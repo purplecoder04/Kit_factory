@@ -74,6 +74,11 @@ Only use these exact labels:
 - `TITLE:`
 - `PROMPT:`
 - `BOTTOM_NOTE:`
+- `QUOTE:`
+- `QUOTE_BY:`
+- `KEY_TERM:`
+- `KEY_TERM_BODY:`
+- `ALERT:`
 
 ## 4. Use PROMPT for fillable answers
 
@@ -94,7 +99,29 @@ Fillable pages are:
 
 Lesson pages and how-to pages are regular reading pages, so they usually use normal paragraphs and bullet lists instead of prompts.
 
-## 5. Basic page example
+## 5. Use special callout boxes when needed
+
+Use `QUOTE:` and `QUOTE_BY:` for an editorial quote box:
+
+```md
+QUOTE: Your foundation does not have to be fancy. It has to be clear enough to use.
+QUOTE_BY: Best Collective | Brand
+```
+
+Use `KEY_TERM:` and `KEY_TERM_BODY:` for a soft lilac key-term box:
+
+```md
+KEY_TERM: Registered Agent
+KEY_TERM_BODY: A person or service that receives official legal and government documents on behalf of your business.
+```
+
+Use `ALERT:` for a gold-accent alert box:
+
+```md
+ALERT: Do not skip this. Using your home address as your registered agent address makes it public record.
+```
+
+## 6. Basic page example
 
 ```md
 <!-- PAGE: lesson -->
@@ -104,10 +131,13 @@ Before a brand can look polished, the business underneath it needs a simple shap
 
 Start with the offer, the audience, and the next decision your buyer needs to make.
 
+QUOTE: Your foundation does not have to be fancy. It has to be clear enough to use.
+QUOTE_BY: Best Collective | Brand
+
 BOTTOM_NOTE: Beginner mistake to avoid: trying to build every system at once.
 ```
 
-## 6. Fillable page example
+## 7. Fillable page example
 
 ```md
 <!-- PAGE: workbook -->

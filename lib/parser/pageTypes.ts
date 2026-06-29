@@ -50,6 +50,20 @@ export type ContentBlock =
       type: "list"
       items: string[]
     }
+  | {
+      type: "quote"
+      text: string
+      attribution?: string
+    }
+  | {
+      type: "key-term"
+      term: string
+      text: string
+    }
+  | {
+      type: "alert"
+      text: string
+    }
 
 export type KitPage = {
   id: string

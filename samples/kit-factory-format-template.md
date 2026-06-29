@@ -38,7 +38,19 @@ Use bullet lists when you want the page to be easy to scan.
 - Second teaching point
 - Third teaching point
 
+QUOTE: Add an optional pull quote here if this page needs a more editorial moment.
+QUOTE_BY: Best Collective | Brand
+
 BOTTOM_NOTE: Add the lesson takeaway here.
+
+<!-- PAGE: important-to-know -->
+SECTION: Key Term + Alert Box
+TITLE: Important Term Or Warning
+KEY_TERM: Add the key term here
+KEY_TERM_BODY: Add the explanation of the term here.
+ALERT: Add the important reminder, warning, or action note here.
+
+BOTTOM_NOTE: Add a short reminder here.
 
 <!-- PAGE: workbook -->
 SECTION: Workbook

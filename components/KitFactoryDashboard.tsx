@@ -474,19 +474,33 @@ function PagePreview({ kit }: { kit: ParsedKit | null }) {
             ))}
           </div>
 
-          <div className="relative mx-auto aspect-[8.5/11] w-full max-w-[360px] overflow-hidden rounded-lg border bg-brand-paper p-8 shadow-sm">
-            <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              Best Collective Brand LLC
+          <div className="relative mx-auto aspect-[8.5/11] w-full max-w-[360px] overflow-hidden rounded-lg border bg-brand-paper shadow-sm">
+            <div className="flex h-9 items-center bg-brand-plum px-5 text-[8px] font-bold uppercase tracking-[0.28em] text-white/90">
+              {kit?.branch ?? "brand"}
             </div>
-            <div className="mt-16 font-heading text-4xl font-semibold leading-tight text-brand-plum">
-              {kit?.title ?? "Kit Preview"}
+            <div className="mx-7 mt-8 rounded-lg bg-brand-plum px-7 py-9 text-center text-brand-paper">
+              <div className="text-[8px] font-semibold uppercase tracking-[0.34em] text-primary">
+                Preview
+              </div>
+              <div className="mt-4 font-heading text-3xl font-semibold leading-tight">
+                {kit?.title ?? "Kit Preview"}
+              </div>
+              <div className="mx-auto mt-4 h-px w-12 bg-primary" />
             </div>
-            <div className="mt-6 text-[10px] font-semibold uppercase tracking-[0.13em] text-primary">
-              {kit?.branch ?? "brand"} / {kit?.outputMode ?? "split"}
+            <div className="mx-7 mt-8 rounded-lg border border-brand-line border-l-4 border-l-primary bg-white/45 p-4">
+              <div className="font-heading text-xl italic leading-tight text-brand-plum">
+                Prompt boxes use gold accents and editorial serif text.
+              </div>
+              <div className="mt-4 grid gap-3">
+                <span className="h-px bg-brand-line" />
+                <span className="h-px bg-brand-line" />
+                <span className="h-px bg-brand-line" />
+              </div>
             </div>
-            <div className="absolute bottom-12 right-0 h-24 w-52 rounded-l-full border-y border-l border-primary/45" />
-            <div className="absolute bottom-16 right-0 h-20 w-44 rounded-l-full border-y border-l border-primary/35" />
-            <div className="absolute bottom-20 right-0 h-16 w-36 rounded-l-full border-y border-l border-primary/25" />
+            <div className="absolute bottom-5 left-7 right-7 flex justify-between border-t border-brand-line pt-3 text-[8px] text-muted-foreground">
+              <span>Best Collective Brand LLC</span>
+              <span>{kit?.outputMode ?? "split"}</span>
+            </div>
           </div>
         </div>
       </CardContent>

@@ -15,7 +15,17 @@ type ParseOptions = {
   outputMode?: OutputMode
 }
 
-const supportedFields = new Set(["SECTION", "TITLE", "BOTTOM_NOTE", "PROMPT"])
+const supportedFields = new Set([
+  "SECTION",
+  "TITLE",
+  "BOTTOM_NOTE",
+  "PROMPT",
+  "QUOTE",
+  "QUOTE_BY",
+  "KEY_TERM",
+  "KEY_TERM_BODY",
+  "ALERT",
+])
 const pageTagPattern = /<!--\s*PAGE:\s*([a-zA-Z0-9-]+)\s*-->/g
 
 export function parseKitMarkdown(
@@ -78,11 +88,26 @@ function parsePages(content: string): KitPage[] {
 
 function parsePageBody(raw: string) {
   const bodyLines: string[] = []
+  const content: ContentBlock[] = []
   const prompts: string[] = []
   const unsupportedFields: string[] = []
   let section = ""
   let title = ""
   let bottomNote = ""
+
+  const flushBodyLines = () => {
+    if (bodyLines.length === 0) {
+      return
+    }
+
+    content.push(...parseContentBlocks(bodyLines))
+    bodyLines.length = 0
+  }
+
+  const pushContentBlock = (block: ContentBlock) => {
+    flushBodyLines()
+    content.push(block)
+  }
 
   for (const line of raw.split(/\r?\n/)) {
     const field = line.match(/^([A-Z_]+):\s*(.*)$/)
@@ -115,12 +140,46 @@ function parsePageBody(raw: string) {
     if (key === "PROMPT") {
       prompts.push(value)
     }
+
+    if (key === "QUOTE") {
+      pushContentBlock({ type: "quote", text: value })
+    }
+
+    if (key === "QUOTE_BY") {
+      flushBodyLines()
+      const lastBlock = content.at(-1)
+
+      if (lastBlock?.type === "quote") {
+        lastBlock.attribution = value
+      }
+    }
+
+    if (key === "KEY_TERM") {
+      pushContentBlock({ type: "key-term", term: value, text: "" })
+    }
+
+    if (key === "KEY_TERM_BODY") {
+      flushBodyLines()
+      const lastBlock = content.at(-1)
+
+      if (lastBlock?.type === "key-term") {
+        lastBlock.text = value
+      } else {
+        content.push({ type: "key-term", term: "Key Term", text: value })
+      }
+    }
+
+    if (key === "ALERT") {
+      pushContentBlock({ type: "alert", text: value })
+    }
   }
+
+  flushBodyLines()
 
   return {
     section,
     title,
-    content: parseContentBlocks(bodyLines),
+    content,
     prompts,
     bottomNote,
     unsupportedFields,

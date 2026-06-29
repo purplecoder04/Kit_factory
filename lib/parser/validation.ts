@@ -99,7 +99,7 @@ function validatePage(page: KitPage, index: number): ValidationIssue[] {
       error(
         "unsupported-field",
         `Page ${pageNumber} has an unsupported field: ${field}.`,
-        "Supported fields are SECTION, TITLE, BOTTOM_NOTE, and PROMPT.",
+        "Supported fields are SECTION, TITLE, BOTTOM_NOTE, PROMPT, QUOTE, QUOTE_BY, KEY_TERM, KEY_TERM_BODY, and ALERT.",
         index
       )
     )
@@ -119,6 +119,18 @@ function validatePage(page: KitPage, index: number): ValidationIssue[] {
   const bodyLength =
     page.content.reduce((count, block) => {
       if (block.type === "paragraph") {
+        return count + block.text.length
+      }
+
+      if (block.type === "quote") {
+        return count + block.text.length + (block.attribution?.length ?? 0)
+      }
+
+      if (block.type === "key-term") {
+        return count + block.term.length + block.text.length
+      }
+
+      if (block.type === "alert") {
         return count + block.text.length
       }
 

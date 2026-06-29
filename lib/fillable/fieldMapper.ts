@@ -13,6 +13,7 @@ export type FieldSpec = {
   height: number
   multiline?: boolean
   fontSize?: number
+  textColor?: "plum" | "white"
 }
 
 const pageHeight = 792
@@ -82,6 +83,7 @@ function mapPageFields(slug: string, page: KitPage, pageIndex: number): FieldSpe
       width: 508,
       height: 146,
       fontSize: 10.5,
+      textColor: "white",
       multiline: true,
     }))
   }

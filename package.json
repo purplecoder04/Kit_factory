@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
+    "@fontsource/cormorant-garamond": "^5.2.11",
     "@fontsource/lora": "^5.2.8",
     "@fontsource/poppins": "^5.2.7",
     "class-variance-authority": "^0.7.1",

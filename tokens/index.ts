@@ -10,6 +10,9 @@ export type BranchTokens = {
   mutedInk: string
   accent: string
   accentSoft: string
+  plum: string
+  lilac: string
+  gold: string
   sage: string
   line: string
   footer: string

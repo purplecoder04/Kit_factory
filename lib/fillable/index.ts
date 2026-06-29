@@ -54,7 +54,8 @@ export async function addFillableFields(
       borderColor: rgb(0.92, 0.86, 0.82),
       borderWidth: 0.15,
       backgroundColor: undefined,
-      textColor: rgb(0.2, 0.08, 0.16),
+      textColor:
+        fieldSpec.textColor === "white" ? rgb(1, 0.98, 0.95) : rgb(0.2, 0.08, 0.16),
       font,
     })
     field.setFontSize(fieldSpec.fontSize ?? 10)

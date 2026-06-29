@@ -27,7 +27,19 @@ Before a brand can look polished, the business underneath it needs a simple shap
 
 The goal is not to create a giant plan. The goal is to know what you are selling, who it helps, and what needs to happen next.
 
+QUOTE: Your foundation does not have to be fancy. It has to be clear enough to use.
+QUOTE_BY: Best Collective | Brand
+
 BOTTOM_NOTE: Beginner mistake to avoid: trying to build every system at once.
+
+<!-- PAGE: important-to-know -->
+SECTION: Key Term + Alert Box
+TITLE: A Few Things To Know First
+KEY_TERM: Registered Agent
+KEY_TERM_BODY: A person or service that receives official legal and government documents on behalf of your business. Required in every state where you are registered.
+ALERT: Do not skip this. Using your home address as your registered agent address makes it public record. Use a service instead when privacy matters.
+
+BOTTOM_NOTE: Keep the setup clean now so you do not have to untangle it later.
 
 <!-- PAGE: workbook -->
 SECTION: Workbook
