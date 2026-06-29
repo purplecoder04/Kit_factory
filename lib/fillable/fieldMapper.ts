@@ -17,6 +17,13 @@ export type FieldSpec = {
 }
 
 const pageHeight = 792
+const checklistLeft = 40
+const checklistTop = 128
+const checklistGap = 41.5
+const checkboxSize = 14
+const reflectionFieldTop = 146
+const reflectionFieldGap = 140
+const reflectionFieldHeight = 95
 
 export function mapFillableFields(kit: ParsedKit, target: RenderTarget): FieldSpec[] {
   const selectedKit = selectPagesForTarget(kit, target)
@@ -43,10 +50,10 @@ function mapPageFields(slug: string, page: KitPage, pageIndex: number): FieldSpe
       pageIndex,
       name: `${slug}_${pageNum}_check_${String(index + 1).padStart(2, "0")}`,
       kind: "checkbox",
-      x: 52,
-      y: topToY(130 + index * 53, 14),
-      width: 14,
-      height: 14,
+      x: checklistLeft,
+      y: topToY(checklistTop + index * checklistGap, checkboxSize),
+      width: checkboxSize,
+      height: checkboxSize,
     }))
   }
 
@@ -74,14 +81,14 @@ function mapPageFields(slug: string, page: KitPage, pageIndex: number): FieldSpe
   }
 
   if (page.type === "reflection") {
-    return page.prompts.slice(0, 2).map((_, index) => ({
+    return page.prompts.slice(0, 4).map((_, index) => ({
       pageIndex,
       name: `${slug}_${pageNum}_reflection_${String(index + 1).padStart(2, "0")}`,
       kind: "text",
-      x: 52,
-      y: topToY(146 + index * 185, 146),
-      width: 508,
-      height: 146,
+      x: 55,
+      y: topToY(reflectionFieldTop + index * reflectionFieldGap, reflectionFieldHeight),
+      width: 502,
+      height: reflectionFieldHeight,
       fontSize: 10.5,
       textColor: "white",
       multiline: true,

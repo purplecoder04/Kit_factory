@@ -32,7 +32,7 @@ export async function addFillableFields(
         width: fieldSpec.width,
         height: fieldSpec.height,
         backgroundColor: undefined,
-        borderColor: rgb(0.47, 0.64, 0.57),
+        borderColor: rgb(0.83, 0.77, 0.92),
         borderWidth: 1,
       })
       return
@@ -51,8 +51,8 @@ export async function addFillableFields(
       y: fieldSpec.y,
       width: fieldSpec.width,
       height: fieldSpec.height,
-      borderColor: rgb(0.92, 0.86, 0.82),
-      borderWidth: 0.15,
+      borderColor: undefined,
+      borderWidth: 0,
       backgroundColor: undefined,
       textColor:
         fieldSpec.textColor === "white" ? rgb(1, 0.98, 0.95) : rgb(0.2, 0.08, 0.16),
