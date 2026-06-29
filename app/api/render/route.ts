@@ -21,7 +21,11 @@ export async function POST(request: Request) {
 
   const pdf = await renderKitPdf(kit, target)
   const filename =
-    target === "complete" ? `${kit.slug}-complete.pdf` : `${kit.slug}-lesson-guide.pdf`
+    target === "complete"
+      ? `${kit.slug}-complete.pdf`
+      : target === "workbook"
+        ? `${kit.slug}-workbook.pdf`
+        : `${kit.slug}-lesson-guide.pdf`
 
   return new Response(pdf, {
     headers: {
@@ -32,5 +36,9 @@ export async function POST(request: Request) {
 }
 
 function normaliseTarget(value: unknown): RenderTarget {
-  return value === "complete" ? "complete" : "guide"
+  if (value === "complete" || value === "workbook") {
+    return value
+  }
+
+  return "guide"
 }
