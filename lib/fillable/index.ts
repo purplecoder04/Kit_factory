@@ -39,6 +39,8 @@ export async function addFillableFields(
     }
 
     const field = form.createTextField(fieldSpec.name)
+    field.disableScrolling()
+    field.disableSpellChecking()
 
     if (fieldSpec.multiline) {
       field.enableMultiline()
@@ -55,6 +57,7 @@ export async function addFillableFields(
       textColor: rgb(0.2, 0.08, 0.16),
       font,
     })
+    field.setFontSize(fieldSpec.fontSize ?? 10)
   })
 
   form.updateFieldAppearances(font)

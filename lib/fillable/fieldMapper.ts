@@ -12,6 +12,7 @@ export type FieldSpec = {
   width: number
   height: number
   multiline?: boolean
+  fontSize?: number
 }
 
 const pageHeight = 792
@@ -65,6 +66,7 @@ function mapPageFields(slug: string, page: KitPage, pageIndex: number): FieldSpe
         y: topToY(149 + row * 31.5, 30),
         width: column.width - 10,
         height: 28,
+        fontSize: 8.5,
         multiline: column.key === "notes",
       }))
     )
@@ -79,6 +81,7 @@ function mapPageFields(slug: string, page: KitPage, pageIndex: number): FieldSpe
       y: topToY(146 + index * 185, 146),
       width: 508,
       height: 146,
+      fontSize: 10.5,
       multiline: true,
     }))
   }
@@ -91,6 +94,7 @@ function mapPageFields(slug: string, page: KitPage, pageIndex: number): FieldSpe
     y: topToY(157 + index * 106, 46),
     width: 480,
     height: 46,
+    fontSize: 10.5,
     multiline: true,
   }))
 }
