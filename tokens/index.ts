@@ -1,4 +1,11 @@
-import { brandTokens } from "@/tokens/brand"
+import {
+  brandLeanTokens,
+  brandTokens,
+  landTokens,
+  rebuildTokens,
+  riseTokens,
+  umbrellaTokens,
+} from "@/tokens/brand"
 
 export type BranchTokens = {
   slug: string
@@ -19,9 +26,23 @@ export type BranchTokens = {
 }
 
 export const branchTokens = {
+  umbrella: umbrellaTokens,
   brand: brandTokens,
+  "brand-lean": brandLeanTokens,
+  rise: riseTokens,
+  land: landTokens,
+  rebuild: rebuildTokens,
 }
 
-export function getBranchTokens(): BranchTokens {
-  return branchTokens.brand
+export type BranchTokenSlug = keyof typeof branchTokens
+
+export const branchTokenOptions = Object.values(branchTokens).map((tokens) => ({
+  slug: tokens.slug,
+  name: tokens.shortName,
+}))
+
+export function getBranchTokens(branch?: string): BranchTokens {
+  return branch && branch in branchTokens
+    ? branchTokens[branch as BranchTokenSlug]
+    : branchTokens.brand
 }

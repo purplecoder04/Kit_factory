@@ -1,6 +1,7 @@
 export const branches = [
   "umbrella",
   "brand",
+  "brand-lean",
   "rise",
   "land",
   "rebuild",

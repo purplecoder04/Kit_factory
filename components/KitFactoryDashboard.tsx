@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { type CSSProperties, useEffect, useMemo, useState } from "react"
 import {
   AlertCircleIcon,
   CheckCircle2Icon,
@@ -35,13 +35,13 @@ import {
   SelectGroup,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { goldenKitMarkdown } from "@/lib/goldenKit"
 import { cn } from "@/lib/utils"
 import type { ContentBlock, KitPage, OutputMode, ParsedKit, ValidationIssue } from "@/lib/parser/pageTypes"
+import { branchTokenOptions, getBranchTokens } from "@/tokens"
 
 type ParseResult = {
   kit: ParsedKit
@@ -54,6 +54,7 @@ type BuildStatus =
   | "Preview Ready"
   | "PDF Generated"
   | "Fillable Generated"
+  | "Mockup Generated"
   | "Error"
 
 const savedKits = [
@@ -70,6 +71,23 @@ export function KitFactoryDashboard() {
   const [status, setStatus] = useState<BuildStatus>("Draft")
   const [message, setMessage] = useState("Golden kit loaded.")
   const [isWorking, setIsWorking] = useState(false)
+  const selectedTokens = useMemo(() => getBranchTokens(branch), [branch])
+  const colorwayStyle = useMemo(
+    () =>
+      ({
+        "--brand-plum": selectedTokens.plum,
+        "--brand-paper": selectedTokens.paper,
+        "--brand-coral": selectedTokens.accent,
+        "--brand-sage": selectedTokens.sage,
+        "--brand-line": selectedTokens.line,
+        "--primary": selectedTokens.accent,
+        "--primary-foreground": selectedTokens.paper,
+        "--secondary": selectedTokens.lilac,
+        "--secondary-foreground": selectedTokens.ink,
+        "--brand-soft": selectedTokens.lilac,
+      }) as CSSProperties,
+    [selectedTokens]
+  )
 
   const blockingErrors = useMemo(
     () => result?.issues.filter((issue) => issue.level === "error") ?? [],
@@ -84,6 +102,7 @@ export function KitFactoryDashboard() {
     if (status === "Parsed") return 34
     if (status === "Preview Ready") return 54
     if (status === "PDF Generated") return 76
+    if (status === "Mockup Generated") return 88
     if (status === "Fillable Generated") return 100
     return 18
   }, [status])
@@ -170,6 +189,47 @@ export function KitFactoryDashboard() {
     }
   }
 
+  async function downloadMockup() {
+    setIsWorking(true)
+    setMessage("Generating website mockup image.")
+
+    try {
+      const response = await fetch("/api/mockup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ markdown, branch, outputMode }),
+      })
+
+      if (!response.ok) {
+        const payload = (await response.json()) as { issues?: ValidationIssue[] }
+        setResult((current) =>
+          current && payload.issues ? { ...current, issues: payload.issues } : current
+        )
+        setStatus("Error")
+        setMessage("Fix the validation errors before rendering the mockup.")
+        return
+      }
+
+      const blob = await response.blob()
+      const filename = filenameFromResponse(response, "kit-website-mockup.png")
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = filename
+      link.click()
+      URL.revokeObjectURL(url)
+      setStatus("Mockup Generated")
+      setMessage(`${filename} downloaded.`)
+    } catch {
+      setStatus("Error")
+      setMessage("The mockup image could not be generated.")
+    } finally {
+      setIsWorking(false)
+    }
+  }
+
   async function handleFileUpload(file: File | undefined) {
     if (!file) {
       return
@@ -181,7 +241,7 @@ export function KitFactoryDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground" style={colorwayStyle}>
       <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[256px_1fr]">
         <aside className="flex flex-col bg-sidebar px-4 py-5 text-sidebar-foreground lg:min-h-screen">
           <div className="flex items-center gap-3">
@@ -258,14 +318,18 @@ export function KitFactoryDashboard() {
 
             <div className="flex flex-col gap-3 md:flex-row md:items-end">
               <Field>
-                <FieldLabel>Branch</FieldLabel>
+                <FieldLabel>Branch / Colorway</FieldLabel>
                 <Select value={branch} onValueChange={(value) => setBranch(String(value))}>
                   <SelectTrigger className="w-full md:w-44">
-                    <SelectValue placeholder="Brand" />
+                    <span className="flex flex-1 text-left">{selectedTokens.shortName}</span>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectItem value="brand">Brand</SelectItem>
+                      {branchTokenOptions.map((option) => (
+                        <SelectItem key={option.slug} value={option.slug}>
+                          {option.name}
+                        </SelectItem>
+                      ))}
                     </SelectGroup>
                   </SelectContent>
                 </Select>
@@ -355,6 +419,7 @@ export function KitFactoryDashboard() {
               <OutputPanel
                 isWorking={isWorking}
                 onDownloadFillable={() => downloadOutput("fillable")}
+                onDownloadMockup={downloadMockup}
                 onDownloadPdf={() => downloadOutput("render")}
                 onDownloadWorkbookPdf={() => downloadOutput("render", "workbook")}
                 progressValue={progressValue}
@@ -538,14 +603,14 @@ function MiniPageBody({ kit, page }: { kit: ParsedKit | null; page: KitPage | nu
 
   if (page.type === "cover") {
     return (
-      <div className="mx-7 mt-8 rounded-lg bg-brand-plum px-7 py-9 text-center text-brand-paper">
+      <div className="mx-7 mt-8 rounded-lg bg-brand-plum px-5 py-7 text-center text-brand-paper">
         <div className="text-[8px] font-semibold uppercase tracking-[0.34em] text-primary">
           {page.section || "Preview"}
         </div>
-        <div className="mt-4 font-heading text-3xl font-semibold leading-tight">
+        <div className="mx-auto mt-3 max-w-40 break-words font-heading text-[19px] font-semibold leading-[0.92]">
           {kit?.title || page.title}
         </div>
-        <div className="mx-auto mt-4 h-px w-12 bg-primary" />
+        <div className="mx-auto mt-3 h-px w-12 bg-primary" />
       </div>
     )
   }
@@ -614,7 +679,10 @@ function MiniContent({ blocks, compact = false }: { blocks: ContentBlock[]; comp
 
         if (block.type === "quote") {
           return (
-            <div className="rounded-lg border-l-4 border-l-brand-plum bg-[#ece7f5] p-4" key={`${block.type}-${index}`}>
+            <div
+              className="rounded-lg border-l-4 border-l-brand-plum bg-[var(--brand-soft)] p-4"
+              key={`${block.type}-${index}`}
+            >
               <div className="font-heading text-lg italic leading-tight text-brand-plum">{block.text}</div>
               {block.attribution && (
                 <div className="mt-3 text-[8px] font-semibold uppercase tracking-[0.22em] text-primary">
@@ -627,7 +695,10 @@ function MiniContent({ blocks, compact = false }: { blocks: ContentBlock[]; comp
 
         if (block.type === "key-term") {
           return (
-            <div className="rounded-lg border-l-4 border-l-brand-plum bg-[#ece7f5] p-4" key={`${block.type}-${index}`}>
+            <div
+              className="rounded-lg border-l-4 border-l-brand-plum bg-[var(--brand-soft)] p-4"
+              key={`${block.type}-${index}`}
+            >
               <div className="text-[8px] font-bold uppercase tracking-[0.24em] text-brand-plum">Key Term</div>
               <div className="mt-2 font-heading text-xl font-semibold text-brand-plum">{block.term}</div>
               <p className="mt-2 line-clamp-3 text-[10px] leading-5 text-muted-foreground">{block.text}</p>
@@ -688,7 +759,7 @@ function MiniFillablePreview({ page }: { page: KitPage }) {
   if (page.type === "tracker") {
     return (
       <div className="mt-3 overflow-hidden rounded-lg border border-brand-line text-[8px]">
-        <div className="grid grid-cols-4 bg-[#ece7f5] font-semibold uppercase tracking-[0.16em] text-brand-plum">
+        <div className="grid grid-cols-4 bg-[var(--brand-soft)] font-semibold uppercase tracking-[0.16em] text-brand-plum">
           <span className="p-2">Step</span>
           <span className="p-2">Owner</span>
           <span className="p-2">Status</span>
@@ -729,6 +800,7 @@ function MiniFillablePreview({ page }: { page: KitPage }) {
 function OutputPanel({
   isWorking,
   onDownloadFillable,
+  onDownloadMockup,
   onDownloadPdf,
   onDownloadWorkbookPdf,
   progressValue,
@@ -736,6 +808,7 @@ function OutputPanel({
 }: {
   isWorking: boolean
   onDownloadFillable: () => void
+  onDownloadMockup: () => void
   onDownloadPdf: () => void
   onDownloadWorkbookPdf: () => void
   progressValue: number
@@ -813,6 +886,23 @@ function OutputPanel({
                 <UploadIcon data-icon="inline-start" />
               )}
               Generate Fillable
+            </Button>
+          </div>
+
+          <Separator />
+
+          <div className="flex flex-col gap-3 rounded-lg border p-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="font-medium">Website mockup PNG</div>
+              <div className="text-xs text-muted-foreground">Listing-ready product image</div>
+            </div>
+            <Button disabled={isWorking} onClick={onDownloadMockup} variant="outline">
+              {isWorking ? (
+                <LoaderCircleIcon data-icon="inline-start" />
+              ) : (
+                <DownloadIcon data-icon="inline-start" />
+              )}
+              Generate Mockup
             </Button>
           </div>
         </div>

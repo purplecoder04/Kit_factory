@@ -9,7 +9,7 @@ import { getBranchTokens } from "@/tokens"
 const fontFaces = buildFontFaces()
 
 export function buildKitHtml(kit: ParsedKit) {
-  const tokens = getBranchTokens()
+  const tokens = getBranchTokens(kit.branch)
   const pages = kit.pages.map((page, index) => renderPage(page, index, kit.pages.length, kit.title))
 
   return `<!doctype html>
