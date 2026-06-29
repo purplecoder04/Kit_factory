@@ -24,6 +24,11 @@ const checkboxSize = 14
 const reflectionFieldTop = 146
 const reflectionFieldGap = 140
 const reflectionFieldHeight = 95
+const promptFieldLeft = 56
+const promptFieldTop = 157
+const promptFieldGap = 97
+const promptFieldWidth = 502
+const promptFieldHeight = 46
 
 export function mapFillableFields(kit: ParsedKit, target: RenderTarget): FieldSpec[] {
   const selectedKit = selectPagesForTarget(kit, target)
@@ -99,10 +104,10 @@ function mapPageFields(slug: string, page: KitPage, pageIndex: number): FieldSpe
     pageIndex,
     name: `${slug}_${pageNum}_field_${String(index + 1).padStart(2, "0")}`,
     kind: "text",
-    x: 66,
-    y: topToY(157 + index * 106, 46),
-    width: 480,
-    height: 46,
+    x: promptFieldLeft,
+    y: topToY(promptFieldTop + index * promptFieldGap, promptFieldHeight),
+    width: promptFieldWidth,
+    height: promptFieldHeight,
     fontSize: 10.5,
     multiline: true,
   }))
