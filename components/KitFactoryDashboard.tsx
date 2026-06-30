@@ -1444,11 +1444,13 @@ function MiniPageBody({
         </div>
         <div
           className={cn(
-            "max-w-[270px] break-words font-heading font-semibold uppercase leading-[0.92]",
-            "text-[35px]",
-            tokens.styleFamily === "rebuild" && "text-[32px]",
-            longCoverTitle && "max-w-[300px] text-[30px] leading-[0.98]",
-            longCoverTitle && tokens.styleFamily === "rebuild" && "text-[28px]"
+            "max-w-[282px] break-words font-heading font-semibold uppercase leading-[0.9]",
+            "text-[38px]",
+            tokens.styleFamily === "brand" && "max-w-[318px] text-[42px] leading-[0.86]",
+            tokens.styleFamily === "rebuild" && "max-w-[318px] text-[40px] leading-[0.86]",
+            longCoverTitle && "max-w-[326px] text-[36px] leading-[0.88]",
+            longCoverTitle && tokens.styleFamily === "brand" && "text-[38px] leading-[0.84]",
+            longCoverTitle && tokens.styleFamily === "rebuild" && "text-[37px] leading-[0.84]"
           )}
           style={{ color: tokens.ink }}
         >

@@ -1463,14 +1463,14 @@ function buildCss(tokens: DesignPresetTokens) {
         margin-bottom: 0.24in;
       }
       .style-brand.cover .cover-title {
-        font-size: 66px;
-        line-height: 0.9;
-        max-width: 5.15in;
+        font-size: 76px;
+        line-height: 0.84;
+        max-width: 5.55in;
       }
       .style-brand.cover .cover-title.is-long {
-        font-size: 54px;
-        line-height: 0.94;
-        max-width: 5.8in;
+        font-size: 64px;
+        line-height: 0.86;
+        max-width: 6.12in;
       }
       .style-brand.cover .cover-subtitle {
         margin-top: 0.18in;
@@ -2420,16 +2420,17 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-rebuild.cover .cover-title {
         color: ${tokens.ink};
-        font-size: 72px;
-        max-width: 4.9in;
+        font-size: 88px;
+        max-width: 5.75in;
         margin: 0;
-        letter-spacing: 0.1em;
+        letter-spacing: 0.08em;
+        line-height: 0.86;
       }
       .style-rebuild.cover .cover-title.is-long {
-        font-size: 48px;
-        line-height: 1;
-        letter-spacing: 0.05em;
-        max-width: 5.65in;
+        font-size: 62px;
+        line-height: 0.88;
+        letter-spacing: 0.035em;
+        max-width: 6.28in;
       }
       .style-rebuild.cover .cover-subtitle {
         color: ${tokens.ink};
