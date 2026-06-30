@@ -827,6 +827,40 @@ function buildCss(tokens: DesignPresetTokens) {
         top: 1.05in;
         color: ${tokens.rose};
       }
+      .style-meetatheal.motif-roads-hearts:not(.cover) {
+        background:
+          linear-gradient(116deg, ${transparent(tokens.sage, 0.12)} 0 22%, transparent 45%),
+          linear-gradient(64deg, transparent 0 58%, ${transparent(tokens.rose, 0.1)} 78%, transparent 100%),
+          radial-gradient(ellipse at 18% 78%, ${transparent(tokens.blue, 0.13)}, transparent 44%),
+          radial-gradient(ellipse at 88% 76%, ${transparent(tokens.rose, 0.12)}, transparent 42%),
+          ${tokens.paper};
+      }
+      .style-meetatheal.motif-roads-hearts:not(.cover) .mountain-mark {
+        left: -0.18in;
+        right: auto;
+        bottom: 0.8in;
+        width: 2.92in;
+        height: 1.34in;
+        opacity: 0.2;
+      }
+      .style-meetatheal.motif-roads-hearts:not(.cover) .road-mark {
+        width: 3.8in;
+        height: 1.34in;
+        bottom: 0.72in;
+        opacity: 0.34;
+      }
+      .style-meetatheal.motif-roads-hearts:not(.cover) .floral-left {
+        left: 0.16in;
+        bottom: 0.78in;
+        transform: scale(0.92);
+        opacity: 0.42;
+      }
+      .style-meetatheal.motif-roads-hearts:not(.cover) .floral-right {
+        right: 0.18in;
+        top: 1.22in;
+        transform: scale(1.08);
+        opacity: 0.55;
+      }
       .style-land .swoop,
       .style-rebuild .swoop {
         border-radius: 0;
@@ -866,6 +900,21 @@ function buildCss(tokens: DesignPresetTokens) {
         padding: 0 0.33in;
         text-transform: uppercase;
         z-index: 3;
+      }
+      .style-brand .page-ribbon {
+        background: transparent;
+        color: ${tokens.accent};
+        min-height: 0.42in;
+        padding-left: 0.58in;
+      }
+      .style-brand .page-ribbon::after {
+        content: "";
+        position: absolute;
+        left: 0.58in;
+        bottom: 0.02in;
+        width: 0.72in;
+        height: 1px;
+        background: ${tokens.accent};
       }
       .style-rise .page-ribbon,
       .style-rebuild .page-ribbon,
@@ -1106,6 +1155,7 @@ function buildCss(tokens: DesignPresetTokens) {
         background:
           linear-gradient(180deg, ${transparent(tokens.rose, 0.08)}, transparent 38%),
           rgba(255,255,255,0.62);
+        box-shadow: 0 0.08in 0.18in ${transparent(tokens.background, 0.05)};
       }
       .prompt-text {
         display: flex;
@@ -1202,6 +1252,12 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-meetatheal .tracker-table th {
         background: ${tokens.rose};
+      }
+      .style-meetatheal .tracker-table {
+        box-shadow: 0 0.08in 0.18in ${transparent(tokens.background, 0.04)};
+      }
+      .style-meetatheal .tracker-table td {
+        background: ${transparent(tokens.paper, 0.62)};
       }
       .tracker-table td {
         height: 38px;
@@ -2827,6 +2883,10 @@ function buildCss(tokens: DesignPresetTokens) {
         top: 1.06in;
         transform: translateX(-50%);
       }
+      .style-meetatheal h2 {
+        font-size: 38px;
+        line-height: 0.96;
+      }
       .style-meetatheal.type-welcome .content,
       .style-meetatheal.type-lesson .content,
       .style-meetatheal.type-lesson-continue .content {
@@ -2864,11 +2924,14 @@ function buildCss(tokens: DesignPresetTokens) {
         border: 1px solid ${transparent(tokens.gold, 0.42)};
         border-radius: 0.08in;
         background:
-          linear-gradient(180deg, ${transparent(tokens.blue, 0.16)}, transparent 60%),
-          radial-gradient(ellipse at 50% 102%, ${transparent(tokens.rose, 0.26)}, transparent 44%),
+          linear-gradient(112deg, ${transparent(tokens.sage, 0.2)} 0 28%, transparent 52%),
+          linear-gradient(62deg, transparent 0 48%, ${transparent(tokens.rose, 0.16)} 78%, transparent 100%),
+          radial-gradient(ellipse at 18% 88%, ${transparent(tokens.blue, 0.18)}, transparent 44%),
+          radial-gradient(ellipse at 88% 76%, ${transparent(tokens.rose, 0.24)}, transparent 40%),
           ${transparent(tokens.paper, 0.86)};
-        min-height: 3.2in;
-        padding: 0.54in 0.62in;
+        min-height: 4.34in;
+        width: 6.36in;
+        padding: 0.66in 0.72in;
         overflow: hidden;
       }
       .style-meetatheal.type-section-divider .section-divider-box::after {
@@ -2887,6 +2950,16 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-meetatheal.type-section-divider .section-divider-box > * {
         position: relative;
         z-index: 2;
+      }
+      .style-meetatheal.type-section-divider .section-divider-box h2 {
+        color: ${tokens.rose};
+        font-size: 48px;
+        line-height: 0.94;
+        max-width: 4.35in;
+      }
+      .style-meetatheal.type-section-divider .section-divider-box .subtitle {
+        color: ${tokens.background};
+        font-size: 24px;
       }
       .style-meetatheal.type-workbook .heal-heart,
       .style-meetatheal.type-workbook .floral-right,
@@ -3030,6 +3103,15 @@ function buildCss(tokens: DesignPresetTokens) {
           linear-gradient(${transparent(tokens.paper, 0.02)}, ${transparent(tokens.paper, 0.02)}),
           url("${coverArt}") center / cover no-repeat,
           ${tokens.paper};
+      }
+      .style-meetatheal.motif-roads-hearts.type-section-divider {
+        background:
+          linear-gradient(${transparent(tokens.paper, 0.18)}, ${transparent(tokens.paper, 0.18)}),
+          url("${coverArt}") center / cover no-repeat,
+          ${tokens.paper};
+      }
+      .style-meetatheal.motif-roads-hearts.type-section-divider::after {
+        opacity: 0.08;
       }`
           : ""
       }

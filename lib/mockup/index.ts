@@ -46,6 +46,8 @@ function buildMockupHtml(kit: ParsedKit) {
   const checklistPage = kit.pages.find((page) => page.type === "checklist")
   const reflectionPage = kit.pages.find((page) => page.type === "reflection" || page.type === "lesson-continue")
   const branchLabel = tokens.shortName.toUpperCase()
+  const productCopy = mockupProductCopy(tokens)
+  const badges = mockupBadges(tokens)
 
   return `<!doctype html>
 <html>
@@ -488,11 +490,9 @@ function buildMockupHtml(kit: ParsedKit) {
       <section class="hero-copy">
         <div class="eyebrow">${escapeHtml(tokens.shortName)} Kit</div>
         <h1>${escapeHtml(kit.title)}</h1>
-        <p class="subline">Printable and fillable workbook pages for a clear, polished learning experience.</p>
+        <p class="subline">${escapeHtml(productCopy)}</p>
         <div class="badge-row">
-          <span class="badge">PDF</span>
-          <span class="badge">Fillable</span>
-          <span class="badge">Workbook</span>
+          ${badges.map((badge) => `<span class="badge">${escapeHtml(badge)}</span>`).join("")}
         </div>
       </section>
       <section class="thumb-row">
@@ -503,6 +503,74 @@ function buildMockupHtml(kit: ParsedKit) {
     </main>
   </body>
 </html>`
+}
+
+function mockupProductCopy(tokens: DesignPresetTokens) {
+  if (tokens.slug === "brand") {
+    return "Strategy pages, offer clarity, checklists, and workbook prompts in the signature Brand style."
+  }
+
+  if (tokens.slug === "brand-land") {
+    return "The Brand kit content in the grounded Land colorway for a more neutral business presentation."
+  }
+
+  if (tokens.slug === "meetatheal") {
+    return "A couples kit with Rise softness and Land grounding: lessons, shared work, and individual reflection."
+  }
+
+  if (tokens.slug === "meetatheal-rise") {
+    return "The Meet at the Heal individual workbook in the Rise visual language for coming back to yourself."
+  }
+
+  if (tokens.slug === "meetatheal-land") {
+    return "The Meet at the Heal individual workbook in the Land visual language for steady repair and grounded action."
+  }
+
+  if (tokens.styleFamily === "rise") {
+    return "Soft reflection pages for standards, self-trust, peace, and the next clear step."
+  }
+
+  if (tokens.styleFamily === "land") {
+    return "Grounded lesson, checklist, and tracker pages for systems, foundation, and steady growth."
+  }
+
+  if (tokens.styleFamily === "rebuild") {
+    return "A fresh-start workbook look for reset, reflection, and moving into the next chapter."
+  }
+
+  return "Printable and fillable workbook pages for a clear, polished learning experience."
+}
+
+function mockupBadges(tokens: DesignPresetTokens) {
+  if (tokens.slug === "brand-land") {
+    return ["PDF", "Fillable", "Brand Land"]
+  }
+
+  if (tokens.slug === "meetatheal") {
+    return ["Couples", "Lesson", "Workbook"]
+  }
+
+  if (tokens.slug === "meetatheal-rise") {
+    return ["Rise", "Individual", "Workbook"]
+  }
+
+  if (tokens.slug === "meetatheal-land") {
+    return ["Land", "Individual", "Workbook"]
+  }
+
+  if (tokens.styleFamily === "rise") {
+    return ["Reflection", "Fillable", "Workbook"]
+  }
+
+  if (tokens.styleFamily === "land") {
+    return ["Systems", "Tracker", "Workbook"]
+  }
+
+  if (tokens.styleFamily === "rebuild") {
+    return ["Reset", "Planner", "Workbook"]
+  }
+
+  return ["PDF", "Fillable", "Workbook"]
 }
 
 function renderWorkbookThumb(page?: KitPage) {
