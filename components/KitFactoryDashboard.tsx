@@ -1286,6 +1286,60 @@ function MiniPageBody({
     const coverTitle = kit?.title || page.title
     const longCoverTitle = coverTitle.length > 24
 
+    if (tokens.styleFamily === "rise") {
+      const collectionTitle = tokens.slug === "meetatheal-rise" ? "Meet at the Heal" : "Rise"
+      const collectionLine =
+        tokens.slug === "meetatheal-rise"
+          ? page.subtitle || kit?.subtitle || "Rise Individual Workbook"
+          : "Come Back To Yourself."
+      const riseTagline = page.subtitle || kit?.subtitle || page.tagline || kit?.tagline
+
+      return (
+        <div className="relative z-10 flex h-[calc(100%-72px)] flex-col items-center px-8 pt-20 text-center">
+          <div
+            className="font-heading text-[25px] font-semibold leading-none tracking-[0.04em]"
+            style={{ color: tokens.accent, textShadow: `0 1px 0 ${tokens.paper}` }}
+          >
+            BC
+          </div>
+          <div className="mt-3 text-[8px] font-extrabold uppercase tracking-[0.36em] text-[var(--preview-background)]">
+            Best Collective
+          </div>
+          <div className="my-3 flex items-center gap-2 text-[var(--preview-rose)]">
+            <span className="h-px w-8 bg-current" />
+            <span className="text-[8px] leading-none">♥</span>
+            <span className="h-px w-8 bg-current" />
+          </div>
+          <div
+            className={cn(
+              "max-w-[310px] break-words font-heading font-semibold uppercase leading-[0.82] tracking-[0.18em]",
+              tokens.slug === "meetatheal-rise" ? "text-[39px] tracking-[0.04em]" : "text-[64px]"
+            )}
+            style={{
+              color: tokens.rose,
+              textShadow: `0 1px 0 ${tokens.paper}, 0 3px 10px ${tokens.accentSoft}`,
+            }}
+          >
+            {collectionTitle}
+          </div>
+          <div className="mt-5 max-w-[260px] text-[8px] font-bold uppercase tracking-[0.36em] text-[var(--preview-background)]">
+            {collectionLine}
+          </div>
+          <div className="mt-6 h-px w-12 bg-[var(--preview-rose)]" />
+          <div className="mt-3 max-w-[240px] text-[10px] font-bold uppercase tracking-[0.27em] text-[var(--preview-background)]">
+            {previewProductLabel(kit)}
+          </div>
+          <div className="mt-3 h-px w-12 bg-[var(--preview-rose)]" />
+          <div className="mt-7 text-[16px] leading-none text-[var(--preview-rose)]">♕</div>
+          {riseTagline && (
+            <div className="absolute bottom-5 left-8 right-8 text-[7px] font-bold uppercase tracking-[0.22em] text-[var(--preview-background)]">
+              {riseTagline}
+            </div>
+          )}
+        </div>
+      )
+    }
+
     if (tokens.styleFamily === "land") {
       const kitTitle = cleanCoverKitTitle(coverTitle)
       const collectionTitle = tokens.slug === "meetatheal-land" ? "Meet at the Heal" : "Land"

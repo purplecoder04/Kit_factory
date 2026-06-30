@@ -1362,6 +1362,9 @@ function buildCss(tokens: DesignPresetTokens) {
       .cover-divider {
         display: none;
       }
+      .cover-mini-mark {
+        display: none;
+      }
       .cover-product {
         border-top: 1px solid ${tokens.accent};
         border-bottom: 1px solid ${tokens.accent};
@@ -1821,7 +1824,9 @@ function buildCss(tokens: DesignPresetTokens) {
         transform: scale(0.72);
       }
       .style-rise.cover {
-        align-content: center;
+        align-content: start;
+        padding: 0.7in 0.62in 0.56in;
+        text-align: center;
         background:
           radial-gradient(ellipse at 10% 14%, ${transparent(tokens.rose, 0.2)}, transparent 38%),
           radial-gradient(ellipse at 88% 72%, ${transparent(tokens.accent, 0.14)}, transparent 34%),
@@ -1830,24 +1835,141 @@ function buildCss(tokens: DesignPresetTokens) {
           linear-gradient(108deg, transparent 0 68%, ${transparent(tokens.lilac, 0.2)} 68.5% 82%, transparent 82.5%),
           ${tokens.paper};
       }
+      .style-rise.cover .cover-copy {
+        margin: 0 auto;
+        max-width: 5.5in;
+        position: static;
+      }
       .style-rise.cover .brand-mark {
-        font-size: 22px;
-        margin-bottom: 20px;
+        color: ${tokens.accent};
+        font-size: 28px;
+        line-height: 1;
+        margin-bottom: 0.12in;
+        text-shadow: 0 1px 0 ${tokens.paper};
+      }
+      .style-rise.cover .cover-brandline {
+        color: ${tokens.background};
+        font-size: 8.5px;
+        font-weight: 800;
+        letter-spacing: 0.34em;
+        margin-bottom: 0;
+      }
+      .style-rise.cover .cover-divider {
+        align-items: center;
+        color: ${tokens.rose};
+        display: flex;
+        gap: 0.08in;
+        justify-content: center;
+        margin: 0.12in auto 0.13in;
+      }
+      .style-rise.cover .cover-divider::before,
+      .style-rise.cover .cover-divider::after {
+        content: "";
+        display: block;
+        height: 1px;
+        width: 0.33in;
+        background: currentColor;
+      }
+      .style-rise.cover .cover-divider span {
+        color: currentColor;
+        display: block;
+        font-size: 9px;
+        line-height: 1;
       }
       .style-rise.cover .cover-title {
-        color: ${tokens.ink};
-        font-size: 76px;
-        letter-spacing: 0.16em;
+        color: ${tokens.rose};
+        font-size: 98px;
+        letter-spacing: 0.18em;
+        line-height: 0.82;
+        text-shadow:
+          0 1px 0 ${tokens.paper},
+          0 3px 10px ${transparent(tokens.accent, 0.32)};
       }
       .style-rise.cover .cover-title.is-long {
-        font-size: 48px;
-        line-height: 1;
-        letter-spacing: 0.05em;
-        max-width: 5.7in;
+        color: ${tokens.rose};
+        font-size: 56px;
+        line-height: 0.94;
+        letter-spacing: 0.04em;
+        max-width: 5.4in;
       }
       .style-rise.cover .cover-subtitle {
-        color: ${tokens.accent};
+        color: ${tokens.background};
+        font-size: 9.6px;
+        font-weight: 700;
+        letter-spacing: 0.34em;
+        margin-top: 0.2in;
+      }
+      .style-rise.cover .cover-product {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        color: ${tokens.background};
+        font-size: 12.5px;
+        font-weight: 600;
+        letter-spacing: 0.3em;
+        margin-top: 0.38in;
+        padding: 0;
+      }
+      .style-rise.cover .cover-mini-mark {
+        color: ${tokens.rose};
+        display: block;
+        font-size: 20px;
+        line-height: 1;
+        margin-top: 0.28in;
+      }
+      .style-rise.cover .cover-tagline {
+        color: ${tokens.background};
+        font-size: 8.4px;
+        left: 0.72in;
+        letter-spacing: 0.3em;
+        margin: 0;
+        position: absolute;
+        right: 0.72in;
+        bottom: 0.42in;
+        z-index: 3;
+        text-shadow: 0 1px 4px ${transparent(tokens.paper, 0.9)};
+      }
+      .style-rise .section-label {
+        color: ${tokens.rose};
+        font-size: 8.8px;
         letter-spacing: 0.32em;
+      }
+      .style-rise h2 {
+        color: ${tokens.plum};
+        font-size: 35px;
+        letter-spacing: 0.02em;
+        line-height: 0.98;
+        text-transform: uppercase;
+      }
+      .style-rise .subtitle {
+        color: ${tokens.rose};
+        font-size: 22px;
+        font-style: italic;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        line-height: 1.05;
+      }
+      .style-rise.type-notes h2,
+      .style-rise.type-closing .cover-tagline {
+        color: ${tokens.rose};
+        font-style: italic;
+        text-transform: none;
+      }
+      .style-rise .quote-text {
+        color: ${tokens.background};
+        font-size: 25px;
+        font-weight: 400;
+        line-height: 1.22;
+      }
+      .style-rise .quote-mark {
+        color: ${transparent(tokens.rose, 0.7)};
+      }
+      .style-rise .prompt-card .prompt-text {
+        color: ${tokens.background};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 17px;
+        font-style: italic;
+        font-weight: 600;
       }
       .style-rise.cover .image-slot {
         display: none;
@@ -2863,6 +2985,28 @@ function renderCoverPage(
   </section>`
   }
 
+  if (preset.styleFamily === "rise") {
+    const collectionTitle = riseCoverCollectionTitle(preset)
+    const collectionSubtitle = riseCoverSubtitle(page, kit, preset)
+    const coverTagline = riseCoverTagline(page, kit)
+    const titleClass = `cover-title ${collectionTitle.length > 8 ? "is-long" : ""}`.trim()
+
+    return `<section class="page cover ${presetClasses} type-cover">
+    ${renderDecor()}
+    <div class="cover-copy">
+      <div class="brand-mark">BC</div>
+      <div class="cover-brandline">Best Collective</div>
+      <div class="cover-divider"><span>&#9829;</span></div>
+      <h1 class="${titleClass}">${escapeHtml(collectionTitle)}</h1>
+      <div class="cover-subtitle">${escapeHtml(collectionSubtitle)}</div>
+      <div class="cover-product">${escapeHtml(productLabel(kit.productType, kit.outputMode))}</div>
+      <div class="cover-mini-mark">&#9813;</div>
+      ${coverTagline ? `<div class="cover-tagline">${escapeHtml(coverTagline)}</div>` : ""}
+    </div>
+    ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
+  </section>`
+  }
+
   return `<section class="page cover ${presetClasses} type-cover">
     ${renderDecor()}
     <div class="cover-copy">
@@ -3165,6 +3309,26 @@ function landCoverTagline(page: KitPage, kit: ParsedKit, preset: DesignPresetTok
     return page.tagline || kit.tagline
   }
 
+  return page.subtitle || kit.subtitle || page.tagline || kit.tagline
+}
+
+function riseCoverCollectionTitle(preset: DesignPresetTokens) {
+  if (preset.slug === "meetatheal-rise") {
+    return "Meet at the Heal"
+  }
+
+  return "Rise"
+}
+
+function riseCoverSubtitle(page: KitPage, kit: ParsedKit, preset: DesignPresetTokens) {
+  if (preset.slug === "meetatheal-rise") {
+    return page.subtitle || kit.subtitle || "Rise Individual Workbook"
+  }
+
+  return "Come Back To Yourself."
+}
+
+function riseCoverTagline(page: KitPage, kit: ParsedKit) {
   return page.subtitle || kit.subtitle || page.tagline || kit.tagline
 }
 
