@@ -21,7 +21,7 @@ These palettes are the locked source of truth for Kit Factory styling. Confirm a
 | Forest Green | `#3E5A45` |
 | Warm Stone | `#D8CEC2` |
 | Soft Cream | `#F6F3ED` |
-| Green Gold | `#9CCB7A` |
+| Green Gold | `#BDB369` |
 | Earth Brown | `#8A6B4D` |
 | Ink Charcoal | `#1E2121` |
 
