@@ -6,7 +6,7 @@ import path from "node:path"
 import { chromium } from "playwright"
 
 import { type KitPage, type ParsedKit } from "@/lib/parser/pageTypes"
-import { getBranchInfo, getDesignPreset } from "@/tokens"
+import { getBranchInfo, getDesignPreset, type DesignPresetTokens } from "@/tokens"
 
 const mockupWidth = 1200
 const mockupHeight = 900
@@ -41,6 +41,7 @@ export async function renderKitMockupPng(kit: ParsedKit) {
 function buildMockupHtml(kit: ParsedKit) {
   const tokens = getDesignPreset(kit.designPreset, kit.branch)
   const branch = getBranchInfo(kit.branch)
+  const coverArt = buildCoverAssetDataUri(tokens)
   const workbookPage = kit.pages.find((page) => page.type === "workbook")
   const checklistPage = kit.pages.find((page) => page.type === "checklist")
   const reflectionPage = kit.pages.find((page) => page.type === "reflection" || page.type === "lesson-continue")
@@ -246,6 +247,9 @@ function buildMockupHtml(kit: ParsedKit) {
         left: 0;
         top: 0;
       }
+      .sheet.front.with-cover-art .ribbon {
+        display: none;
+      }
       .ribbon {
         height: 34px;
         background: ${tokens.plum};
@@ -271,6 +275,35 @@ function buildMockupHtml(kit: ParsedKit) {
         overflow: hidden;
         padding: 30px;
         text-align: center;
+      }
+      ${
+        coverArt
+          ? `.sheet.front.with-cover-art .cover-panel {
+        inset: 0;
+        min-height: 0;
+        background:
+          linear-gradient(${transparent(tokens.paper, 0.06)}, ${transparent(tokens.paper, 0.06)}),
+          url("${coverArt}") center / cover no-repeat,
+          ${tokens.paper};
+        border: 0;
+        padding: 78px 34px 58px;
+      }
+      .sheet.front.with-cover-art .cover-panel::before {
+        display: none;
+      }
+      .sheet.front.with-cover-art .cover-panel > div {
+        position: relative;
+        z-index: 2;
+      }
+      .sheet.front.with-cover-art .cover-kicker {
+        color: ${tokens.gold};
+        font-size: 9px;
+      }
+      .sheet.front.with-cover-art .cover-title {
+        color: ${tokens.ink};
+        font-size: 31px;
+      }`
+          : ""
       }
       .stage.style-rise .cover-panel,
       .stage.style-meetatheal .cover-panel {
@@ -440,7 +473,7 @@ function buildMockupHtml(kit: ParsedKit) {
       <section class="stack">
         <div class="sheet back"><div class="ribbon">Workbook</div></div>
         <div class="sheet mid"><div class="ribbon">Lesson</div></div>
-        <div class="sheet front">
+        <div class="sheet front${coverArt ? " with-cover-art" : ""}">
           <div class="ribbon">${escapeHtml(branchLabel)}</div>
           <div class="cover-panel">
             <div>
@@ -516,6 +549,52 @@ function transparent(hex: string, alpha: number) {
   const blue = parseInt(trimmed.slice(4, 6), 16)
 
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`
+}
+
+function buildCoverAssetDataUri(tokens: DesignPresetTokens) {
+  const fileName = coverAssetFileName(tokens)
+
+  if (!fileName) {
+    return ""
+  }
+
+  const filePath = path.join(process.cwd(), "public", "kit-assets", fileName)
+
+  if (!fs.existsSync(filePath)) {
+    return ""
+  }
+
+  const data = fs.readFileSync(filePath).toString("base64")
+
+  return `data:image/png;base64,${data}`
+}
+
+function coverAssetFileName(tokens: DesignPresetTokens) {
+  if (tokens.slug === "brand") {
+    return "brand-cover-bg.png"
+  }
+
+  if (tokens.slug === "brand-land") {
+    return "land-cover-bg.png"
+  }
+
+  if (tokens.styleFamily === "rise") {
+    return "rise-cover-bg.png"
+  }
+
+  if (tokens.styleFamily === "land") {
+    return "land-cover-bg.png"
+  }
+
+  if (tokens.styleFamily === "rebuild") {
+    return "rebuild-cover-bg.png"
+  }
+
+  if (tokens.styleFamily === "meetatheal") {
+    return "meetatheal-cover-bg.png"
+  }
+
+  return ""
 }
 
 function escapeHtml(value: string) {
