@@ -1342,6 +1342,15 @@ function buildCss(tokens: DesignPresetTokens) {
         margin-top: 18px;
         text-transform: uppercase;
       }
+      .cover-kit-title {
+        color: ${tokens.ink};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 38px;
+        font-weight: 700;
+        line-height: 1.02;
+        margin-top: 22px;
+        text-transform: uppercase;
+      }
       .cover-product {
         border-top: 1px solid ${tokens.accent};
         border-bottom: 1px solid ${tokens.accent};
@@ -1995,9 +2004,9 @@ function buildCss(tokens: DesignPresetTokens) {
         display: none;
       }
       .style-land.cover {
-        align-content: center;
-        text-align: left;
-        padding-left: 0.76in;
+        align-content: start;
+        padding: 0.46in 0.58in 0.42in;
+        text-align: center;
         background:
           linear-gradient(145deg, ${transparent(tokens.plum, 0.22)} 0 25%, transparent 25.5% 100%),
           linear-gradient(22deg, ${transparent(tokens.plum, 0.28)} 0 19%, transparent 19.5% 100%),
@@ -2005,33 +2014,76 @@ function buildCss(tokens: DesignPresetTokens) {
           repeating-linear-gradient(155deg, transparent 0 0.17in, ${transparent(tokens.gold, 0.16)} 0.18in 0.19in, transparent 0.2in 0.36in),
           ${tokens.paper};
       }
+      .style-land.cover .cover-copy {
+        margin: 0 auto;
+        max-width: 5.2in;
+        position: static;
+      }
       .style-land.cover .brand-mark,
       .style-land.cover .cover-product,
       .style-land.cover .cover-tagline {
-        margin-left: 0.02in;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .style-land.cover .brand-mark {
+        color: ${tokens.gold};
+        font-size: 22px;
+        margin-bottom: 0.14in;
       }
       .style-land.cover .cover-title {
         color: ${tokens.ink};
-        font-size: 78px;
-        max-width: 4.8in;
-        margin: 0;
+        font-size: 82px;
         letter-spacing: 0.12em;
+        line-height: 0.86;
+        margin: 0 auto;
+        max-width: 5.1in;
       }
       .style-land.cover .cover-title.is-long {
-        font-size: 50px;
-        line-height: 1;
-        letter-spacing: 0.06em;
-        max-width: 5.7in;
+        font-size: 54px;
+        letter-spacing: 0.04em;
+        line-height: 0.95;
+        max-width: 5.6in;
       }
       .style-land.cover .cover-subtitle {
         color: ${tokens.ink};
-        letter-spacing: 0.28em;
+        font-size: 10.5px;
+        letter-spacing: 0.12em;
+        margin-top: 0.16in;
+      }
+      .style-land.cover .cover-kit-title {
+        color: ${tokens.ink};
+        font-size: 36px;
+        line-height: 1.05;
+        margin: 0.24in auto 0;
+        max-width: 4.55in;
+      }
+      .style-land.cover .cover-kit-title.is-long {
+        font-size: 30px;
+        max-width: 4.85in;
       }
       .style-land.cover .cover-product {
         background: ${tokens.plum};
         color: ${tokens.paper};
         border: 0;
+        font-size: 10px;
+        margin-top: 0.14in;
+        padding: 8px 18px;
         box-shadow: 0 0.08in 0.16in ${transparent(tokens.ink, 0.12)};
+      }
+      .style-land.cover .cover-tagline {
+        color: ${tokens.paper};
+        font-size: 8.4px;
+        left: 0.72in;
+        margin: 0;
+        position: absolute;
+        right: 0.72in;
+        bottom: 0.62in;
+        z-index: 3;
+        text-shadow: 0 1px 5px ${transparent(tokens.ink, 0.6)};
+      }
+      .style-land.cover .footer {
+        color: ${transparent(tokens.paper, 0.82)};
+        text-shadow: 0 1px 4px ${transparent(tokens.ink, 0.54)};
       }
       .style-land.cover .mountain-mark,
       .style-land.cover .land-compass,
@@ -2738,13 +2790,35 @@ function renderCoverPage(
   const presetClasses = presetClassName(preset)
   const titleClass = `cover-title ${title.length > 24 ? "is-long" : ""}`.trim()
 
+  if (preset.styleFamily === "land") {
+    const collectionTitle = landCoverCollectionTitle(preset)
+    const collectionSubtitle = landCoverSubtitle(page, kit, preset)
+    const coverTagline = landCoverTagline(page, kit, preset)
+    const kitTitle = cleanCoverKitTitle(title)
+    const kitTitleClass = `cover-kit-title ${kitTitle.length > 24 ? "is-long" : ""}`.trim()
+
+    return `<section class="page cover ${presetClasses} type-cover">
+    ${renderDecor()}
+    <div class="cover-copy">
+      <div class="brand-mark">${renderIcon(preset)}</div>
+      <h1 class="cover-title">${escapeHtml(collectionTitle)}</h1>
+      <div class="cover-subtitle">${escapeHtml(collectionSubtitle)}</div>
+      <div class="${kitTitleClass}">${escapeHtml(kitTitle)}</div>
+      <div class="cover-product">${escapeHtml(productLabel(kit.productType, kit.outputMode))}</div>
+      ${coverTagline ? `<div class="cover-tagline">${escapeHtml(coverTagline)}</div>` : ""}
+    </div>
+    ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
+    ${footer(index, total, branch)}
+  </section>`
+  }
+
   return `<section class="page cover ${presetClasses} type-cover">
     ${renderDecor()}
     <div class="cover-copy">
       <div class="brand-mark">${renderIcon(preset)}</div>
       <h1 class="${titleClass}">${escapeHtml(title)}</h1>
       ${subtitle ? `<div class="cover-subtitle">${escapeHtml(subtitle)}</div>` : ""}
-      <div class="cover-product">${escapeHtml(productLabel(kit.productType))}</div>
+      <div class="cover-product">${escapeHtml(productLabel(kit.productType, kit.outputMode))}</div>
       ${tagline ? `<div class="cover-tagline">${escapeHtml(tagline)}</div>` : ""}
     </div>
     ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
@@ -3016,7 +3090,39 @@ function titleFromType(type: string) {
     .join(" ")
 }
 
-function productLabel(productType: string) {
+function cleanCoverKitTitle(title: string) {
+  return title.replace(/\s+kit$/i, "").trim()
+}
+
+function landCoverCollectionTitle(preset: DesignPresetTokens) {
+  if (preset.slug === "meetatheal-land") {
+    return "Meet at the Heal"
+  }
+
+  return "Land"
+}
+
+function landCoverSubtitle(page: KitPage, kit: ParsedKit, preset: DesignPresetTokens) {
+  if (preset.slug === "meetatheal-land") {
+    return page.subtitle || kit.subtitle || "Two Worlds. One Choice. A Stronger We."
+  }
+
+  return "Build. Grow. Stand Firm."
+}
+
+function landCoverTagline(page: KitPage, kit: ParsedKit, preset: DesignPresetTokens) {
+  if (preset.slug === "meetatheal-land") {
+    return page.tagline || kit.tagline
+  }
+
+  return page.subtitle || kit.subtitle || page.tagline || kit.tagline
+}
+
+function productLabel(productType: string, outputMode?: string) {
+  if (outputMode === "split") {
+    return "Lesson Guide + Workbook"
+  }
+
   return (productType || "workbook")
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))

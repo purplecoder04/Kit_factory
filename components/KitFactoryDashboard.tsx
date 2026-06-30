@@ -1275,30 +1275,73 @@ function MiniPageBody({
     const coverTitle = kit?.title || page.title
     const longCoverTitle = coverTitle.length > 24
 
+    if (tokens.styleFamily === "land") {
+      const kitTitle = cleanCoverKitTitle(coverTitle)
+      const collectionTitle = tokens.slug === "meetatheal-land" ? "Meet at the Heal" : "Land"
+      const collectionLine =
+        tokens.slug === "meetatheal-land"
+          ? page.subtitle || kit?.subtitle || "Two Worlds. One Choice. A Stronger We."
+          : "Build. Grow. Stand Firm."
+      const landTagline =
+        tokens.slug === "meetatheal-land"
+          ? page.tagline || kit?.tagline
+          : page.subtitle || kit?.subtitle || page.tagline || kit?.tagline
+
+      return (
+        <div className="relative z-10 flex h-[calc(100%-72px)] flex-col items-center px-8 pt-9 text-center">
+          <span
+            aria-hidden="true"
+            className="mb-3 h-4 w-9"
+            style={{
+              background: tokens.gold,
+              clipPath: "polygon(0 85%, 28% 36%, 42% 58%, 58% 18%, 100% 85%, 88% 85%, 58% 42%, 43% 70%, 30% 54%, 12% 85%)",
+            }}
+          />
+          <div
+            className="max-w-[285px] break-words font-heading text-[52px] font-semibold uppercase leading-[0.9] tracking-[0.12em]"
+            style={{ color: tokens.ink }}
+          >
+            {collectionTitle}
+          </div>
+          <div className="mt-3 max-w-[245px] text-[8px] font-bold uppercase tracking-[0.34em] text-[var(--preview-muted)]">
+            {collectionLine}
+          </div>
+          <div className="my-4 h-px w-16 bg-[var(--preview-gold)]" />
+          <div className="max-w-[250px] font-heading text-[25px] font-semibold uppercase leading-[1.05] text-[var(--preview-ink)]">
+            {kitTitle}
+          </div>
+          <div className="mt-3 bg-[var(--preview-ink)] px-4 py-1.5 text-[8px] font-bold uppercase tracking-[0.24em] text-[var(--preview-paper)] shadow-sm">
+            {previewProductLabel(kit)}
+          </div>
+          {landTagline && (
+            <div className="absolute bottom-3 left-8 right-8 text-[7px] font-bold uppercase tracking-[0.22em] text-[var(--preview-paper)]">
+              {landTagline}
+            </div>
+          )}
+        </div>
+      )
+    }
+
     return (
       <div
         className={cn(
           "relative z-10 flex h-[calc(100%-72px)] flex-col px-8 py-9",
-          tokens.styleFamily === "land" || tokens.styleFamily === "rebuild"
+          tokens.styleFamily === "rebuild"
             ? "items-start justify-center text-left"
             : "items-center justify-center text-center"
         )}
       >
         <div
-          className={cn(
-            "mb-5 text-[9px] font-bold uppercase tracking-[0.34em]",
-            tokens.styleFamily === "land" ? "text-[var(--preview-gold)]" : "text-[var(--preview-accent)]"
-          )}
+          className="mb-5 text-[9px] font-bold uppercase tracking-[0.34em] text-[var(--preview-accent)]"
         >
           {tokens.shortName}
         </div>
         <div
           className={cn(
             "max-w-[270px] break-words font-heading font-semibold uppercase leading-[0.92]",
-            tokens.styleFamily === "land" ? "text-[33px]" : "text-[35px]",
+            "text-[35px]",
             tokens.styleFamily === "rebuild" && "text-[32px]",
             longCoverTitle && "max-w-[300px] text-[30px] leading-[0.98]",
-            longCoverTitle && tokens.styleFamily === "land" && "text-[29px]",
             longCoverTitle && tokens.styleFamily === "rebuild" && "text-[28px]",
             longCoverTitle && tokens.styleFamily === "meetatheal" && "text-[29px]",
             tokens.styleFamily === "meetatheal" && "normal-case"
@@ -1341,6 +1384,20 @@ function MiniPageBody({
       <MiniFillablePreview page={page} />
     </div>
   )
+}
+
+function cleanCoverKitTitle(title: string) {
+  return title.replace(/\s+kit$/i, "").trim()
+}
+
+function previewProductLabel(kit: ParsedKit | null) {
+  if (kit?.outputMode === "split") {
+    return "Lesson Guide + Workbook"
+  }
+
+  return (kit?.productType || "workbook")
+    .replace(/-/g, " + ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
 function MiniPageHeading({ page }: { page: KitPage }) {
