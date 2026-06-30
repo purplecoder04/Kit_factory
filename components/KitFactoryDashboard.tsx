@@ -915,7 +915,7 @@ function getPreviewCoverArtPath(tokens: DesignPresetTokens) {
   }
 
   if (tokens.slug === "brand-land") {
-    return "/kit-assets/land-cover-bg.png"
+    return "/kit-assets/brand-land-cover-bg.png"
   }
 
   if (tokens.styleFamily === "rise") {

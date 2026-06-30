@@ -575,7 +575,7 @@ function coverAssetFileName(tokens: DesignPresetTokens) {
   }
 
   if (tokens.slug === "brand-land") {
-    return "land-cover-bg.png"
+    return "brand-land-cover-bg.png"
   }
 
   if (tokens.styleFamily === "rise") {
