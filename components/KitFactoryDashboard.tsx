@@ -925,11 +925,11 @@ function MiniPreviewDecorations({ tokens }: { tokens: DesignPresetTokens }) {
         style={{ background: tokens.accentSoft }}
       />
       <span
-        className="absolute -bottom-16 -left-16 size-44 rounded-full opacity-40"
+        className="absolute -bottom-20 -left-20 size-44 rounded-full opacity-25"
         style={{ border: `1px solid ${tokens.gold}` }}
       />
       <span
-        className="absolute right-7 top-8 h-12 w-12 opacity-65"
+        className="absolute right-7 top-8 h-11 w-11 opacity-40"
         style={{
           backgroundImage: `radial-gradient(${tokens.accent} 1.5px, transparent 1.5px)`,
           backgroundSize: "10px 10px",
@@ -939,15 +939,15 @@ function MiniPreviewDecorations({ tokens }: { tokens: DesignPresetTokens }) {
       {tokens.styleFamily === "brand" && (
         <>
           <span
-            className="absolute -left-14 -top-10 size-44 rounded-full opacity-30"
+            className="absolute -left-20 -top-16 size-44 rounded-full opacity-18"
             style={{ background: tokens.plum }}
           />
           <span
-            className="absolute left-8 top-3 size-32 rounded-full opacity-30"
+            className="absolute left-9 top-5 size-28 rounded-full opacity-16"
             style={{ background: tokens.lilac }}
           />
           <span
-            className="absolute -left-8 bottom-4 size-36 rounded-full opacity-70"
+            className="absolute -left-12 bottom-5 size-32 rounded-full opacity-45"
             style={{ border: `1px solid ${tokens.gold}` }}
           />
           <span

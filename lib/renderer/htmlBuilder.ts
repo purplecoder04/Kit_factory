@@ -49,8 +49,8 @@ function buildCss(tokens: DesignPresetTokens) {
         overflow: hidden;
         page-break-after: always;
         background:
-          radial-gradient(circle at 90% 18%, ${transparent(tokens.accentSoft, 0.78)} 0 0.58in, transparent 0.59in),
-          radial-gradient(circle at 8% 92%, ${transparent(tokens.lilac, 0.82)} 0 0.82in, transparent 0.83in),
+          radial-gradient(circle at 90% 18%, ${transparent(tokens.accentSoft, 0.36)} 0 0.48in, transparent 0.5in),
+          radial-gradient(circle at 8% 92%, ${transparent(tokens.lilac, 0.42)} 0 0.68in, transparent 0.7in),
           ${tokens.paper};
         padding: 0.72in 0.58in 0.68in;
       }
@@ -95,14 +95,14 @@ function buildCss(tokens: DesignPresetTokens) {
         height: 2.18in;
         right: -0.72in;
         bottom: -0.46in;
-        background: ${transparent(tokens.plum, 0.2)};
+        background: ${transparent(tokens.plum, 0.12)};
       }
       .decor::after {
         width: 1.46in;
         height: 1.46in;
         left: -0.58in;
         top: -0.42in;
-        background: ${transparent(tokens.accent, 0.16)};
+        background: ${transparent(tokens.accent, 0.08)};
       }
       .dots {
         position: absolute;
@@ -112,7 +112,7 @@ function buildCss(tokens: DesignPresetTokens) {
         height: 0.42in;
         background-image: radial-gradient(${tokens.accent} 1.15px, transparent 1.3px);
         background-size: 0.1in 0.1in;
-        opacity: 0.72;
+        opacity: 0.42;
       }
       .swoop {
         position: absolute;
@@ -120,7 +120,7 @@ function buildCss(tokens: DesignPresetTokens) {
         bottom: -0.44in;
         width: 3.1in;
         height: 3.1in;
-        border: 1px solid ${transparent(tokens.gold, 0.64)};
+        border: 1px solid ${transparent(tokens.gold, 0.42)};
         border-radius: 50%;
       }
       .watercolor,
@@ -1400,10 +1400,10 @@ function buildCss(tokens: DesignPresetTokens) {
         align-content: center;
         padding: 0.7in 0.74in 0.9in;
         background:
-          radial-gradient(circle at -2% 0%, ${transparent(tokens.plum, 0.9)} 0 0.92in, transparent 0.94in),
-          radial-gradient(circle at 19% 11%, ${transparent(tokens.lilac, 0.55)} 0 1.15in, transparent 1.17in),
-          radial-gradient(circle at 82% 9%, ${transparent(tokens.lilac, 0.82)} 0 0.48in, transparent 0.5in),
-          radial-gradient(circle at 96% 92%, ${transparent(tokens.plum, 0.72)} 0 0.84in, transparent 0.86in),
+          radial-gradient(circle at -4% 0%, ${transparent(tokens.plum, 0.56)} 0 0.8in, transparent 0.82in),
+          radial-gradient(circle at 19% 11%, ${transparent(tokens.lilac, 0.26)} 0 1.05in, transparent 1.07in),
+          radial-gradient(circle at 82% 9%, ${transparent(tokens.lilac, 0.45)} 0 0.44in, transparent 0.46in),
+          radial-gradient(circle at 98% 94%, ${transparent(tokens.plum, 0.42)} 0 0.72in, transparent 0.74in),
           linear-gradient(168deg, transparent 0 74%, ${transparent(tokens.paperAlt, 0.72)} 74.5% 100%),
           ${tokens.paper};
       }
