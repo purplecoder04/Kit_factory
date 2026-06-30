@@ -932,7 +932,7 @@ function getPreviewCoverArtPath(tokens: DesignPresetTokens) {
   }
 
   if (tokens.styleFamily === "meetatheal") {
-    return "/kit-assets/meetatheal-cover-bg.png"
+    return "/kit-assets/meetatheal-cover-bg-v2.png"
   }
 
   return ""
@@ -1395,6 +1395,39 @@ function MiniPageBody({
       )
     }
 
+    if (tokens.styleFamily === "meetatheal") {
+      const collectionLine = meetAtHealCoverSubtitle(page, kit)
+
+      return (
+        <div className="relative z-10 flex h-[calc(100%-72px)] flex-col items-center px-8 pt-12 text-center">
+          <span aria-hidden="true" className="relative mb-3 block size-6 rotate-[-45deg] rounded-sm border-2 border-[var(--preview-rose)]">
+            <span className="absolute -top-[13px] left-[-2px] size-6 rounded-full border-2 border-[var(--preview-rose)] bg-transparent" />
+            <span className="absolute -right-[13px] top-[-2px] size-6 rounded-full border-2 border-[var(--preview-rose)] bg-transparent" />
+          </span>
+          <div className="mb-3 text-[8px] font-extrabold uppercase tracking-[0.36em] text-[var(--preview-background)]">
+            Best Collective
+          </div>
+          <div
+            className="max-w-[305px] break-words font-heading text-[39px] font-semibold uppercase leading-[0.92] tracking-[0.04em]"
+            style={{ color: tokens.ink }}
+          >
+            Meet at the Heal
+          </div>
+          <div className="mt-3 max-w-[265px] text-[8px] font-bold uppercase tracking-[0.28em] text-[var(--preview-background)]">
+            {collectionLine}
+          </div>
+          <div className="my-4 flex items-center gap-2 text-[var(--preview-gold)]">
+            <span className="h-px w-10 bg-current" />
+            <span className="size-1.5 rotate-45 bg-current" />
+            <span className="h-px w-10 bg-current" />
+          </div>
+          <div className="max-w-[230px] text-[9px] font-bold uppercase tracking-[0.3em] text-[var(--preview-background)]">
+            {previewProductLabel(kit)}
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div
         className={cn(
@@ -1415,9 +1448,7 @@ function MiniPageBody({
             "text-[35px]",
             tokens.styleFamily === "rebuild" && "text-[32px]",
             longCoverTitle && "max-w-[300px] text-[30px] leading-[0.98]",
-            longCoverTitle && tokens.styleFamily === "rebuild" && "text-[28px]",
-            longCoverTitle && tokens.styleFamily === "meetatheal" && "text-[29px]",
-            tokens.styleFamily === "meetatheal" && "normal-case"
+            longCoverTitle && tokens.styleFamily === "rebuild" && "text-[28px]"
           )}
           style={{ color: tokens.ink }}
         >
@@ -1461,6 +1492,16 @@ function MiniPageBody({
 
 function cleanCoverKitTitle(title: string) {
   return title.replace(/\s+kit$/i, "").trim()
+}
+
+function meetAtHealCoverSubtitle(page: KitPage, kit: ParsedKit | null) {
+  const candidate = page.subtitle || kit?.subtitle || ""
+
+  if (/two worlds|stronger we|heal|healing|together|relationship/i.test(candidate)) {
+    return candidate
+  }
+
+  return "Two Worlds. One Choice. A Stronger We."
 }
 
 function previewProductLabel(kit: ParsedKit | null) {

@@ -2580,7 +2580,9 @@ function buildCss(tokens: DesignPresetTokens) {
         display: none;
       }
       .style-meetatheal.cover {
-        align-content: center;
+        align-content: start;
+        padding: 0.62in 0.62in 0.5in;
+        text-align: center;
         background:
           linear-gradient(180deg, ${transparent(tokens.blue, 0.22)} 0, transparent 42%),
           radial-gradient(ellipse at 50% 78%, ${transparent(tokens.rose, 0.28)}, transparent 46%),
@@ -2588,23 +2590,78 @@ function buildCss(tokens: DesignPresetTokens) {
           radial-gradient(ellipse at 94% 22%, ${transparent(tokens.rose, 0.16)}, transparent 34%),
           ${tokens.paper};
       }
+      .style-meetatheal.cover .cover-copy {
+        margin: 0 auto;
+        max-width: 4.8in;
+        position: static;
+      }
       .style-meetatheal.cover .brand-mark {
-        font-size: 30px;
+        color: ${tokens.rose};
+        font-size: 31px;
+        line-height: 1;
+        margin-bottom: 0.12in;
+      }
+      .style-meetatheal.cover .cover-brandline {
+        color: ${tokens.background};
+        font-size: 8.5px;
+        font-weight: 800;
+        letter-spacing: 0.34em;
+        margin-bottom: 0.14in;
       }
       .style-meetatheal.cover .cover-title {
         color: ${tokens.ink};
-        font-size: 54px;
-        letter-spacing: 0.06em;
+        font-size: 53px;
+        letter-spacing: 0.045em;
+        line-height: 0.9;
+        margin: 0 auto;
+        max-width: 4.15in;
+        text-transform: uppercase;
       }
       .style-meetatheal.cover .cover-title.is-long {
-        font-size: 44px;
-        line-height: 1;
-        letter-spacing: 0.04em;
-        max-width: 5.85in;
+        font-size: 46px;
+        line-height: 0.94;
+        max-width: 4.4in;
       }
       .style-meetatheal.cover .cover-subtitle {
-        color: ${tokens.ink};
-        letter-spacing: 0.24em;
+        color: ${tokens.background};
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.26em;
+        margin-top: 0.14in;
+      }
+      .style-meetatheal.cover .cover-divider {
+        align-items: center;
+        color: ${tokens.gold};
+        display: flex;
+        gap: 0.07in;
+        justify-content: center;
+        margin: 0.16in auto;
+      }
+      .style-meetatheal.cover .cover-divider::before,
+      .style-meetatheal.cover .cover-divider::after {
+        content: "";
+        display: block;
+        height: 1px;
+        width: 0.44in;
+        background: currentColor;
+      }
+      .style-meetatheal.cover .cover-divider span {
+        display: block;
+        width: 0.055in;
+        height: 0.055in;
+        background: currentColor;
+        transform: rotate(45deg);
+      }
+      .style-meetatheal.cover .cover-product {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        color: ${tokens.background};
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        margin-top: 0;
+        padding: 0;
       }
       .style-meetatheal.cover .road-mark,
       .style-meetatheal.cover .mountain-mark,
@@ -2855,6 +2912,12 @@ function buildCss(tokens: DesignPresetTokens) {
           linear-gradient(${transparent(tokens.paper, 0.04)}, ${transparent(tokens.paper, 0.04)}),
           url("${coverArt}") center bottom / 116% auto no-repeat,
           ${tokens.paper};
+      }
+      .style-meetatheal.page.cover {
+        background:
+          linear-gradient(${transparent(tokens.paper, 0.02)}, ${transparent(tokens.paper, 0.02)}),
+          url("${coverArt}") center / cover no-repeat,
+          ${tokens.paper};
       }`
           : ""
       }
@@ -3002,6 +3065,23 @@ function renderCoverPage(
       <div class="cover-product">${escapeHtml(productLabel(kit.productType, kit.outputMode))}</div>
       <div class="cover-mini-mark">&#9813;</div>
       ${coverTagline ? `<div class="cover-tagline">${escapeHtml(coverTagline)}</div>` : ""}
+    </div>
+    ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
+  </section>`
+  }
+
+  if (preset.styleFamily === "meetatheal") {
+    const collectionSubtitle = meetAtHealCoverSubtitle(page, kit)
+
+    return `<section class="page cover ${presetClasses} type-cover">
+    ${renderDecor()}
+    <div class="cover-copy">
+      <div class="brand-mark">&#9825;</div>
+      <div class="cover-brandline">Best Collective</div>
+      <h1 class="cover-title">Meet at<br />the Heal</h1>
+      <div class="cover-subtitle">${escapeHtml(collectionSubtitle)}</div>
+      <div class="cover-divider"><span></span></div>
+      <div class="cover-product">${escapeHtml(productLabel(kit.productType, kit.outputMode))}</div>
     </div>
     ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
   </section>`
@@ -3332,6 +3412,16 @@ function riseCoverTagline(page: KitPage, kit: ParsedKit) {
   return page.subtitle || kit.subtitle || page.tagline || kit.tagline
 }
 
+function meetAtHealCoverSubtitle(page: KitPage, kit: ParsedKit) {
+  const candidate = page.subtitle || kit.subtitle || ""
+
+  if (/two worlds|stronger we|heal|healing|together|relationship/i.test(candidate)) {
+    return candidate
+  }
+
+  return "Two Worlds. One Choice. A Stronger We."
+}
+
 function productLabel(productType: string, outputMode?: string) {
   if (outputMode === "split") {
     return "Lesson Guide + Workbook"
@@ -3394,7 +3484,7 @@ function coverAssetFileName(tokens: DesignPresetTokens) {
   }
 
   if (tokens.styleFamily === "meetatheal") {
-    return "meetatheal-cover-bg.png"
+    return "meetatheal-cover-bg-v2.png"
   }
 
   return ""

@@ -591,7 +591,7 @@ function coverAssetFileName(tokens: DesignPresetTokens) {
   }
 
   if (tokens.styleFamily === "meetatheal") {
-    return "meetatheal-cover-bg.png"
+    return "meetatheal-cover-bg-v2.png"
   }
 
   return ""
