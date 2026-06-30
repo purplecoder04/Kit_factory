@@ -3141,7 +3141,7 @@ function renderCoverPage(
     const collectionTitle = landCoverCollectionTitle(preset)
     const collectionSubtitle = landCoverSubtitle(page, kit, preset)
     const coverTagline = landCoverTagline(page, kit, preset)
-    const kitTitle = cleanCoverKitTitle(title)
+    const kitTitle = landCoverKitTitle(title, preset)
     const kitTitleClass = `cover-kit-title ${kitTitle.length > 24 ? "is-long" : ""}`.trim()
 
     return `<section class="page cover ${presetClasses} type-cover">
@@ -3153,7 +3153,7 @@ function renderCoverPage(
       <div class="cover-subtitle">${escapeHtml(collectionSubtitle)}</div>
       <div class="cover-divider"><span></span><span></span></div>
       <div class="${kitTitleClass}">${escapeHtml(kitTitle)}</div>
-      <div class="cover-product">${escapeHtml(productLabel(kit.productType, kit.outputMode))}</div>
+      <div class="cover-product">${escapeHtml(coverProductLabel(kit, preset))}</div>
       ${coverTagline ? `<div class="cover-tagline">${escapeHtml(coverTagline)}</div>` : ""}
     </div>
     ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
@@ -3163,7 +3163,7 @@ function renderCoverPage(
   if (preset.styleFamily === "rise") {
     const collectionTitle = riseCoverCollectionTitle(preset)
     const collectionSubtitle = riseCoverSubtitle(page, kit, preset)
-    const coverTagline = riseCoverTagline(page, kit)
+    const coverTagline = riseCoverTagline(page, kit, preset)
     const titleClass = `cover-title ${collectionTitle.length > 8 ? "is-long" : ""}`.trim()
 
     return `<section class="page cover ${presetClasses} type-cover">
@@ -3174,7 +3174,7 @@ function renderCoverPage(
       <div class="cover-divider"><span>&#9829;</span></div>
       <h1 class="${titleClass}">${escapeHtml(collectionTitle)}</h1>
       <div class="cover-subtitle">${escapeHtml(collectionSubtitle)}</div>
-      <div class="cover-product">${escapeHtml(productLabel(kit.productType, kit.outputMode))}</div>
+      <div class="cover-product">${escapeHtml(coverProductLabel(kit, preset))}</div>
       <div class="cover-mini-mark">&#9813;</div>
       ${coverTagline ? `<div class="cover-tagline">${escapeHtml(coverTagline)}</div>` : ""}
     </div>
@@ -3193,7 +3193,7 @@ function renderCoverPage(
       <h1 class="cover-title">Meet at<br />the Heal</h1>
       <div class="cover-subtitle">${escapeHtml(collectionSubtitle)}</div>
       <div class="cover-divider"><span></span></div>
-      <div class="cover-product">${escapeHtml(productLabel(kit.productType, kit.outputMode))}</div>
+      <div class="cover-product">${escapeHtml(coverProductLabel(kit, preset))}</div>
     </div>
     ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
   </section>`
@@ -3205,7 +3205,7 @@ function renderCoverPage(
       <div class="brand-mark">${renderIcon(preset)}</div>
       <h1 class="${titleClass}">${escapeHtml(title)}</h1>
       ${subtitle ? `<div class="cover-subtitle">${escapeHtml(subtitle)}</div>` : ""}
-      <div class="cover-product">${escapeHtml(productLabel(kit.productType, kit.outputMode))}</div>
+      <div class="cover-product">${escapeHtml(coverProductLabel(kit, preset))}</div>
       ${tagline ? `<div class="cover-tagline">${escapeHtml(tagline)}</div>` : ""}
     </div>
     ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
@@ -3480,6 +3480,14 @@ function cleanCoverKitTitle(title: string) {
   return title.replace(/\s+kit$/i, "").trim()
 }
 
+function isMeetAtHealText(value: string) {
+  return /two worlds|stronger we|heal|healing|together|relationship|choose us|repair|trust|couples/i.test(value)
+}
+
+function isGenericBusinessCoverText(value: string) {
+  return /business|brand|offer|system\. five rooms|your brand is your promise/i.test(value)
+}
+
 function landCoverCollectionTitle(preset: DesignPresetTokens) {
   if (preset.slug === "meetatheal-land") {
     return "Meet at the Heal"
@@ -3488,9 +3496,23 @@ function landCoverCollectionTitle(preset: DesignPresetTokens) {
   return "Land"
 }
 
+function landCoverKitTitle(title: string, preset: DesignPresetTokens) {
+  if (preset.slug === "meetatheal-land") {
+    return "Land Individual Workbook"
+  }
+
+  return cleanCoverKitTitle(title)
+}
+
 function landCoverSubtitle(page: KitPage, kit: ParsedKit, preset: DesignPresetTokens) {
   if (preset.slug === "meetatheal-land") {
-    return page.subtitle || kit.subtitle || "Two Worlds. One Choice. A Stronger We."
+    const candidate = page.subtitle || kit.subtitle || ""
+
+    if (/build|grow|stand firm|land|individual|foundation/i.test(candidate) && !isGenericBusinessCoverText(candidate)) {
+      return candidate
+    }
+
+    return "Build. Grow. Stand Firm."
   }
 
   return "Build. Grow. Stand Firm."
@@ -3498,7 +3520,13 @@ function landCoverSubtitle(page: KitPage, kit: ParsedKit, preset: DesignPresetTo
 
 function landCoverTagline(page: KitPage, kit: ParsedKit, preset: DesignPresetTokens) {
   if (preset.slug === "meetatheal-land") {
-    return page.tagline || kit.tagline
+    const candidate = page.tagline || kit.tagline || ""
+
+    if (isMeetAtHealText(candidate)) {
+      return candidate
+    }
+
+    return "Two worlds. One choice. A stronger we."
   }
 
   return page.subtitle || kit.subtitle || page.tagline || kit.tagline
@@ -3514,13 +3542,29 @@ function riseCoverCollectionTitle(preset: DesignPresetTokens) {
 
 function riseCoverSubtitle(page: KitPage, kit: ParsedKit, preset: DesignPresetTokens) {
   if (preset.slug === "meetatheal-rise") {
-    return page.subtitle || kit.subtitle || "Rise Individual Workbook"
+    const candidate = page.subtitle || kit.subtitle || ""
+
+    if (/come back|yourself|rise|individual|peace|standards/i.test(candidate) && !isGenericBusinessCoverText(candidate)) {
+      return candidate
+    }
+
+    return "Come Back To Yourself."
   }
 
   return "Come Back To Yourself."
 }
 
-function riseCoverTagline(page: KitPage, kit: ParsedKit) {
+function riseCoverTagline(page: KitPage, kit: ParsedKit, preset: DesignPresetTokens) {
+  if (preset.slug === "meetatheal-rise") {
+    const candidate = page.tagline || kit.tagline || ""
+
+    if (isMeetAtHealText(candidate)) {
+      return candidate
+    }
+
+    return "Two worlds. One choice. A stronger we."
+  }
+
   return page.subtitle || kit.subtitle || page.tagline || kit.tagline
 }
 
@@ -3543,6 +3587,28 @@ function productLabel(productType: string, outputMode?: string) {
     .split("-")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ")
+}
+
+function coverProductLabel(kit: ParsedKit, preset: DesignPresetTokens) {
+  if (preset.slug === "meetatheal") {
+    if (/lesson\s+book/i.test(kit.title)) {
+      return "Lesson Book"
+    }
+
+    if (/couples\s+workbook/i.test(kit.title)) {
+      return "Couples Workbook"
+    }
+  }
+
+  if (preset.slug === "meetatheal-rise") {
+    return "Rise Individual Workbook"
+  }
+
+  if (preset.slug === "meetatheal-land") {
+    return "Workbook"
+  }
+
+  return productLabel(kit.productType, kit.outputMode)
 }
 
 function transparent(hex: string, alpha: number) {

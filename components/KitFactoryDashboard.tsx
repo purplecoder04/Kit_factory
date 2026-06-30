@@ -1290,9 +1290,12 @@ function MiniPageBody({
       const collectionTitle = tokens.slug === "meetatheal-rise" ? "Meet at the Heal" : "Rise"
       const collectionLine =
         tokens.slug === "meetatheal-rise"
-          ? page.subtitle || kit?.subtitle || "Rise Individual Workbook"
+          ? meetAtHealRiseSubtitle(page, kit)
           : "Come Back To Yourself."
-      const riseTagline = page.subtitle || kit?.subtitle || page.tagline || kit?.tagline
+      const riseTagline =
+        tokens.slug === "meetatheal-rise"
+          ? meetAtHealTagline(page, kit)
+          : page.subtitle || kit?.subtitle || page.tagline || kit?.tagline
 
       return (
         <div className="relative z-10 flex h-[calc(100%-72px)] flex-col items-center px-8 pt-20 text-center">
@@ -1327,7 +1330,7 @@ function MiniPageBody({
           </div>
           <div className="mt-6 h-px w-12 bg-[var(--preview-rose)]" />
           <div className="mt-3 max-w-[240px] text-[10px] font-bold uppercase tracking-[0.27em] text-[var(--preview-background)]">
-            {previewProductLabel(kit)}
+            {previewProductLabel(kit, tokens)}
           </div>
           <div className="mt-3 h-px w-12 bg-[var(--preview-rose)]" />
           <div className="mt-7 text-[16px] leading-none text-[var(--preview-rose)]">♕</div>
@@ -1341,15 +1344,15 @@ function MiniPageBody({
     }
 
     if (tokens.styleFamily === "land") {
-      const kitTitle = cleanCoverKitTitle(coverTitle)
+      const kitTitle = tokens.slug === "meetatheal-land" ? "Land Individual Workbook" : cleanCoverKitTitle(coverTitle)
       const collectionTitle = tokens.slug === "meetatheal-land" ? "Meet at the Heal" : "Land"
       const collectionLine =
         tokens.slug === "meetatheal-land"
-          ? page.subtitle || kit?.subtitle || "Two Worlds. One Choice. A Stronger We."
+          ? meetAtHealLandSubtitle(page, kit)
           : "Build. Grow. Stand Firm."
       const landTagline =
         tokens.slug === "meetatheal-land"
-          ? page.tagline || kit?.tagline
+          ? meetAtHealTagline(page, kit)
           : page.subtitle || kit?.subtitle || page.tagline || kit?.tagline
 
       return (
@@ -1384,7 +1387,7 @@ function MiniPageBody({
             {kitTitle}
           </div>
           <div className="mt-3 bg-[var(--preview-ink)] px-5 py-1.5 text-[8px] font-bold uppercase tracking-[0.24em] text-[var(--preview-paper)] shadow-sm">
-            {previewProductLabel(kit)}
+            {previewProductLabel(kit, tokens)}
           </div>
           {landTagline && (
             <div className="absolute bottom-2 left-8 right-8 text-[8px] font-bold uppercase tracking-[0.22em] text-[var(--preview-paper)] drop-shadow">
@@ -1422,7 +1425,7 @@ function MiniPageBody({
             <span className="h-px w-10 bg-current" />
           </div>
           <div className="max-w-[230px] text-[9px] font-bold uppercase tracking-[0.3em] text-[var(--preview-background)]">
-            {previewProductLabel(kit)}
+            {previewProductLabel(kit, tokens)}
           </div>
         </div>
       )
@@ -1496,6 +1499,44 @@ function cleanCoverKitTitle(title: string) {
   return title.replace(/\s+kit$/i, "").trim()
 }
 
+function isMeetAtHealText(value: string) {
+  return /two worlds|stronger we|heal|healing|together|relationship|choose us|repair|trust|couples/i.test(value)
+}
+
+function isGenericBusinessCoverText(value: string) {
+  return /business|brand|offer|system\. five rooms|your brand is your promise/i.test(value)
+}
+
+function meetAtHealRiseSubtitle(page: KitPage, kit: ParsedKit | null) {
+  const candidate = page.subtitle || kit?.subtitle || ""
+
+  if (/come back|yourself|rise|individual|peace|standards/i.test(candidate) && !isGenericBusinessCoverText(candidate)) {
+    return candidate
+  }
+
+  return "Come Back To Yourself."
+}
+
+function meetAtHealLandSubtitle(page: KitPage, kit: ParsedKit | null) {
+  const candidate = page.subtitle || kit?.subtitle || ""
+
+  if (/build|grow|stand firm|land|individual|foundation/i.test(candidate) && !isGenericBusinessCoverText(candidate)) {
+    return candidate
+  }
+
+  return "Build. Grow. Stand Firm."
+}
+
+function meetAtHealTagline(page: KitPage, kit: ParsedKit | null) {
+  const candidate = page.tagline || kit?.tagline || ""
+
+  if (isMeetAtHealText(candidate)) {
+    return candidate
+  }
+
+  return "Two worlds. One choice. A stronger we."
+}
+
 function meetAtHealCoverSubtitle(page: KitPage, kit: ParsedKit | null) {
   const candidate = page.subtitle || kit?.subtitle || ""
 
@@ -1506,7 +1547,25 @@ function meetAtHealCoverSubtitle(page: KitPage, kit: ParsedKit | null) {
   return "Two Worlds. One Choice. A Stronger We."
 }
 
-function previewProductLabel(kit: ParsedKit | null) {
+function previewProductLabel(kit: ParsedKit | null, tokens?: DesignPresetTokens) {
+  if (tokens?.slug === "meetatheal") {
+    if (/lesson\s+book/i.test(kit?.title || "")) {
+      return "Lesson Book"
+    }
+
+    if (/couples\s+workbook/i.test(kit?.title || "")) {
+      return "Couples Workbook"
+    }
+  }
+
+  if (tokens?.slug === "meetatheal-rise") {
+    return "Rise Individual Workbook"
+  }
+
+  if (tokens?.slug === "meetatheal-land") {
+    return "Workbook"
+  }
+
   if (kit?.outputMode === "split") {
     return "Lesson Guide + Workbook"
   }

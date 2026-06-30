@@ -130,7 +130,7 @@ export const designPresetTokens = {
     blue: "#8DAE8C",
     line: "#D8CEC2",
     footer: branchInfo.brand.footer,
-    icon: "mountain",
+    icon: "bc",
     motif: "grounded-circles",
   },
   rise: {
