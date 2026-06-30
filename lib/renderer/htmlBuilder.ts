@@ -1323,6 +1323,14 @@ function buildCss(tokens: DesignPresetTokens) {
         letter-spacing: 0.04em;
         margin-bottom: 14px;
       }
+      .cover-brandline {
+        color: ${tokens.mutedInk};
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.34em;
+        margin-bottom: 14px;
+        text-transform: uppercase;
+      }
       .cover-title {
         font-size: 58px;
         max-width: 5.8in;
@@ -1350,6 +1358,9 @@ function buildCss(tokens: DesignPresetTokens) {
         line-height: 1.02;
         margin-top: 22px;
         text-transform: uppercase;
+      }
+      .cover-divider {
+        display: none;
       }
       .cover-product {
         border-top: 1px solid ${tokens.accent};
@@ -2005,7 +2016,7 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-land.cover {
         align-content: start;
-        padding: 0.46in 0.58in 0.42in;
+        padding: 0.36in 0.58in 0.42in;
         text-align: center;
         background:
           linear-gradient(145deg, ${transparent(tokens.plum, 0.22)} 0 25%, transparent 25.5% 100%),
@@ -2027,16 +2038,30 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-land.cover .brand-mark {
         color: ${tokens.gold};
-        font-size: 22px;
-        margin-bottom: 0.14in;
+        font-size: 0;
+        margin-bottom: 0.08in;
+      }
+      .style-land.cover .brand-mark::before {
+        content: "";
+        display: block;
+        width: 0.78in;
+        height: 0.28in;
+        margin: 0 auto;
+        background: ${tokens.gold};
+        clip-path: polygon(0 85%, 28% 36%, 42% 58%, 58% 18%, 100% 85%, 88% 85%, 58% 42%, 43% 70%, 30% 54%, 12% 85%);
+      }
+      .style-land.cover .cover-brandline {
+        color: ${tokens.background};
+        font-size: 10px;
+        margin-bottom: 0.12in;
       }
       .style-land.cover .cover-title {
         color: ${tokens.ink};
-        font-size: 82px;
+        font-size: 94px;
         letter-spacing: 0.12em;
         line-height: 0.86;
         margin: 0 auto;
-        max-width: 5.1in;
+        max-width: 5.8in;
       }
       .style-land.cover .cover-title.is-long {
         font-size: 54px;
@@ -2045,21 +2070,44 @@ function buildCss(tokens: DesignPresetTokens) {
         max-width: 5.6in;
       }
       .style-land.cover .cover-subtitle {
-        color: ${tokens.ink};
+        color: ${tokens.background};
         font-size: 10.5px;
-        letter-spacing: 0.12em;
-        margin-top: 0.16in;
+        letter-spacing: 0.32em;
+        margin-top: 0.12in;
+      }
+      .style-land.cover .cover-divider {
+        align-items: center;
+        color: ${tokens.gold};
+        display: flex;
+        gap: 0.07in;
+        justify-content: center;
+        margin-top: 0.17in;
+      }
+      .style-land.cover .cover-divider::before,
+      .style-land.cover .cover-divider::after {
+        content: "";
+        display: block;
+        height: 1px;
+        width: 0.44in;
+        background: currentColor;
+      }
+      .style-land.cover .cover-divider span {
+        display: block;
+        width: 0.055in;
+        height: 0.055in;
+        background: currentColor;
+        transform: rotate(45deg);
       }
       .style-land.cover .cover-kit-title {
-        color: ${tokens.ink};
-        font-size: 36px;
-        line-height: 1.05;
-        margin: 0.24in auto 0;
-        max-width: 4.55in;
+        color: ${tokens.background};
+        font-size: 35px;
+        line-height: 0.98;
+        margin: 0.14in auto 0;
+        max-width: 3.9in;
       }
       .style-land.cover .cover-kit-title.is-long {
-        font-size: 30px;
-        max-width: 4.85in;
+        font-size: 32px;
+        max-width: 3.95in;
       }
       .style-land.cover .cover-product {
         background: ${tokens.plum};
@@ -2082,8 +2130,7 @@ function buildCss(tokens: DesignPresetTokens) {
         text-shadow: 0 1px 5px ${transparent(tokens.ink, 0.6)};
       }
       .style-land.cover .footer {
-        color: ${transparent(tokens.paper, 0.82)};
-        text-shadow: 0 1px 4px ${transparent(tokens.ink, 0.54)};
+        display: none;
       }
       .style-land.cover .mountain-mark,
       .style-land.cover .land-compass,
@@ -2680,6 +2727,12 @@ function buildCss(tokens: DesignPresetTokens) {
       .page.cover .heal-journals,
       .page.cover .heal-sun {
         display: none !important;
+      }
+      .style-land.page.cover {
+        background:
+          linear-gradient(${transparent(tokens.paper, 0.04)}, ${transparent(tokens.paper, 0.04)}),
+          url("${coverArt}") center bottom / 116% auto no-repeat,
+          ${tokens.paper};
       }`
           : ""
       }
@@ -2753,7 +2806,7 @@ function renderPage(
   branch: BranchInfo
 ) {
   if (page.type === "cover") {
-    return renderCoverPage(page, index, total, kit, preset, branch)
+    return renderCoverPage(page, kit, preset)
   }
 
   if (page.type === "closing") {
@@ -2778,11 +2831,8 @@ function renderPage(
 
 function renderCoverPage(
   page: KitPage,
-  index: number,
-  total: number,
   kit: ParsedKit,
-  preset: DesignPresetTokens,
-  branch: BranchInfo
+  preset: DesignPresetTokens
 ) {
   const title = page.title || kit.title
   const subtitle = page.subtitle || kit.subtitle
@@ -2801,14 +2851,15 @@ function renderCoverPage(
     ${renderDecor()}
     <div class="cover-copy">
       <div class="brand-mark">${renderIcon(preset)}</div>
+      <div class="cover-brandline">Best Collective</div>
       <h1 class="cover-title">${escapeHtml(collectionTitle)}</h1>
       <div class="cover-subtitle">${escapeHtml(collectionSubtitle)}</div>
+      <div class="cover-divider"><span></span><span></span></div>
       <div class="${kitTitleClass}">${escapeHtml(kitTitle)}</div>
       <div class="cover-product">${escapeHtml(productLabel(kit.productType, kit.outputMode))}</div>
       ${coverTagline ? `<div class="cover-tagline">${escapeHtml(coverTagline)}</div>` : ""}
     </div>
     ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
-    ${footer(index, total, branch)}
   </section>`
   }
 
@@ -2822,7 +2873,6 @@ function renderCoverPage(
       ${tagline ? `<div class="cover-tagline">${escapeHtml(tagline)}</div>` : ""}
     </div>
     ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
-    ${footer(index, total, branch)}
   </section>`
 }
 

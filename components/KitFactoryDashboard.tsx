@@ -895,6 +895,7 @@ function PagePreview({
 function makePreviewStyle(tokens: DesignPresetTokens) {
   return {
     "--preview-paper": tokens.paper,
+    "--preview-background": tokens.background,
     "--preview-paper-alt": tokens.paperAlt,
     "--preview-ink": tokens.ink,
     "--preview-muted": tokens.mutedInk,
@@ -946,14 +947,21 @@ function MiniPreviewDecorations({
 }) {
   const coverArtPath = pageType === "cover" ? getPreviewCoverArtPath(tokens) : ""
   const useCoverArt = Boolean(coverArtPath)
+  const coverArtStyle =
+    tokens.styleFamily === "land"
+      ? { backgroundImage: `url('${coverArtPath}')`, backgroundPosition: "center bottom", backgroundSize: "116% auto" }
+      : { backgroundImage: `url('${coverArtPath}')` }
 
   return (
     <div aria-hidden="true" className="absolute inset-0 z-0 overflow-hidden">
       {useCoverArt ? (
         <>
           <span
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url('${coverArtPath}')` }}
+            className={cn(
+              "absolute inset-0",
+              tokens.styleFamily === "land" ? "bg-no-repeat" : "bg-cover bg-center"
+            )}
+            style={coverArtStyle}
           />
           <span className="absolute inset-0 bg-[var(--preview-paper)] opacity-[0.04]" />
         </>
@@ -1245,19 +1253,14 @@ function MiniPagePreview({
         </div>
       )}
       <MiniPageBody kit={kit} page={page} tokens={tokens} />
-      <div
-        className={cn(
-          "absolute bottom-5 left-7 right-7 z-20 flex justify-between text-[8px]",
-          isCover
-            ? "text-[var(--preview-paper)] drop-shadow"
-            : "border-t border-[var(--preview-line)] pt-3 text-muted-foreground"
-        )}
-      >
-        <span>{footer}</span>
-        <span>
-          {total > 0 ? pageNumber : 0} / {total}
-        </span>
-      </div>
+      {!isCover && (
+        <div className="absolute bottom-5 left-7 right-7 z-20 flex justify-between border-t border-[var(--preview-line)] pt-3 text-[8px] text-muted-foreground">
+          <span>{footer}</span>
+          <span>
+            {total > 0 ? pageNumber : 0} / {total}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
@@ -1296,33 +1299,41 @@ function MiniPageBody({
           : page.subtitle || kit?.subtitle || page.tagline || kit?.tagline
 
       return (
-        <div className="relative z-10 flex h-[calc(100%-72px)] flex-col items-center px-8 pt-9 text-center">
+        <div className="relative z-10 flex h-[calc(100%-72px)] flex-col items-center px-8 pt-8 text-center">
           <span
             aria-hidden="true"
-            className="mb-3 h-4 w-9"
+            className="mb-2 h-5 w-12"
             style={{
               background: tokens.gold,
               clipPath: "polygon(0 85%, 28% 36%, 42% 58%, 58% 18%, 100% 85%, 88% 85%, 58% 42%, 43% 70%, 30% 54%, 12% 85%)",
             }}
           />
+          <div className="mb-3 text-[8px] font-extrabold uppercase tracking-[0.36em] text-[var(--preview-background)]">
+            Best Collective
+          </div>
           <div
-            className="max-w-[285px] break-words font-heading text-[52px] font-semibold uppercase leading-[0.9] tracking-[0.12em]"
+            className="max-w-[310px] break-words font-heading text-[60px] font-semibold uppercase leading-[0.86] tracking-[0.12em]"
             style={{ color: tokens.ink }}
           >
             {collectionTitle}
           </div>
-          <div className="mt-3 max-w-[245px] text-[8px] font-bold uppercase tracking-[0.34em] text-[var(--preview-muted)]">
+          <div className="mt-3 max-w-[250px] text-[8px] font-bold uppercase tracking-[0.34em] text-[var(--preview-background)]">
             {collectionLine}
           </div>
-          <div className="my-4 h-px w-16 bg-[var(--preview-gold)]" />
-          <div className="max-w-[250px] font-heading text-[25px] font-semibold uppercase leading-[1.05] text-[var(--preview-ink)]">
+          <div className="my-3 flex items-center gap-2 text-[var(--preview-gold)]">
+            <span className="h-px w-10 bg-current" />
+            <span className="size-1.5 rotate-45 bg-current" />
+            <span className="size-1.5 rotate-45 bg-current" />
+            <span className="h-px w-10 bg-current" />
+          </div>
+          <div className="max-w-[310px] font-heading text-[28px] font-semibold uppercase leading-[0.98] text-[var(--preview-background)]">
             {kitTitle}
           </div>
-          <div className="mt-3 bg-[var(--preview-ink)] px-4 py-1.5 text-[8px] font-bold uppercase tracking-[0.24em] text-[var(--preview-paper)] shadow-sm">
+          <div className="mt-3 bg-[var(--preview-ink)] px-5 py-1.5 text-[8px] font-bold uppercase tracking-[0.24em] text-[var(--preview-paper)] shadow-sm">
             {previewProductLabel(kit)}
           </div>
           {landTagline && (
-            <div className="absolute bottom-3 left-8 right-8 text-[7px] font-bold uppercase tracking-[0.22em] text-[var(--preview-paper)]">
+            <div className="absolute bottom-2 left-8 right-8 text-[8px] font-bold uppercase tracking-[0.22em] text-[var(--preview-paper)] drop-shadow">
               {landTagline}
             </div>
           )}
