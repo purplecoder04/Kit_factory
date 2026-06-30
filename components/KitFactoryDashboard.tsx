@@ -909,34 +909,54 @@ function makePreviewStyle(tokens: DesignPresetTokens) {
   } as CSSProperties
 }
 
-function MiniPreviewDecorations({ tokens }: { tokens: DesignPresetTokens }) {
+function MiniPreviewDecorations({
+  pageType,
+  tokens,
+}: {
+  pageType?: KitPage["type"] | null
+  tokens: DesignPresetTokens
+}) {
+  const useBrandCoverArt = pageType === "cover" && tokens.styleFamily === "brand"
+
   return (
     <div aria-hidden="true" className="absolute inset-0 z-0 overflow-hidden">
-      <span
-        className="absolute inset-0 opacity-[0.14]"
-        style={{
-          backgroundImage: `radial-gradient(${tokens.ink} 0.45px, transparent 0.55px), radial-gradient(${tokens.paperAlt} 0.5px, transparent 0.6px)`,
-          backgroundPosition: "0 0, 5px 6px",
-          backgroundSize: "8px 8px, 10px 10px",
-        }}
-      />
-      <span
-        className="absolute -right-12 -top-12 size-32 rounded-full opacity-30"
-        style={{ background: tokens.accentSoft }}
-      />
-      <span
-        className="absolute -bottom-20 -left-20 size-44 rounded-full opacity-25"
-        style={{ border: `1px solid ${tokens.gold}` }}
-      />
-      <span
-        className="absolute right-7 top-8 h-11 w-11 opacity-40"
-        style={{
-          backgroundImage: `radial-gradient(${tokens.accent} 1.5px, transparent 1.5px)`,
-          backgroundSize: "10px 10px",
-        }}
-      />
+      {useBrandCoverArt ? (
+        <>
+          <span
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url('/kit-assets/brand-cover-bg.png')" }}
+          />
+          <span className="absolute inset-0 bg-[var(--preview-paper)] opacity-[0.04]" />
+        </>
+      ) : (
+        <>
+          <span
+            className="absolute inset-0 opacity-[0.14]"
+            style={{
+              backgroundImage: `radial-gradient(${tokens.ink} 0.45px, transparent 0.55px), radial-gradient(${tokens.paperAlt} 0.5px, transparent 0.6px)`,
+              backgroundPosition: "0 0, 5px 6px",
+              backgroundSize: "8px 8px, 10px 10px",
+            }}
+          />
+          <span
+            className="absolute -right-12 -top-12 size-32 rounded-full opacity-30"
+            style={{ background: tokens.accentSoft }}
+          />
+          <span
+            className="absolute -bottom-20 -left-20 size-44 rounded-full opacity-25"
+            style={{ border: `1px solid ${tokens.gold}` }}
+          />
+          <span
+            className="absolute right-7 top-8 h-11 w-11 opacity-40"
+            style={{
+              backgroundImage: `radial-gradient(${tokens.accent} 1.5px, transparent 1.5px)`,
+              backgroundSize: "10px 10px",
+            }}
+          />
+        </>
+      )}
 
-      {tokens.styleFamily === "brand" && (
+      {!useBrandCoverArt && tokens.styleFamily === "brand" && (
         <>
           <span
             className="absolute -left-20 -top-16 size-44 rounded-full opacity-18"
@@ -1181,7 +1201,7 @@ function MiniPagePreview({
       )}
       data-testid="selected-page-preview"
     >
-      <MiniPreviewDecorations tokens={tokens} />
+      <MiniPreviewDecorations pageType={page?.type} tokens={tokens} />
       {showRibbon && (
         <div
           className={cn(

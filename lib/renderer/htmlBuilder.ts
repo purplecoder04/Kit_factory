@@ -37,6 +37,8 @@ export function buildKitHtml(kit: ParsedKit) {
 }
 
 function buildCss(tokens: DesignPresetTokens) {
+  const brandCoverArt = tokens.styleFamily === "brand" ? buildAssetDataUri("public/kit-assets/brand-cover-bg.png") : ""
+
   return `
       @page { size: Letter; margin: 0; }
       * { box-sizing: border-box; }
@@ -1399,13 +1401,37 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-brand.cover {
         align-content: center;
         padding: 0.7in 0.74in 0.9in;
-        background:
+        ${
+          brandCoverArt
+            ? `background:
+          linear-gradient(${transparent(tokens.paper, 0.04)}, ${transparent(tokens.paper, 0.04)}),
+          url("${brandCoverArt}") center / cover no-repeat,
+          ${tokens.paper};`
+            : `background:
           radial-gradient(circle at -4% 0%, ${transparent(tokens.plum, 0.56)} 0 0.8in, transparent 0.82in),
           radial-gradient(circle at 19% 11%, ${transparent(tokens.lilac, 0.26)} 0 1.05in, transparent 1.07in),
           radial-gradient(circle at 82% 9%, ${transparent(tokens.lilac, 0.45)} 0 0.44in, transparent 0.46in),
           radial-gradient(circle at 98% 94%, ${transparent(tokens.plum, 0.42)} 0 0.72in, transparent 0.74in),
           linear-gradient(168deg, transparent 0 74%, ${transparent(tokens.paperAlt, 0.72)} 74.5% 100%),
-          ${tokens.paper};
+          ${tokens.paper};`
+        }
+      }
+      ${
+        brandCoverArt
+          ? `.style-brand.cover::before,
+      .style-brand.cover::after,
+      .style-brand.cover .dots,
+      .style-brand.cover .swoop,
+      .style-brand.cover .decor::before,
+      .style-brand.cover .decor::after,
+      .style-brand.cover .brand-arc,
+      .style-brand.cover .brand-cup,
+      .style-brand.cover .brand-card,
+      .style-brand.cover .brand-laptop,
+      .style-brand.cover .brand-plant {
+        display: none !important;
+      }`
+          : ""
       }
       .style-brand.cover .brand-mark {
         color: ${tokens.ink};
@@ -2960,6 +2986,20 @@ function transparent(hex: string, alpha: number) {
   const blue = parseInt(trimmed.slice(4, 6), 16)
 
   return `rgba(${red}, ${green}, ${blue}, ${alpha})`
+}
+
+function buildAssetDataUri(relativePath: string) {
+  const filePath = path.join(process.cwd(), relativePath)
+
+  if (!fs.existsSync(filePath)) {
+    return ""
+  }
+
+  const extension = path.extname(filePath).toLowerCase()
+  const mimeType = extension === ".jpg" || extension === ".jpeg" ? "image/jpeg" : "image/png"
+  const data = fs.readFileSync(filePath).toString("base64")
+
+  return `data:${mimeType};base64,${data}`
 }
 
 function escapeHtml(value: string) {
