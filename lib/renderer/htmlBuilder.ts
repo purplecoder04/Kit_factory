@@ -37,7 +37,8 @@ export function buildKitHtml(kit: ParsedKit) {
 }
 
 function buildCss(tokens: DesignPresetTokens) {
-  const brandCoverArt = tokens.styleFamily === "brand" ? buildAssetDataUri("public/kit-assets/brand-cover-bg.png") : ""
+  const coverArt = buildCoverAssetDataUri(tokens)
+  const brandCoverArt = tokens.styleFamily === "brand" ? coverArt : ""
 
   return `
       @page { size: Letter; margin: 0; }
@@ -2587,6 +2588,49 @@ function buildCss(tokens: DesignPresetTokens) {
         bottom: 1.75in;
         transform: translateX(-50%);
       }
+      ${
+        coverArt
+          ? `.page.cover {
+        background:
+          linear-gradient(${transparent(tokens.paper, 0.04)}, ${transparent(tokens.paper, 0.04)}),
+          url("${coverArt}") center / cover no-repeat,
+          ${tokens.paper};
+      }
+      .page.cover::before,
+      .page.cover::after,
+      .page.cover .dots,
+      .page.cover .swoop,
+      .page.cover .decor::before,
+      .page.cover .decor::after,
+      .page.cover .watercolor,
+      .page.cover .mountain-mark,
+      .page.cover .tool-mark,
+      .page.cover .road-mark,
+      .page.cover .floral,
+      .page.cover .spark-lines,
+      .page.cover .brand-arc,
+      .page.cover .brand-cup,
+      .page.cover .brand-card,
+      .page.cover .brand-laptop,
+      .page.cover .brand-plant,
+      .page.cover .brand-door,
+      .page.cover .brand-book,
+      .page.cover .rise-glass,
+      .page.cover .rise-cake,
+      .page.cover .rise-crown,
+      .page.cover .land-compass,
+      .page.cover .land-wrench,
+      .page.cover .land-leaf,
+      .page.cover .rebuild-boxes,
+      .page.cover .rebuild-paint,
+      .page.cover .rebuild-frame,
+      .page.cover .heal-heart,
+      .page.cover .heal-journals,
+      .page.cover .heal-sun {
+        display: none !important;
+      }`
+          : ""
+      }
       .quote-page {
         display: grid;
         min-height: 7.7in;
@@ -3000,6 +3044,40 @@ function buildAssetDataUri(relativePath: string) {
   const data = fs.readFileSync(filePath).toString("base64")
 
   return `data:${mimeType};base64,${data}`
+}
+
+function buildCoverAssetDataUri(tokens: DesignPresetTokens) {
+  const fileName = coverAssetFileName(tokens)
+
+  return fileName ? buildAssetDataUri(`public/kit-assets/${fileName}`) : ""
+}
+
+function coverAssetFileName(tokens: DesignPresetTokens) {
+  if (tokens.slug === "brand") {
+    return "brand-cover-bg.png"
+  }
+
+  if (tokens.slug === "brand-land") {
+    return "land-cover-bg.png"
+  }
+
+  if (tokens.styleFamily === "rise") {
+    return "rise-cover-bg.png"
+  }
+
+  if (tokens.styleFamily === "land") {
+    return "land-cover-bg.png"
+  }
+
+  if (tokens.styleFamily === "rebuild") {
+    return "rebuild-cover-bg.png"
+  }
+
+  if (tokens.styleFamily === "meetatheal") {
+    return "meetatheal-cover-bg.png"
+  }
+
+  return ""
 }
 
 function escapeHtml(value: string) {

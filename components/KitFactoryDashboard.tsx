@@ -909,6 +909,34 @@ function makePreviewStyle(tokens: DesignPresetTokens) {
   } as CSSProperties
 }
 
+function getPreviewCoverArtPath(tokens: DesignPresetTokens) {
+  if (tokens.slug === "brand") {
+    return "/kit-assets/brand-cover-bg.png"
+  }
+
+  if (tokens.slug === "brand-land") {
+    return "/kit-assets/land-cover-bg.png"
+  }
+
+  if (tokens.styleFamily === "rise") {
+    return "/kit-assets/rise-cover-bg.png"
+  }
+
+  if (tokens.styleFamily === "land") {
+    return "/kit-assets/land-cover-bg.png"
+  }
+
+  if (tokens.styleFamily === "rebuild") {
+    return "/kit-assets/rebuild-cover-bg.png"
+  }
+
+  if (tokens.styleFamily === "meetatheal") {
+    return "/kit-assets/meetatheal-cover-bg.png"
+  }
+
+  return ""
+}
+
 function MiniPreviewDecorations({
   pageType,
   tokens,
@@ -916,15 +944,16 @@ function MiniPreviewDecorations({
   pageType?: KitPage["type"] | null
   tokens: DesignPresetTokens
 }) {
-  const useBrandCoverArt = pageType === "cover" && tokens.styleFamily === "brand"
+  const coverArtPath = pageType === "cover" ? getPreviewCoverArtPath(tokens) : ""
+  const useCoverArt = Boolean(coverArtPath)
 
   return (
     <div aria-hidden="true" className="absolute inset-0 z-0 overflow-hidden">
-      {useBrandCoverArt ? (
+      {useCoverArt ? (
         <>
           <span
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: "url('/kit-assets/brand-cover-bg.png')" }}
+            style={{ backgroundImage: `url('${coverArtPath}')` }}
           />
           <span className="absolute inset-0 bg-[var(--preview-paper)] opacity-[0.04]" />
         </>
@@ -956,7 +985,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {!useBrandCoverArt && tokens.styleFamily === "brand" && (
+      {!useCoverArt && tokens.styleFamily === "brand" && (
         <>
           <span
             className="absolute -left-20 -top-16 size-44 rounded-full opacity-18"
@@ -1008,7 +1037,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {tokens.styleFamily === "rise" && (
+      {!useCoverArt && tokens.styleFamily === "rise" && (
         <>
           <span
             className="absolute -right-16 top-12 h-32 w-44 rotate-[-28deg] rounded-[48%] opacity-35"
@@ -1053,7 +1082,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {tokens.styleFamily === "land" && (
+      {!useCoverArt && tokens.styleFamily === "land" && (
         <>
           <span
             className="absolute -left-6 -top-10 h-52 w-96 opacity-30"
@@ -1100,7 +1129,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {tokens.styleFamily === "rebuild" && (
+      {!useCoverArt && tokens.styleFamily === "rebuild" && (
         <>
           <span
             className="absolute -right-14 top-10 h-56 w-48 rounded-full opacity-50 blur-sm"
@@ -1142,7 +1171,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {tokens.styleFamily === "meetatheal" && (
+      {!useCoverArt && tokens.styleFamily === "meetatheal" && (
         <>
           <span
             className="absolute bottom-14 left-1/2 h-28 w-52 -translate-x-1/2 opacity-45"
