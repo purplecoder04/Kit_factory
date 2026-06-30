@@ -1472,7 +1472,7 @@ function MiniPageBody({
   if (page.type === "closing") {
     return (
       <div className="relative z-10 p-5">
-        <MiniPageHeading page={page} />
+        <MiniPageHeading page={page} tokens={tokens} />
         <div className="mt-4 rounded-lg bg-[var(--preview-plum)] p-5 text-center text-[var(--preview-paper)]">
           <div className="mx-auto mb-4 size-3 rotate-45 bg-[var(--preview-paper)]" />
           <MiniContent blocks={page.content} compact />
@@ -1483,7 +1483,7 @@ function MiniPageBody({
 
   return (
     <div className="relative z-10 p-5">
-      <MiniPageHeading page={page} />
+      <MiniPageHeading page={page} tokens={tokens} />
       <MiniContent blocks={page.content} />
       <MiniFillablePreview page={page} />
     </div>
@@ -1514,13 +1514,36 @@ function previewProductLabel(kit: ParsedKit | null) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
-function MiniPageHeading({ page }: { page: KitPage }) {
+function MiniPageHeading({
+  page,
+  tokens,
+}: {
+  page: KitPage
+  tokens: DesignPresetTokens
+}) {
+  const isRebuild = tokens.styleFamily === "rebuild"
+  const titleStyle = isRebuild
+    ? {
+        color: page.type === "notes" ? tokens.rose : tokens.blue,
+      }
+    : undefined
+
   return (
     <>
-      <div className="text-[8px] font-bold uppercase tracking-[0.28em] text-primary">
+      <div
+        className="text-[8px] font-bold uppercase tracking-[0.28em] text-primary"
+        style={isRebuild ? { color: tokens.rose } : undefined}
+      >
         {page.section || page.rawType}
       </div>
-      <div className="mt-2 font-heading text-lg font-semibold leading-tight text-[var(--preview-ink)]">
+      <div
+        className={cn(
+          "mt-2 font-heading text-lg font-semibold leading-tight text-[var(--preview-ink)]",
+          isRebuild && "uppercase tracking-[0.03em]",
+          isRebuild && page.type === "notes" && "normal-case italic"
+        )}
+        style={titleStyle}
+      >
         {page.title || page.rawType}
       </div>
     </>

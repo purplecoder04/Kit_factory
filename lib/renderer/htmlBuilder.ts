@@ -2437,6 +2437,117 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-rebuild.cover .cover-product {
         border-color: ${tokens.accent};
       }
+      .style-rebuild .section-label {
+        color: ${tokens.rose};
+        font-size: 8.6px;
+        font-weight: 800;
+        letter-spacing: 0.33em;
+      }
+      .style-rebuild h2 {
+        color: ${tokens.blue};
+        font-size: 35px;
+        letter-spacing: 0.018em;
+        line-height: 0.98;
+        text-transform: uppercase;
+      }
+      .style-rebuild .subtitle {
+        color: ${tokens.rose};
+        font-size: 22px;
+        font-style: italic;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        line-height: 1.05;
+      }
+      .style-rebuild p,
+      .style-rebuild li,
+      .style-rebuild .tracker-table,
+      .style-rebuild .check-row .prompt-text {
+        color: ${tokens.background};
+      }
+      .style-rebuild.type-notes h2 {
+        color: ${tokens.rose};
+        font-size: 30px;
+        font-style: italic;
+        letter-spacing: 0.01em;
+        text-transform: none;
+      }
+      .style-rebuild.type-section-divider h2 {
+        color: ${tokens.rose};
+        font-size: 42px;
+        letter-spacing: 0.02em;
+      }
+      .style-rebuild.type-section-divider .subtitle {
+        color: ${tokens.background};
+        font-family: "Poppins", Arial, sans-serif;
+        font-size: 11px;
+        font-style: normal;
+        font-weight: 700;
+        letter-spacing: 0.24em;
+        line-height: 1.35;
+        text-transform: uppercase;
+      }
+      .style-rebuild .quote-page .quote-mark {
+        color: ${transparent(tokens.blue, 0.72)};
+        font-size: 82px;
+        margin-bottom: -12px;
+      }
+      .style-rebuild .quote-page .quote-text {
+        color: ${tokens.background};
+        font-size: 28px;
+        font-weight: 400;
+        line-height: 1.2;
+      }
+      .style-rebuild .quote-by {
+        color: ${tokens.rose};
+      }
+      .style-rebuild .quote-by::before {
+        background: ${tokens.gold};
+      }
+      .style-rebuild .prompt-card .prompt-text,
+      .style-rebuild .reflect-box .prompt-text {
+        color: ${tokens.background};
+        font-size: 17px;
+        font-style: italic;
+        font-weight: 600;
+        line-height: 1.13;
+      }
+      .style-rebuild .prompt-text::before {
+        background: ${tokens.rose};
+        border-radius: 999px;
+        height: 6px;
+        transform: none;
+        width: 6px;
+      }
+      .style-rebuild .check-list li::before,
+      .style-rebuild .soft-check::before {
+        background: ${tokens.blue};
+        border-radius: 999px;
+      }
+      .style-rebuild .key-term-label,
+      .style-rebuild .key-term-title {
+        color: ${tokens.blue};
+      }
+      .style-rebuild .key-term-box {
+        border-left-color: ${tokens.blue};
+      }
+      .style-rebuild .alert-box {
+        border-left-color: ${tokens.rose};
+      }
+      .style-rebuild .alert-icon,
+      .style-rebuild .action-num {
+        background: ${tokens.rose};
+      }
+      .style-rebuild.type-closing .closing-panel h1 {
+        color: ${tokens.blue};
+        font-size: 58px;
+        letter-spacing: 0.12em;
+        line-height: 0.86;
+      }
+      .style-rebuild.type-closing .cover-tagline {
+        color: ${tokens.background};
+        font-size: 8.4px;
+        letter-spacing: 0.26em;
+      }
       .style-rebuild.cover .rebuild-boxes,
       .style-rebuild.cover .rebuild-paint,
       .style-rebuild.cover .rebuild-frame,
