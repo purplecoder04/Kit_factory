@@ -9,6 +9,7 @@ export async function POST(request: Request) {
   const markdown = typeof body.markdown === "string" ? body.markdown : ""
   const kit = parseKitMarkdown(markdown, {
     branch: body.branch,
+    designPreset: body.designPreset,
     outputMode: body.outputMode,
   })
   const issues = validateKit(kit)

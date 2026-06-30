@@ -11,6 +11,7 @@ export async function POST(request: Request) {
   const target = normaliseTarget(body.target)
   const kit = parseKitMarkdown(markdown, {
     branch: body.branch,
+    designPreset: body.designPreset,
     outputMode: body.outputMode,
   })
   const issues = validateKit(kit)
@@ -20,12 +21,13 @@ export async function POST(request: Request) {
   }
 
   const pdf = await renderKitPdf(kit, target)
+  const stem = `${kit.slug}-${kit.designPreset || kit.branch || "brand"}`
   const filename =
     target === "complete"
-      ? `${kit.slug}-complete.pdf`
+      ? `${stem}-complete.pdf`
       : target === "workbook"
-        ? `${kit.slug}-workbook.pdf`
-        : `${kit.slug}-lesson-guide.pdf`
+        ? `${stem}-workbook.pdf`
+        : `${stem}-lesson-guide.pdf`
 
   return new Response(pdf, {
     headers: {

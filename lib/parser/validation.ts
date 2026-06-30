@@ -1,8 +1,11 @@
 import {
+  fillablePageTypes,
   isBranch,
+  isDesignPreset,
   isOutputMode,
   isPageType,
   isProductType,
+  type ContentBlock,
   type KitPage,
   type ParsedKit,
   type ValidationIssue,
@@ -23,8 +26,23 @@ export function validateKit(kit: ParsedKit): ValidationIssue[] {
     )
   }
 
+  if (kit.designPreset && !isDesignPreset(kit.designPreset)) {
+    issues.push(
+      error(
+        "invalid-design-preset",
+        "Use one of the approved design_preset values.",
+        kit.designPreset
+      )
+    )
+  }
+
   if (!kit.productType) {
-    issues.push(error("missing-product-type", "Add a product_type in the frontmatter."))
+    issues.push(
+      warning(
+        "missing-product-type",
+        "product_type is missing, so the app will treat this as a workbook."
+      )
+    )
   } else if (!isProductType(kit.productType)) {
     issues.push(
       error(
@@ -36,7 +54,12 @@ export function validateKit(kit: ParsedKit): ValidationIssue[] {
   }
 
   if (!kit.outputMode) {
-    issues.push(error("missing-output-mode", "Add an output_mode in the frontmatter."))
+    issues.push(
+      warning(
+        "missing-output-mode",
+        "output_mode is missing, so the app will use split output."
+      )
+    )
   } else if (!isOutputMode(kit.outputMode)) {
     issues.push(
       error(
@@ -51,8 +74,28 @@ export function validateKit(kit: ParsedKit): ValidationIssue[] {
     issues.push(error("no-pages", "Add at least one PAGE tag before rendering."))
   }
 
+  if (kit.pages.length > 0 && kit.pages[0]?.type !== "cover") {
+    issues.push(
+      error(
+        "missing-cover-first",
+        "The first PAGE tag must be cover.",
+        "Start the kit with <!-- PAGE: cover -->."
+      )
+    )
+  }
+
+  if (kit.pages.length > 0 && kit.pages.at(-1)?.type !== "closing") {
+    issues.push(
+      error(
+        "missing-closing-last",
+        "The last PAGE tag must be closing.",
+        "End the kit with <!-- PAGE: closing -->."
+      )
+    )
+  }
+
   kit.pages.forEach((page, index) => {
-    issues.push(...validatePage(page, index))
+    issues.push(...validatePage(page, index, kit.branch))
   })
 
   return issues
@@ -62,7 +105,11 @@ export function hasBlockingErrors(issues: ValidationIssue[]) {
   return issues.some((issue) => issue.level === "error")
 }
 
-function validatePage(page: KitPage, index: number): ValidationIssue[] {
+function validatePage(
+  page: KitPage,
+  index: number,
+  branch: string
+): ValidationIssue[] {
   const issues: ValidationIssue[] = []
   const pageNumber = index + 1
 
@@ -77,17 +124,11 @@ function validatePage(page: KitPage, index: number): ValidationIssue[] {
     )
   }
 
-  if (
-    !page.section &&
-    !page.title &&
-    page.content.length === 0 &&
-    page.prompts.length === 0 &&
-    !page.bottomNote
-  ) {
+  if (isEmptyPage(page)) {
     issues.push(
       error(
         "empty-page",
-        `Page ${pageNumber} is empty. Add a title, body text, or prompts.`,
+        `Page ${pageNumber} is empty. Add a title, body text, or fields.`,
         undefined,
         index
       )
@@ -99,11 +140,26 @@ function validatePage(page: KitPage, index: number): ValidationIssue[] {
       error(
         "unsupported-field",
         `Page ${pageNumber} has an unsupported field: ${field}.`,
-        "Supported fields are SECTION, TITLE, BOTTOM_NOTE, PROMPT, QUOTE, QUOTE_BY, KEY_TERM, KEY_TERM_BODY, and ALERT.",
+        "Use the field tags from Kit Factory Markdown Spec v2.",
         index
       )
     )
   })
+
+  page.parserErrors.forEach((message) => {
+    issues.push(error("parser-field-error", `Page ${pageNumber}: ${message}`, undefined, index))
+  })
+
+  if (page.prompts.length > 0 && page.type !== "workbook") {
+    issues.push(
+      error(
+        "prompt-on-wrong-page",
+        `Page ${pageNumber} uses PROMPT outside a workbook page.`,
+        "Use REFLECT for thinking prompts, CHECK for checklist items, or ACTION for action-plan pages.",
+        index
+      )
+    )
+  }
 
   if (page.type === "workbook" && page.prompts.length === 0) {
     issues.push(
@@ -116,39 +172,191 @@ function validatePage(page: KitPage, index: number): ValidationIssue[] {
     )
   }
 
-  const bodyLength =
-    page.content.reduce((count, block) => {
-      if (block.type === "paragraph") {
-        return count + block.text.length
-      }
+  if (page.type === "checklist" && page.checks.length === 0) {
+    issues.push(
+      warning(
+        "checklist-without-checks",
+        `Checklist page ${pageNumber} has no CHECK items.`,
+        undefined,
+        index
+      )
+    )
+  }
 
-      if (block.type === "quote") {
-        return count + block.text.length + (block.attribution?.length ?? 0)
-      }
-
-      if (block.type === "key-term") {
-        return count + block.term.length + block.text.length
-      }
-
-      if (block.type === "alert") {
-        return count + block.text.length
-      }
-
-      return count + block.items.join(" ").length
-    }, 0) + page.prompts.join(" ").length
-
-  if (bodyLength > 2400 || page.prompts.length > 8) {
+  if (page.tableHeaders.length > 0 && page.type !== "tracker") {
     issues.push(
       error(
-        "page-too-full",
-        `Page ${pageNumber} has too much content for one clean PDF page.`,
-        "Split this page into two PAGE sections.",
+        "table-on-wrong-page",
+        `Page ${pageNumber} uses TABLE_HEADERS outside a tracker page.`,
+        undefined,
+        index
+      )
+    )
+  }
+
+  if (page.type === "tracker" && page.tableHeaders.length === 0) {
+    issues.push(
+      warning(
+        "tracker-without-headers",
+        `Tracker page ${pageNumber} has no TABLE_HEADERS field.`,
+        undefined,
+        index
+      )
+    )
+  }
+
+  if (page.actions.length > 0 && page.type !== "action-plan") {
+    issues.push(
+      warning(
+        "action-on-unexpected-page",
+        `Page ${pageNumber} uses ACTION outside an action-plan page.`,
+        undefined,
+        index
+      )
+    )
+  }
+
+  if (page.reflects.length > 0 && page.type !== "unknown" && fillablePageTypes.has(page.type)) {
+    issues.push(
+      warning(
+        "reflect-on-fillable-page",
+        `Page ${pageNumber} uses REFLECT on a fillable page.`,
+        "REFLECT will render as a non-fillable thinking prompt.",
+        index
+      )
+    )
+  }
+
+  if (page.content.some((block) => block.type === "alert") && page.type !== "how-to-use") {
+    issues.push(
+      warning(
+        "alert-outside-how-to-use",
+        `Page ${pageNumber} uses ALERT outside a how-to-use page.`,
+        "It will still render as a highlighted notice box.",
+        index
+      )
+    )
+  }
+
+  if (branch !== "brand" && page.content.some((block) => block.type === "alert" && !block.text.trim())) {
+    issues.push(
+      warning(
+        "pending-alert-copy",
+        `Page ${pageNumber} has an empty ALERT field.`,
+        "This branch disclaimer can stay pending for now.",
+        index
+      )
+    )
+  }
+
+  if (page.type === "workbook" && page.prompts.length > 4) {
+    issues.push(
+      warning(
+        "workbook-many-prompts",
+        `Workbook page ${pageNumber} has more than 4 prompts.`,
+        "The page may overflow in the PDF.",
+        index
+      )
+    )
+  }
+
+  if (page.type === "checklist" && page.checks.length > 12) {
+    issues.push(
+      warning(
+        "checklist-many-checks",
+        `Checklist page ${pageNumber} has more than 12 items.`,
+        "The page may overflow in the PDF.",
+        index
+      )
+    )
+  }
+
+  if (
+    !page.title &&
+    page.type !== "unknown" &&
+    page.type !== "cover" &&
+    page.type !== "quote"
+  ) {
+    issues.push(
+      warning(
+        "missing-page-title",
+        `Page ${pageNumber} has no TITLE field.`,
+        undefined,
+        index
+      )
+    )
+  }
+
+  const bodyLength = measurePageLength(page)
+
+  if (bodyLength > 2400) {
+    issues.push(
+      warning(
+        "page-likely-too-full",
+        `Page ${pageNumber} has a lot of content for one clean PDF page.`,
+        "Split this into another PAGE section if the render looks crowded.",
         index
       )
     )
   }
 
   return issues
+}
+
+function isEmptyPage(page: KitPage) {
+  return (
+    !page.section &&
+    !page.title &&
+    !page.subtitle &&
+    !page.tagline &&
+    page.content.length === 0 &&
+    page.prompts.length === 0 &&
+    page.checks.length === 0 &&
+    page.tableHeaders.length === 0 &&
+    page.tableRows.length === 0 &&
+    page.actions.length === 0 &&
+    page.questions.length === 0 &&
+    !page.story &&
+    !page.takeaway &&
+    !page.bottomNote
+  )
+}
+
+function measurePageLength(page: KitPage) {
+  const contentLength = page.content.reduce((count, block) => count + measureBlock(block), 0)
+
+  return (
+    contentLength +
+    page.prompts.join(" ").length +
+    page.checks.join(" ").length +
+    page.tableHeaders.join(" ").length +
+    page.tableRows.join(" ").length +
+    page.actions.join(" ").length +
+    page.questions.join(" ").length +
+    page.story.length +
+    page.takeaway.length +
+    page.bottomNote.length
+  )
+}
+
+function measureBlock(block: ContentBlock) {
+  if (block.type === "paragraph") {
+    return block.text.length
+  }
+
+  if (block.type === "quote") {
+    return block.text.length + (block.attribution?.length ?? 0)
+  }
+
+  if (block.type === "key-term") {
+    return block.term.length + block.text.length
+  }
+
+  if (block.type === "alert" || block.type === "reflect") {
+    return block.text.length
+  }
+
+  return block.items.join(" ").length
 }
 
 function error(
@@ -159,6 +367,21 @@ function error(
 ): ValidationIssue {
   return {
     level: "error",
+    code,
+    message,
+    detail,
+    pageIndex,
+  }
+}
+
+function warning(
+  code: string,
+  message: string,
+  detail?: string,
+  pageIndex?: number
+): ValidationIssue {
+  return {
+    level: "warning",
     code,
     message,
     detail,

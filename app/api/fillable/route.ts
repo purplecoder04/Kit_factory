@@ -12,6 +12,7 @@ export async function POST(request: Request) {
   const target = normaliseTarget(body.target)
   const kit = parseKitMarkdown(markdown, {
     branch: body.branch,
+    designPreset: body.designPreset,
     outputMode: body.outputMode,
   })
   const issues = validateKit(kit)
@@ -22,8 +23,9 @@ export async function POST(request: Request) {
 
   const basePdf = await renderKitPdf(kit, target)
   const fillablePdf = await addFillableFields(basePdf, kit, target)
+  const stem = `${kit.slug}-${kit.designPreset || kit.branch || "brand"}`
   const filename =
-    target === "complete" ? `${kit.slug}-fillable.pdf` : `${kit.slug}-workbook-fillable.pdf`
+    target === "complete" ? `${stem}-fillable.pdf` : `${stem}-workbook-fillable.pdf`
 
   return new Response(fillablePdf, {
     headers: {

@@ -17,18 +17,15 @@ export type FieldSpec = {
 }
 
 const pageHeight = 792
-const checklistLeft = 40
-const checklistTop = 128
-const checklistGap = 41.5
-const checkboxSize = 14
-const reflectionFieldTop = 146
-const reflectionFieldGap = 140
-const reflectionFieldHeight = 95
 const promptFieldLeft = 56
-const promptFieldTop = 157
-const promptFieldGap = 97
+const promptFieldTop = 158
+const promptFieldGap = 108
 const promptFieldWidth = 502
-const promptFieldHeight = 46
+const promptFieldHeight = 55
+const checkboxLeft = 44
+const checklistTop = 145
+const checklistGap = 29
+const checkboxSize = 12
 
 export function mapFillableFields(kit: ParsedKit, target: RenderTarget): FieldSpec[] {
   const selectedKit = selectPagesForTarget(kit, target)
@@ -46,71 +43,147 @@ export function mapFillableFields(kit: ParsedKit, target: RenderTarget): FieldSp
 }
 
 function mapPageFields(slug: string, page: KitPage, pageIndex: number): FieldSpec[] {
-  const pageNum = String(pageIndex + 1).padStart(3, "0")
+  if (page.type === "workbook") {
+    return mapWorkbookFields(slug, page, pageIndex)
+  }
 
   if (page.type === "checklist") {
-    const prompts = page.prompts.length > 0 ? page.prompts : ["check"]
-
-    return prompts.slice(0, 8).map((_, index) => ({
-      pageIndex,
-      name: `${slug}_${pageNum}_check_${String(index + 1).padStart(2, "0")}`,
-      kind: "checkbox",
-      x: checklistLeft,
-      y: topToY(checklistTop + index * checklistGap, checkboxSize),
-      width: checkboxSize,
-      height: checkboxSize,
-    }))
+    return mapChecklistFields(slug, page, pageIndex)
   }
 
   if (page.type === "tracker") {
-    const columns = [
-      { key: "step", x: 52, width: 104 },
-      { key: "owner", x: 156, width: 137 },
-      { key: "status", x: 293, width: 141 },
-      { key: "notes", x: 434, width: 126 },
-    ]
+    return mapTrackerFields(slug, page, pageIndex)
+  }
 
-    return Array.from({ length: 3 }).flatMap((_, row) =>
-      columns.map((column) => ({
-        pageIndex,
-        name: `${slug}_${pageNum}_row_${row + 1}_${column.key}`,
-        kind: "text" as const,
-        x: column.x + 5,
-        y: topToY(149 + row * 31.5, 30),
-        width: column.width - 10,
-        height: 28,
-        fontSize: 8.5,
-        multiline: column.key === "notes",
-      }))
+  if (page.type === "action-plan") {
+    return mapActionFields(slug, page, pageIndex)
+  }
+
+  if (page.type === "notes") {
+    return [
+      textField(slug, pageIndex, "notes_01", 56, 148, 502, 480, {
+        multiline: true,
+      }),
+    ]
+  }
+
+  return []
+}
+
+function mapWorkbookFields(slug: string, page: KitPage, pageIndex: number): FieldSpec[] {
+  return page.prompts.slice(0, 4).map((_, index) =>
+    textField(
+      slug,
+      pageIndex,
+      `prompt_${String(index + 1).padStart(2, "0")}`,
+      promptFieldLeft,
+      promptFieldTop + index * promptFieldGap,
+      promptFieldWidth,
+      promptFieldHeight,
+      { multiline: true }
+    )
+  )
+}
+
+function mapChecklistFields(slug: string, page: KitPage, pageIndex: number): FieldSpec[] {
+  const items = page.checks.length > 0 ? page.checks : ["check"]
+  const fields: FieldSpec[] = items.slice(0, 12).map((_, index) => ({
+    pageIndex,
+    name: fieldName(slug, pageIndex, `check_${String(index + 1).padStart(2, "0")}`),
+    kind: "checkbox" as const,
+    x: checkboxLeft,
+    y: topToY(checklistTop + index * checklistGap, checkboxSize),
+    width: checkboxSize,
+    height: checkboxSize,
+  }))
+
+  if (page.noteLabel) {
+    fields.push(
+      textField(slug, pageIndex, "notes_01", 56, 610, 502, 58, {
+        multiline: true,
+        fontSize: 9.5,
+      })
     )
   }
 
-  if (page.type === "reflection") {
-    return page.prompts.slice(0, 4).map((_, index) => ({
-      pageIndex,
-      name: `${slug}_${pageNum}_reflection_${String(index + 1).padStart(2, "0")}`,
-      kind: "text",
-      x: 55,
-      y: topToY(reflectionFieldTop + index * reflectionFieldGap, reflectionFieldHeight),
-      width: 502,
-      height: reflectionFieldHeight,
-      fontSize: 10.5,
-      textColor: "white",
-      multiline: true,
-    }))
-  }
+  return fields
+}
 
-  return page.prompts.slice(0, 4).map((_, index) => ({
+function mapTrackerFields(slug: string, page: KitPage, pageIndex: number): FieldSpec[] {
+  const headers = page.tableHeaders.length > 0 ? page.tableHeaders : ["Category", "Goal", "Actual", "Notes"]
+  const rows = page.tableRows.length > 0 ? page.tableRows : ["Revenue", "Expenses", "Profit", "Notes"]
+  const columnCount = Math.max(headers.length, 2)
+  const tableLeft = 56
+  const tableTop = 150
+  const tableWidth = 502
+  const rowHeight = 33
+  const colWidth = tableWidth / columnCount
+
+  return rows.slice(0, 10).flatMap((_, row) =>
+    headers.slice(1).map((__, columnIndex) =>
+      textField(
+        slug,
+        pageIndex,
+        `table_row${String(row + 1).padStart(2, "0")}_col${String(columnIndex + 2).padStart(2, "0")}`,
+        tableLeft + colWidth * (columnIndex + 1) + 4,
+        tableTop + 31 + row * rowHeight,
+        colWidth - 8,
+        rowHeight - 5,
+        {
+          multiline: columnIndex === headers.length - 2,
+          fontSize: 8.5,
+        }
+      )
+    )
+  )
+}
+
+function mapActionFields(slug: string, page: KitPage, pageIndex: number): FieldSpec[] {
+  const actions = page.actions.length > 0 ? page.actions : ["action"]
+  const actionFields = actions.slice(0, 4).map((_, index) =>
+    textField(slug, pageIndex, `action_${String(index + 1).padStart(2, "0")}`, 86, 158 + index * 100, 472, 48, {
+      multiline: true,
+    })
+  )
+
+  const questionFields = page.questions.slice(0, 3).map((_, index) =>
+    textField(slug, pageIndex, `question_${String(index + 1).padStart(2, "0")}`, 56, 570 + index * 44, 502, 30, {
+      multiline: true,
+      fontSize: 9.5,
+    })
+  )
+
+  return [...actionFields, ...questionFields]
+}
+
+function textField(
+  slug: string,
+  pageIndex: number,
+  suffix: string,
+  x: number,
+  top: number,
+  width: number,
+  height: number,
+  options: Pick<FieldSpec, "multiline" | "fontSize" | "textColor"> = {}
+): FieldSpec {
+  return {
     pageIndex,
-    name: `${slug}_${pageNum}_field_${String(index + 1).padStart(2, "0")}`,
+    name: fieldName(slug, pageIndex, suffix),
     kind: "text",
-    x: promptFieldLeft,
-    y: topToY(promptFieldTop + index * promptFieldGap, promptFieldHeight),
-    width: promptFieldWidth,
-    height: promptFieldHeight,
-    fontSize: 10.5,
-    multiline: true,
-  }))
+    x,
+    y: topToY(top, height),
+    width,
+    height,
+    fontSize: options.fontSize ?? 10,
+    multiline: options.multiline,
+    textColor: options.textColor,
+  }
+}
+
+function fieldName(slug: string, pageIndex: number, suffix: string) {
+  const pageNum = String(pageIndex + 1).padStart(3, "0")
+
+  return `${slug}_${pageNum}_${suffix}`
 }
 
 function topToY(top: number, height: number) {

@@ -10,6 +10,7 @@ export async function POST(request: Request) {
   const markdown = typeof body.markdown === "string" ? body.markdown : ""
   const kit = parseKitMarkdown(markdown, {
     branch: body.branch,
+    designPreset: body.designPreset,
     outputMode: body.outputMode,
   })
   const issues = validateKit(kit)
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
   }
 
   const mockup = await renderKitMockupPng(kit)
-  const filename = `${kit.slug}-${kit.branch || "brand"}-website-mockup.png`
+  const filename = `${kit.slug}-${kit.designPreset || kit.branch || "brand"}-website-mockup.png`
 
   return new Response(mockup, {
     headers: {

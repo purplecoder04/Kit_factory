@@ -9,6 +9,7 @@ import {
   FolderOpenIcon,
   Layers3Icon,
   LoaderCircleIcon,
+  PackageIcon,
   PlayIcon,
   UploadIcon,
   WavesIcon,
@@ -36,12 +37,20 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { goldenKitMarkdown } from "@/lib/goldenKit"
+import { defaultDesignPresetForBranch } from "@/lib/parser/pageTypes"
 import { cn } from "@/lib/utils"
 import type { ContentBlock, KitPage, OutputMode, ParsedKit, ValidationIssue } from "@/lib/parser/pageTypes"
-import { branchTokenOptions, getBranchTokens } from "@/tokens"
+import {
+  branchOptions,
+  designPresetOptions,
+  getBranchInfo,
+  getDesignPreset,
+  type DesignPresetTokens,
+} from "@/tokens"
 
 type ParseResult = {
   kit: ParsedKit
@@ -55,7 +64,27 @@ type BuildStatus =
   | "PDF Generated"
   | "Fillable Generated"
   | "Mockup Generated"
+  | "Package Generated"
   | "Error"
+
+type PackageKey =
+  | "lessonBook"
+  | "couplesWorkbook"
+  | "riseWorkbook"
+  | "landWorkbook"
+
+type PackageMarkdowns = Record<PackageKey, string>
+
+const packageDocuments: {
+  key: PackageKey
+  title: string
+  bodyKey: string
+}[] = [
+  { key: "lessonBook", title: "Lesson Book", bodyKey: "lessonBookMarkdown" },
+  { key: "couplesWorkbook", title: "Couples Workbook", bodyKey: "couplesWorkbookMarkdown" },
+  { key: "riseWorkbook", title: "Rise Individual", bodyKey: "riseWorkbookMarkdown" },
+  { key: "landWorkbook", title: "Land Individual", bodyKey: "landWorkbookMarkdown" },
+]
 
 const savedKits = [
   { name: "GYBS Brand Kit", date: "Golden test", status: "Preview Ready" },
@@ -66,12 +95,20 @@ const savedKits = [
 export function KitFactoryDashboard() {
   const [markdown, setMarkdown] = useState(goldenKitMarkdown)
   const [branch, setBranch] = useState("brand")
+  const [designPreset, setDesignPreset] = useState("brand")
   const [outputMode, setOutputMode] = useState<OutputMode>("split")
+  const [packageMarkdowns, setPackageMarkdowns] = useState<PackageMarkdowns>(() =>
+    createPackageMarkdowns()
+  )
   const [result, setResult] = useState<ParseResult | null>(null)
   const [status, setStatus] = useState<BuildStatus>("Draft")
   const [message, setMessage] = useState("Golden kit loaded.")
   const [isWorking, setIsWorking] = useState(false)
-  const selectedTokens = useMemo(() => getBranchTokens(branch), [branch])
+  const selectedTokens = useMemo(() => getDesignPreset(designPreset, branch), [branch, designPreset])
+  const filteredDesignPresetOptions = useMemo(
+    () => designPresetOptions.filter((option) => option.branch === branch),
+    [branch]
+  )
   const colorwayStyle = useMemo(
     () =>
       ({
@@ -103,7 +140,7 @@ export function KitFactoryDashboard() {
     if (status === "Preview Ready") return 54
     if (status === "PDF Generated") return 76
     if (status === "Mockup Generated") return 88
-    if (status === "Fillable Generated") return 100
+    if (status === "Fillable Generated" || status === "Package Generated") return 100
     return 18
   }, [status])
 
@@ -122,7 +159,7 @@ export function KitFactoryDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ markdown, branch, outputMode }),
+        body: JSON.stringify({ markdown, branch, designPreset, outputMode }),
       })
       const payload = (await response.json()) as ParseResult
       const hasErrors = payload.issues.some((issue) => issue.level === "error")
@@ -158,7 +195,7 @@ export function KitFactoryDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ markdown, branch, outputMode, target }),
+        body: JSON.stringify({ markdown, branch, designPreset, outputMode, target }),
       })
 
       if (!response.ok) {
@@ -199,7 +236,7 @@ export function KitFactoryDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ markdown, branch, outputMode }),
+        body: JSON.stringify({ markdown, branch, designPreset, outputMode }),
       })
 
       if (!response.ok) {
@@ -228,6 +265,101 @@ export function KitFactoryDashboard() {
     } finally {
       setIsWorking(false)
     }
+  }
+
+  async function downloadMeetPackage() {
+    setIsWorking(true)
+    setMessage("Generating Meet at the Heal package.")
+
+    try {
+      const response = await fetch("/api/package/meetatheal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lessonBookMarkdown: packageMarkdowns.lessonBook,
+          couplesWorkbookMarkdown: packageMarkdowns.couplesWorkbook,
+          riseWorkbookMarkdown: packageMarkdowns.riseWorkbook,
+          landWorkbookMarkdown: packageMarkdowns.landWorkbook,
+        }),
+      })
+
+      if (!response.ok) {
+        const payload = (await response.json()) as { issues?: ValidationIssue[] }
+        setResult((current) =>
+          current && payload.issues ? { ...current, issues: payload.issues } : current
+        )
+        setStatus("Error")
+        setMessage("Fix the package markdown before exporting.")
+        return
+      }
+
+      const blob = await response.blob()
+      const filename = filenameFromResponse(response, "meet-at-the-heal-kit-package.zip")
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = filename
+      link.click()
+      URL.revokeObjectURL(url)
+      setStatus("Package Generated")
+      setMessage(`${filename} downloaded.`)
+    } catch {
+      setStatus("Error")
+      setMessage("The Meet at the Heal package could not be generated.")
+    } finally {
+      setIsWorking(false)
+    }
+  }
+
+  async function downloadBrandPackage() {
+    setIsWorking(true)
+    setMessage("Generating Brand style package.")
+
+    try {
+      const response = await fetch("/api/package/brand", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ markdown }),
+      })
+
+      if (!response.ok) {
+        const payload = (await response.json()) as { issues?: ValidationIssue[] }
+        setResult((current) =>
+          current && payload.issues ? { ...current, issues: payload.issues } : current
+        )
+        setStatus("Error")
+        setMessage("Fix the Brand markdown before exporting the package.")
+        return
+      }
+
+      const blob = await response.blob()
+      const filename = filenameFromResponse(response, "brand-style-package.zip")
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = filename
+      link.click()
+      URL.revokeObjectURL(url)
+      setStatus("Package Generated")
+      setMessage(`${filename} downloaded.`)
+    } catch {
+      setStatus("Error")
+      setMessage("The Brand package could not be generated.")
+    } finally {
+      setIsWorking(false)
+    }
+  }
+
+  function updatePackageMarkdown(key: PackageKey, value: string) {
+    setPackageMarkdowns((current) => ({
+      ...current,
+      [key]: value,
+    }))
+    setStatus("Draft")
   }
 
   async function handleFileUpload(file: File | undefined) {
@@ -318,14 +450,61 @@ export function KitFactoryDashboard() {
 
             <div className="flex flex-col gap-3 md:flex-row md:items-end">
               <Field>
-                <FieldLabel>Branch / Colorway</FieldLabel>
-                <Select value={branch} onValueChange={(value) => setBranch(String(value))}>
+                <FieldLabel>Branch</FieldLabel>
+                <Select
+                  value={branch}
+                  onValueChange={(value) => {
+                    const nextBranch = String(value)
+                    const nextPreset = defaultDesignPresetForBranch(nextBranch)
+                    setBranch(nextBranch)
+                    setDesignPreset(nextPreset)
+                    setMarkdown((current) =>
+                      updateMarkdownFrontmatter(current, {
+                        branch: nextBranch,
+                        design_preset: nextPreset,
+                      })
+                    )
+                    setStatus("Draft")
+                    setMessage("Branch and design preset updated.")
+                  }}
+                >
                   <SelectTrigger className="w-full md:w-44">
-                    <span className="flex flex-1 text-left">{selectedTokens.shortName}</span>
+                    <span className="flex flex-1 text-left">{getBranchInfo(branch).shortName}</span>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      {branchTokenOptions.map((option) => (
+                      {branchOptions.map((option) => (
+                        <SelectItem key={option.slug} value={option.slug}>
+                          {option.name}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field>
+                <FieldLabel>Design Preset</FieldLabel>
+                <Select
+                  value={designPreset}
+                  onValueChange={(value) => {
+                    const nextPreset = String(value)
+                    setDesignPreset(nextPreset)
+                    setMarkdown((current) =>
+                      updateMarkdownFrontmatter(current, {
+                        design_preset: nextPreset,
+                      })
+                    )
+                    setStatus("Draft")
+                    setMessage("Design preset updated.")
+                  }}
+                >
+                  <SelectTrigger className="w-full md:w-56">
+                    <span className="flex flex-1 text-left">{selectedTokens.name}</span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {filteredDesignPresetOptions.map((option) => (
                         <SelectItem key={option.slug} value={option.slug}>
                           {option.name}
                         </SelectItem>
@@ -344,6 +523,13 @@ export function KitFactoryDashboard() {
 
                     if (next === "split" || next === "all-in-one") {
                       setOutputMode(next)
+                      setMarkdown((current) =>
+                        updateMarkdownFrontmatter(current, {
+                          output_mode: next,
+                        })
+                      )
+                      setStatus("Draft")
+                      setMessage("Output mode updated.")
                     }
                   }}
                   size="sm"
@@ -405,6 +591,22 @@ export function KitFactoryDashboard() {
                 </CardContent>
               </Card>
 
+              {branch === "brand" && (
+                <BrandPackagePanel
+                  isWorking={isWorking}
+                  onDownloadPackage={downloadBrandPackage}
+                />
+              )}
+
+              {branch === "meetatheal" && (
+                <MeetPackagePanel
+                  isWorking={isWorking}
+                  markdowns={packageMarkdowns}
+                  onDownloadPackage={downloadMeetPackage}
+                  onUpdateMarkdown={updatePackageMarkdown}
+                />
+              )}
+
               <ValidationPanel
                 blockingErrors={blockingErrors}
                 isWorking={isWorking}
@@ -414,9 +616,11 @@ export function KitFactoryDashboard() {
               />
             </section>
 
-            <section className="grid min-w-0 gap-4 xl:grid-rows-[1fr_auto]">
-              <PagePreview kit={result?.kit ?? null} />
+            <section className="order-first grid min-w-0 gap-4 xl:order-none xl:grid-rows-[1fr_auto]">
+              <PagePreview branch={branch} designPreset={designPreset} kit={result?.kit ?? null} />
               <OutputPanel
+                branchLabel={getBranchInfo(branch).shortName}
+                designLabel={selectedTokens.name}
                 isWorking={isWorking}
                 onDownloadFillable={() => downloadOutput("fillable")}
                 onDownloadMockup={downloadMockup}
@@ -510,18 +714,129 @@ function ValidationPanel({
   )
 }
 
-function PagePreview({ kit }: { kit: ParsedKit | null }) {
+function BrandPackagePanel({
+  isWorking,
+  onDownloadPackage,
+}: {
+  isWorking: boolean
+  onDownloadPackage: () => void
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <div>
+          <CardTitle>Brand Package</CardTitle>
+          <CardDescription>One markdown file, two Brand product styles</CardDescription>
+        </div>
+        <CardAction>
+          <Button disabled={isWorking} onClick={onDownloadPackage} variant="outline">
+            {isWorking ? (
+              <LoaderCircleIcon data-icon="inline-start" />
+            ) : (
+              <PackageIcon data-icon="inline-start" />
+            )}
+            Generate Brand ZIP
+          </Button>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="rounded-lg border bg-card p-3">
+            <div className="text-sm font-medium">Brand Signature</div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              Plum, orchid, and gold business styling
+            </div>
+          </div>
+          <div className="rounded-lg border bg-card p-3">
+            <div className="text-sm font-medium">Brand Land</div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              Same Brand content with the grounded Land palette
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function MeetPackagePanel({
+  isWorking,
+  markdowns,
+  onDownloadPackage,
+  onUpdateMarkdown,
+}: {
+  isWorking: boolean
+  markdowns: PackageMarkdowns
+  onDownloadPackage: () => void
+  onUpdateMarkdown: (key: PackageKey, value: string) => void
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <div>
+          <CardTitle>Meet at the Heal Package</CardTitle>
+          <CardDescription>Four documents, four PDFs, one ZIP export</CardDescription>
+        </div>
+        <CardAction>
+          <Button disabled={isWorking} onClick={onDownloadPackage} variant="outline">
+            {isWorking ? (
+              <LoaderCircleIcon data-icon="inline-start" />
+            ) : (
+              <PackageIcon data-icon="inline-start" />
+            )}
+            Generate Package
+          </Button>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="lessonBook">
+          <TabsList className="flex w-full flex-wrap justify-start">
+            {packageDocuments.map((document) => (
+              <TabsTrigger key={document.key} value={document.key}>
+                {document.title}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          {packageDocuments.map((document) => (
+            <TabsContent className="mt-3" key={document.key} value={document.key}>
+              <Textarea
+                aria-label={`${document.title} markdown`}
+                className="h-[260px] resize-none font-mono text-xs leading-6"
+                onChange={(event) => onUpdateMarkdown(document.key, event.target.value)}
+                value={markdowns[document.key]}
+              />
+            </TabsContent>
+          ))}
+        </Tabs>
+      </CardContent>
+    </Card>
+  )
+}
+
+function PagePreview({
+  branch,
+  designPreset,
+  kit,
+}: {
+  branch: string
+  designPreset: string
+  kit: ParsedKit | null
+}) {
   const pages = kit?.pages ?? []
+  const tokens = getDesignPreset(designPreset, branch)
+  const previewStyle = makePreviewStyle(tokens)
   const [selectedIndex, setSelectedIndex] = useState(0)
   const safeIndex = pages.length > 0 ? Math.min(selectedIndex, pages.length - 1) : 0
   const selectedPage = pages[safeIndex] ?? null
 
   return (
-    <Card className="min-h-[440px]">
+    <Card className="min-h-[520px]" style={previewStyle}>
       <CardHeader>
         <div>
-          <CardTitle>Preview</CardTitle>
-          <CardDescription>{pages.length} pages detected</CardDescription>
+          <CardTitle>Live Design Preview</CardTitle>
+          <CardDescription>
+            {pages.length} pages detected - {tokens.name}
+          </CardDescription>
         </div>
         <CardAction>
           <Badge variant="outline">US Letter</Badge>
@@ -529,7 +844,7 @@ function PagePreview({ kit }: { kit: ParsedKit | null }) {
       </CardHeader>
       <CardContent>
         <div className="grid gap-4 lg:grid-cols-[156px_1fr]">
-          <div className="max-h-[430px] overflow-auto rounded-lg border">
+          <div className="order-2 max-h-[240px] overflow-auto rounded-lg border lg:order-1 lg:max-h-[430px]">
             {pages.map((page, index) => (
               <button
                 aria-pressed={safeIndex === index}
@@ -542,6 +857,14 @@ function PagePreview({ kit }: { kit: ParsedKit | null }) {
                 data-testid={`preview-page-${index + 1}`}
                 key={page.id}
                 onClick={() => setSelectedIndex(index)}
+                style={
+                  safeIndex === index
+                    ? {
+                        background: tokens.accentSoft,
+                        color: tokens.ink,
+                      }
+                    : undefined
+                }
                 type="button"
               >
                 <span className="text-muted-foreground">{index + 1}</span>
@@ -553,10 +876,281 @@ function PagePreview({ kit }: { kit: ParsedKit | null }) {
             ))}
           </div>
 
-          <MiniPagePreview kit={kit} page={selectedPage} pageNumber={safeIndex + 1} total={pages.length} />
+          <div className="order-1 lg:order-2">
+            <MiniPagePreview
+              kit={kit}
+              page={selectedPage}
+              pageNumber={safeIndex + 1}
+              selectedBranch={branch}
+              tokens={tokens}
+              total={pages.length}
+            />
+          </div>
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function makePreviewStyle(tokens: DesignPresetTokens) {
+  return {
+    "--preview-paper": tokens.paper,
+    "--preview-paper-alt": tokens.paperAlt,
+    "--preview-ink": tokens.ink,
+    "--preview-muted": tokens.mutedInk,
+    "--preview-accent": tokens.accent,
+    "--preview-soft": tokens.accentSoft,
+    "--preview-plum": tokens.plum,
+    "--preview-gold": tokens.gold,
+    "--preview-sage": tokens.sage,
+    "--preview-rose": tokens.rose,
+    "--preview-blue": tokens.blue,
+    "--preview-line": tokens.line,
+  } as CSSProperties
+}
+
+function MiniPreviewDecorations({ tokens }: { tokens: DesignPresetTokens }) {
+  return (
+    <div aria-hidden="true" className="absolute inset-0 z-0 overflow-hidden">
+      <span
+        className="absolute inset-0 opacity-[0.14]"
+        style={{
+          backgroundImage: `radial-gradient(${tokens.ink} 0.45px, transparent 0.55px), radial-gradient(${tokens.paperAlt} 0.5px, transparent 0.6px)`,
+          backgroundPosition: "0 0, 5px 6px",
+          backgroundSize: "8px 8px, 10px 10px",
+        }}
+      />
+      <span
+        className="absolute -right-12 -top-12 size-32 rounded-full opacity-30"
+        style={{ background: tokens.accentSoft }}
+      />
+      <span
+        className="absolute -bottom-16 -left-16 size-44 rounded-full opacity-40"
+        style={{ border: `1px solid ${tokens.gold}` }}
+      />
+      <span
+        className="absolute right-7 top-8 h-12 w-12 opacity-65"
+        style={{
+          backgroundImage: `radial-gradient(${tokens.accent} 1.5px, transparent 1.5px)`,
+          backgroundSize: "10px 10px",
+        }}
+      />
+
+      {tokens.styleFamily === "brand" && (
+        <>
+          <span
+            className="absolute -left-14 -top-10 size-44 rounded-full opacity-30"
+            style={{ background: tokens.plum }}
+          />
+          <span
+            className="absolute left-8 top-3 size-32 rounded-full opacity-30"
+            style={{ background: tokens.lilac }}
+          />
+          <span
+            className="absolute -left-8 bottom-4 size-36 rounded-full opacity-70"
+            style={{ border: `1px solid ${tokens.gold}` }}
+          />
+          <span
+            className="absolute bottom-8 left-9 size-12 rounded-full shadow-sm"
+            style={{
+              border: `7px solid ${tokens.ink}`,
+              background: `radial-gradient(circle, ${tokens.gold} 0 30%, ${tokens.paper} 31%)`,
+            }}
+          />
+          <span
+            className="absolute bottom-10 left-[45%] h-10 w-20 rotate-[-6deg] rounded border shadow-sm"
+            style={{ borderColor: tokens.line, background: tokens.paper }}
+          >
+            <span
+              className="absolute left-4 right-4 top-4 h-px"
+              style={{ background: tokens.accent }}
+            />
+            <span
+              className="absolute left-4 right-4 top-6 h-px opacity-45"
+              style={{ background: tokens.ink }}
+            />
+          </span>
+          <span
+            className="absolute bottom-8 right-8 h-16 w-20 rotate-[3deg] rounded-sm shadow-sm"
+            style={{ background: tokens.ink }}
+          >
+            <span
+              className="absolute -bottom-2 -left-1 h-2 w-[5.5rem] rounded-sm opacity-80"
+              style={{ background: tokens.ink }}
+            />
+          </span>
+          <span className="absolute bottom-24 right-16 h-16 w-8 opacity-70">
+            <span className="absolute bottom-0 left-2 size-5 rounded-b-sm" style={{ background: tokens.gold }} />
+            <span className="absolute bottom-5 left-5 h-9 w-px" style={{ background: tokens.sage }} />
+            <span className="absolute bottom-9 left-2 h-2 w-3 rounded-full" style={{ background: tokens.sage }} />
+            <span className="absolute bottom-7 left-6 h-2 w-3 rounded-full" style={{ background: tokens.sage }} />
+          </span>
+        </>
+      )}
+
+      {tokens.styleFamily === "rise" && (
+        <>
+          <span
+            className="absolute -right-16 top-12 h-32 w-44 rotate-[-28deg] rounded-[48%] opacity-35"
+            style={{
+              background: `linear-gradient(105deg, transparent 0 20%, ${tokens.rose} 20% 58%, transparent 59%)`,
+            }}
+          />
+          <span
+            className="absolute -left-10 top-8 h-36 w-24 rotate-[15deg] rounded-[48%] opacity-25"
+            style={{
+              background: `linear-gradient(112deg, transparent 0 28%, ${tokens.rose} 28% 62%, transparent 63%)`,
+            }}
+          />
+          <span
+            className="absolute bottom-12 left-4 h-44 w-20 rotate-[18deg] opacity-30"
+            style={{
+              background: `linear-gradient(125deg, transparent 0 32%, ${tokens.lilac} 32% 68%, transparent 69%)`,
+            }}
+          />
+          <span
+            className="absolute bottom-28 left-1/2 h-5 w-8 -translate-x-1/2 opacity-80"
+            style={{
+              background: tokens.accent,
+              clipPath:
+                "polygon(0 88%, 13% 34%, 32% 64%, 50% 8%, 68% 64%, 87% 34%, 100% 88%, 100% 100%, 0 100%)",
+            }}
+          />
+          <span
+            className="absolute bottom-7 right-14 h-16 w-9 rotate-[-7deg] rounded-b-full rounded-t-md border-2 opacity-75"
+            style={{
+              borderColor: tokens.rose,
+              background: `linear-gradient(to top, ${tokens.accentSoft} 0 45%, transparent 46%)`,
+            }}
+          />
+          <span
+            className="absolute bottom-8 right-24 h-10 w-16 rounded-md border opacity-75 shadow-sm"
+            style={{
+              borderColor: tokens.accent,
+              background: `linear-gradient(to bottom, ${tokens.paper} 0 32%, ${tokens.rose} 33% 48%, ${tokens.paper} 49% 68%, ${tokens.rose} 69%)`,
+            }}
+          />
+        </>
+      )}
+
+      {tokens.styleFamily === "land" && (
+        <>
+          <span
+            className="absolute -left-6 -top-10 h-52 w-96 opacity-30"
+            style={{
+              background: tokens.sage,
+              clipPath: "polygon(0 0, 100% 0, 48% 100%, 0 82%)",
+            }}
+          />
+          <span
+            className="absolute inset-0 opacity-25"
+            style={{
+              backgroundImage: `repeating-linear-gradient(155deg, transparent 0 17px, ${tokens.gold} 18px 19px, transparent 20px 36px)`,
+            }}
+          />
+          <span
+            className="absolute bottom-2 right-0 h-32 w-44 opacity-40"
+            style={{
+              background: tokens.sage,
+              clipPath: "polygon(0 85%, 18% 52%, 32% 72%, 52% 32%, 76% 78%, 90% 54%, 100% 86%, 100% 100%, 0 100%)",
+            }}
+          />
+          <span
+            className="absolute bottom-14 right-16 size-16 rounded-full border-2 opacity-75 shadow-sm"
+            style={{
+              borderColor: tokens.gold,
+              background: `radial-gradient(circle, ${tokens.gold} 0 7%, transparent 8%), ${tokens.paper}`,
+            }}
+          >
+            <span
+              className="absolute left-7 top-3 h-10 w-2 rotate-[38deg]"
+              style={{
+                background: tokens.ink,
+                clipPath:
+                  "polygon(50% 0, 100% 47%, 58% 47%, 58% 100%, 42% 100%, 42% 47%, 0 47%)",
+              }}
+            />
+          </span>
+          <span
+            className="absolute bottom-8 right-24 h-4 w-24 rotate-[-12deg] rounded-full opacity-75 shadow-sm"
+            style={{
+              background: `linear-gradient(90deg, ${tokens.rose}, ${tokens.ink})`,
+            }}
+          />
+        </>
+      )}
+
+      {tokens.styleFamily === "rebuild" && (
+        <>
+          <span
+            className="absolute -right-14 top-10 h-56 w-48 rounded-full opacity-50 blur-sm"
+            style={{ background: tokens.blue }}
+          />
+          <span
+            className="absolute bottom-0 left-2 h-36 w-28 rounded-full opacity-35 blur-sm"
+            style={{ background: tokens.lilac }}
+          />
+          <span
+            className="absolute right-0 top-12 h-28 w-40 opacity-45"
+            style={{
+              backgroundImage: `repeating-linear-gradient(145deg, transparent 0 17px, ${tokens.gold} 18px 19px, transparent 20px 34px)`,
+            }}
+          />
+          <span
+            className="absolute bottom-7 right-10 h-12 w-16 rounded border opacity-75 shadow-sm"
+            style={{ borderColor: tokens.gold, background: tokens.paperAlt }}
+          />
+          <span
+            className="absolute bottom-12 right-20 h-14 w-14 rotate-[-4deg] rounded border-2 bg-white/45 opacity-75 shadow-sm"
+            style={{ borderColor: tokens.gold, color: tokens.ink }}
+          >
+            <span className="absolute inset-x-0 top-5 text-center font-heading text-xs italic">new</span>
+          </span>
+          <span
+            className="absolute bottom-6 right-28 h-14 w-10 rounded-b-xl rounded-t-sm border opacity-75 shadow-sm"
+            style={{
+              borderColor: tokens.blue,
+              background: `linear-gradient(to top, ${tokens.blue}55 0 44%, ${tokens.paper} 45%)`,
+            }}
+          />
+          <span className="absolute bottom-12 left-8 h-24 w-10 opacity-55">
+            <span className="absolute bottom-0 left-5 h-20 w-px" style={{ background: tokens.sage }} />
+            <span className="absolute bottom-16 left-1 h-3 w-4 rounded-full" style={{ background: tokens.sage }} />
+            <span className="absolute bottom-11 left-6 h-3 w-4 rounded-full" style={{ background: tokens.sage }} />
+            <span className="absolute bottom-7 left-0 h-3 w-4 rounded-full" style={{ background: tokens.sage }} />
+          </span>
+        </>
+      )}
+
+      {tokens.styleFamily === "meetatheal" && (
+        <>
+          <span
+            className="absolute bottom-14 left-1/2 h-28 w-52 -translate-x-1/2 opacity-45"
+            style={{
+              background: `radial-gradient(ellipse at 42% 100%, transparent 0 43%, ${tokens.gold} 44% 45%, transparent 46%), radial-gradient(ellipse at 58% 100%, transparent 0 43%, ${tokens.rose} 44% 45%, transparent 46%)`,
+            }}
+          />
+          <span
+            className="absolute bottom-4 right-5 h-20 w-28 opacity-30"
+            style={{
+              background: tokens.blue,
+              clipPath: "polygon(0 88%, 22% 52%, 36% 70%, 58% 34%, 78% 78%, 90% 56%, 100% 88%, 100% 100%, 0 100%)",
+            }}
+          />
+          <span
+            className="absolute left-1/2 top-24 h-9 w-9 -translate-x-1/2 rotate-[-45deg] rounded opacity-65"
+            style={{ background: tokens.rose }}
+          >
+            <span className="absolute -top-[18px] left-0 size-9 rounded-full" style={{ background: tokens.rose }} />
+            <span className="absolute left-[18px] top-0 size-9 rounded-full" style={{ background: tokens.rose }} />
+          </span>
+          <span
+            className="absolute bottom-8 right-9 h-9 w-16 rotate-[-4deg] rounded border bg-white/50 opacity-75 shadow-sm"
+            style={{ borderColor: tokens.gold }}
+          />
+        </>
+      )}
+    </div>
   )
 }
 
@@ -564,26 +1158,45 @@ function MiniPagePreview({
   kit,
   page,
   pageNumber,
+  selectedBranch,
+  tokens,
   total,
 }: {
   kit: ParsedKit | null
   page: KitPage | null
   pageNumber: number
+  selectedBranch: string
+  tokens: DesignPresetTokens
   total: number
 }) {
   const section = page?.section || page?.rawType || kit?.branch || "brand"
+  const footer = getBranchInfo(selectedBranch).footer
+  const showRibbon = page?.type !== "cover" && page?.type !== "closing"
 
   return (
     <div
-      className="relative mx-auto aspect-[8.5/11] w-full max-w-[360px] overflow-hidden rounded-lg border bg-brand-paper shadow-sm"
+      className={cn(
+        "relative mx-auto aspect-[8.5/11] w-full max-w-[400px] overflow-hidden rounded-lg border shadow-md",
+        "border-[var(--preview-line)] bg-[var(--preview-paper)] text-[var(--preview-ink)]"
+      )}
       data-testid="selected-page-preview"
     >
-      <div className="flex h-9 items-center bg-brand-plum px-5 text-[8px] font-bold uppercase tracking-[0.28em] text-white/90">
-        {section}
-      </div>
-      <MiniPageBody kit={kit} page={page} />
-      <div className="absolute bottom-5 left-7 right-7 flex justify-between border-t border-brand-line pt-3 text-[8px] text-muted-foreground">
-        <span>Best Collective Brand LLC</span>
+      <MiniPreviewDecorations tokens={tokens} />
+      {showRibbon && (
+        <div
+          className={cn(
+            "relative z-10 flex h-9 items-center px-5 text-[8px] font-bold uppercase tracking-[0.28em]",
+            tokens.styleFamily === "land"
+              ? "bg-[var(--preview-plum)] text-[var(--preview-paper)]"
+              : "border-b border-[var(--preview-line)] bg-transparent text-[var(--preview-accent)]"
+          )}
+        >
+          {section}
+        </div>
+      )}
+      <MiniPageBody kit={kit} page={page} tokens={tokens} />
+      <div className="absolute bottom-5 left-7 right-7 z-20 flex justify-between border-t border-[var(--preview-line)] pt-3 text-[8px] text-muted-foreground">
+        <span>{footer}</span>
         <span>
           {total > 0 ? pageNumber : 0} / {total}
         </span>
@@ -592,35 +1205,80 @@ function MiniPagePreview({
   )
 }
 
-function MiniPageBody({ kit, page }: { kit: ParsedKit | null; page: KitPage | null }) {
+function MiniPageBody({
+  kit,
+  page,
+  tokens,
+}: {
+  kit: ParsedKit | null
+  page: KitPage | null
+  tokens: DesignPresetTokens
+}) {
   if (!page) {
     return (
-      <div className="p-7">
-        <div className="font-heading text-3xl font-semibold text-brand-plum">Kit Preview</div>
+      <div className="relative z-10 p-7">
+        <div className="font-heading text-3xl font-semibold text-[var(--preview-ink)]">Kit Preview</div>
       </div>
     )
   }
 
   if (page.type === "cover") {
+    const coverTitle = kit?.title || page.title
+    const longCoverTitle = coverTitle.length > 24
+
     return (
-      <div className="mx-7 mt-8 rounded-lg bg-brand-plum px-5 py-7 text-center text-brand-paper">
-        <div className="text-[8px] font-semibold uppercase tracking-[0.34em] text-primary">
-          {page.section || "Preview"}
+      <div
+        className={cn(
+          "relative z-10 flex h-[calc(100%-72px)] flex-col px-8 py-9",
+          tokens.styleFamily === "land" || tokens.styleFamily === "rebuild"
+            ? "items-start justify-center text-left"
+            : "items-center justify-center text-center"
+        )}
+      >
+        <div
+          className={cn(
+            "mb-5 text-[9px] font-bold uppercase tracking-[0.34em]",
+            tokens.styleFamily === "land" ? "text-[var(--preview-gold)]" : "text-[var(--preview-accent)]"
+          )}
+        >
+          {tokens.shortName}
         </div>
-        <div className="mx-auto mt-3 max-w-40 break-words font-heading text-[19px] font-semibold leading-[0.92]">
-          {kit?.title || page.title}
+        <div
+          className={cn(
+            "max-w-[270px] break-words font-heading font-semibold uppercase leading-[0.92]",
+            tokens.styleFamily === "land" ? "text-[33px]" : "text-[35px]",
+            tokens.styleFamily === "rebuild" && "text-[32px]",
+            longCoverTitle && "max-w-[300px] text-[30px] leading-[0.98]",
+            longCoverTitle && tokens.styleFamily === "land" && "text-[29px]",
+            longCoverTitle && tokens.styleFamily === "rebuild" && "text-[28px]",
+            longCoverTitle && tokens.styleFamily === "meetatheal" && "text-[29px]",
+            tokens.styleFamily === "meetatheal" && "normal-case"
+          )}
+          style={{ color: tokens.ink }}
+        >
+          {coverTitle}
         </div>
-        <div className="mx-auto mt-3 h-px w-12 bg-primary" />
+        <div className="mt-5 h-px w-16 bg-[var(--preview-accent)]" />
+        {page.subtitle && (
+          <div className="mt-5 max-w-[250px] text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--preview-muted)]">
+            {page.subtitle}
+          </div>
+        )}
+        {page.tagline && (
+          <div className="mt-8 max-w-[230px] text-[9px] font-bold uppercase tracking-[0.22em] text-[var(--preview-muted)]">
+            {page.tagline}
+          </div>
+        )}
       </div>
     )
   }
 
   if (page.type === "closing") {
     return (
-      <div className="p-5">
+      <div className="relative z-10 p-5">
         <MiniPageHeading page={page} />
-        <div className="mt-4 rounded-lg bg-brand-plum p-5 text-center text-brand-paper">
-          <div className="mx-auto mb-4 size-3 rotate-45 bg-brand-paper" />
+        <div className="mt-4 rounded-lg bg-[var(--preview-plum)] p-5 text-center text-[var(--preview-paper)]">
+          <div className="mx-auto mb-4 size-3 rotate-45 bg-[var(--preview-paper)]" />
           <MiniContent blocks={page.content} compact />
         </div>
       </div>
@@ -628,7 +1286,7 @@ function MiniPageBody({ kit, page }: { kit: ParsedKit | null; page: KitPage | nu
   }
 
   return (
-    <div className="p-5">
+    <div className="relative z-10 p-5">
       <MiniPageHeading page={page} />
       <MiniContent blocks={page.content} />
       <MiniFillablePreview page={page} />
@@ -642,7 +1300,7 @@ function MiniPageHeading({ page }: { page: KitPage }) {
       <div className="text-[8px] font-bold uppercase tracking-[0.28em] text-primary">
         {page.section || page.rawType}
       </div>
-      <div className="mt-2 font-heading text-lg font-semibold leading-tight text-brand-plum">
+      <div className="mt-2 font-heading text-lg font-semibold leading-tight text-[var(--preview-ink)]">
         {page.title || page.rawType}
       </div>
     </>
@@ -677,13 +1335,26 @@ function MiniContent({ blocks, compact = false }: { blocks: ContentBlock[]; comp
           )
         }
 
+        if (block.type === "check-list") {
+          return (
+            <ul className="grid gap-1.5 text-[10px] leading-5 text-muted-foreground" key={`${block.type}-${index}`}>
+              {block.items.slice(0, 4).map((item) => (
+                <li className="grid grid-cols-[12px_1fr] gap-2" key={item}>
+                  <span className="mt-1 size-2 rounded-full bg-primary" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+
         if (block.type === "quote") {
           return (
             <div
-              className="rounded-lg border-l-4 border-l-brand-plum bg-[var(--brand-soft)] p-4"
+              className="rounded-lg border-l-4 border-l-[var(--preview-plum)] bg-[var(--preview-soft)] p-4"
               key={`${block.type}-${index}`}
             >
-              <div className="font-heading text-lg italic leading-tight text-brand-plum">{block.text}</div>
+              <div className="font-heading text-lg italic leading-tight text-[var(--preview-ink)]">{block.text}</div>
               {block.attribution && (
                 <div className="mt-3 text-[8px] font-semibold uppercase tracking-[0.22em] text-primary">
                   {block.attribution}
@@ -696,22 +1367,33 @@ function MiniContent({ blocks, compact = false }: { blocks: ContentBlock[]; comp
         if (block.type === "key-term") {
           return (
             <div
-              className="rounded-lg border-l-4 border-l-brand-plum bg-[var(--brand-soft)] p-4"
+              className="rounded-lg border-l-4 border-l-[var(--preview-plum)] bg-[var(--preview-soft)] p-4"
               key={`${block.type}-${index}`}
             >
-              <div className="text-[8px] font-bold uppercase tracking-[0.24em] text-brand-plum">Key Term</div>
-              <div className="mt-2 font-heading text-xl font-semibold text-brand-plum">{block.term}</div>
+              <div className="text-[8px] font-bold uppercase tracking-[0.24em] text-[var(--preview-ink)]">Key Term</div>
+              <div className="mt-2 font-heading text-xl font-semibold text-[var(--preview-ink)]">{block.term}</div>
               <p className="mt-2 line-clamp-3 text-[10px] leading-5 text-muted-foreground">{block.text}</p>
+            </div>
+          )
+        }
+
+        if (block.type === "alert") {
+          return (
+            <div
+              className="rounded-lg border-l-4 border-l-primary bg-white/55 p-3 text-[10px] leading-5 text-[var(--preview-ink)]"
+              key={`${block.type}-${index}`}
+            >
+              {block.text}
             </div>
           )
         }
 
         return (
           <div
-            className="rounded-lg border-l-4 border-l-primary bg-white/55 p-3 text-[10px] leading-5 text-brand-plum"
+            className="rounded-lg border border-[var(--preview-line)] border-l-4 border-l-primary bg-white/45 p-3"
             key={`${block.type}-${index}`}
           >
-            {block.text}
+            <div className="font-heading text-xs italic leading-tight text-[var(--preview-ink)]">{block.text}</div>
           </div>
         )
       })}
@@ -725,14 +1407,14 @@ function MiniFillablePreview({ page }: { page: KitPage }) {
       <div className="mt-3 grid gap-2">
         {page.prompts.slice(0, 1).map((prompt, index) => (
           <div
-            className="rounded-lg border border-brand-line border-l-4 border-l-primary bg-white/45 p-2"
+            className="rounded-lg border border-[var(--preview-line)] border-l-4 border-l-primary bg-white/50 p-2 shadow-sm"
             key={`${prompt}-${index}`}
           >
-            <div className="font-heading text-xs italic leading-tight text-brand-plum">{prompt}</div>
+            <div className="font-heading text-xs italic leading-tight text-[var(--preview-ink)]">{prompt}</div>
             <div className="mt-2 grid gap-1.5">
-              <span className="h-px bg-brand-line" />
-              <span className="h-px bg-brand-line" />
-              <span className="h-px bg-brand-line" />
+              <span className="h-px bg-[var(--preview-line)]" />
+              <span className="h-px bg-[var(--preview-line)]" />
+              <span className="h-px bg-[var(--preview-line)]" />
             </div>
           </div>
         ))}
@@ -741,14 +1423,16 @@ function MiniFillablePreview({ page }: { page: KitPage }) {
   }
 
   if (page.type === "checklist") {
+    const checks = page.checks.length > 0 ? page.checks : page.prompts
+
     return (
       <div className="mt-3 grid gap-2">
-        {page.prompts.slice(0, 5).map((prompt, index) => (
+        {checks.slice(0, 5).map((prompt, index) => (
           <div
-            className="grid grid-cols-[14px_1fr] gap-2 border-b border-brand-line pb-2 text-[10px]"
+            className="grid grid-cols-[14px_1fr] gap-2 border-b border-[var(--preview-line)] pb-2 text-[10px]"
             key={`${prompt}-${index}`}
           >
-            <span className="mt-0.5 size-3 rounded-sm border border-[#d3c5eb]" />
+            <span className="mt-0.5 size-3 rounded-sm border border-[var(--preview-accent)]" />
             <span className="line-clamp-1">{prompt}</span>
           </div>
         ))}
@@ -757,19 +1441,21 @@ function MiniFillablePreview({ page }: { page: KitPage }) {
   }
 
   if (page.type === "tracker") {
+    const headers = page.tableHeaders.length > 0 ? page.tableHeaders.slice(0, 4) : ["Category", "Goal", "Actual", "Notes"]
+    const rows = page.tableRows.length > 0 ? page.tableRows.slice(0, 3) : ["", "", ""]
+
     return (
-      <div className="mt-3 overflow-hidden rounded-lg border border-brand-line text-[8px]">
-        <div className="grid grid-cols-4 bg-[var(--brand-soft)] font-semibold uppercase tracking-[0.16em] text-brand-plum">
-          <span className="p-2">Step</span>
-          <span className="p-2">Owner</span>
-          <span className="p-2">Status</span>
-          <span className="p-2">Notes</span>
+      <div className="mt-3 overflow-hidden rounded-lg border border-[var(--preview-line)] text-[8px]">
+        <div className="grid grid-cols-4 bg-[var(--preview-soft)] font-semibold uppercase tracking-[0.16em] text-[var(--preview-ink)]">
+          {headers.map((header) => (
+            <span className="p-2" key={header}>{header}</span>
+          ))}
         </div>
-        {Array.from({ length: 3 }).map((_, index) => (
-          <div className="grid grid-cols-4 border-t border-brand-line" key={index}>
-            <span className="h-8 border-r border-brand-line" />
-            <span className="h-8 border-r border-brand-line" />
-            <span className="h-8 border-r border-brand-line" />
+        {rows.map((row, index) => (
+          <div className="grid grid-cols-4 border-t border-[var(--preview-line)]" key={index}>
+            <span className="h-8 border-r border-[var(--preview-line)] p-2">{row}</span>
+            <span className="h-8 border-r border-[var(--preview-line)]" />
+            <span className="h-8 border-r border-[var(--preview-line)]" />
             <span className="h-8" />
           </div>
         ))}
@@ -777,17 +1463,39 @@ function MiniFillablePreview({ page }: { page: KitPage }) {
     )
   }
 
-  if (page.type === "reflection") {
+  if (page.type === "action-plan") {
     return (
       <div className="mt-3 grid gap-2">
-        {page.prompts.slice(0, 2).map((prompt, index) => (
-          <div className="rounded-lg bg-brand-plum p-3 text-brand-paper" key={`${prompt}-${index}`}>
-            <div className="font-heading text-xs italic leading-tight">{prompt}</div>
-            <div className="mt-2 grid gap-1.5">
-              <span className="h-px bg-white/45" />
-              <span className="h-px bg-white/45" />
-              <span className="h-px bg-white/45" />
-            </div>
+        {page.actions.slice(0, 3).map((action, index) => (
+          <div className="grid grid-cols-[18px_1fr] gap-2 text-[10px]" key={`${action}-${index}`}>
+            <span className="flex size-5 items-center justify-center rounded-full bg-[var(--preview-plum)] text-[9px] text-[var(--preview-paper)]">
+              {index + 1}
+            </span>
+            <span className="line-clamp-1 border-b border-[var(--preview-line)] pb-2">{action}</span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (page.type === "notes") {
+    return (
+      <div className="mt-3 grid gap-3">
+        {Array.from({ length: 7 }).map((_, index) => (
+          <span className="h-px bg-[var(--preview-line)]" key={index} />
+        ))}
+      </div>
+    )
+  }
+
+  if (page.type === "reflection" || page.type === "lesson-continue") {
+    const reflects = page.reflects.length > 0 ? page.reflects : page.prompts
+
+    return (
+      <div className="mt-3 grid gap-2">
+        {reflects.slice(0, 2).map((prompt, index) => (
+          <div className="rounded-lg border border-[var(--preview-line)] border-l-4 border-l-primary bg-white/45 p-3" key={`${prompt}-${index}`}>
+            <div className="font-heading text-xs italic leading-tight text-[var(--preview-ink)]">{prompt}</div>
           </div>
         ))}
       </div>
@@ -798,6 +1506,8 @@ function MiniFillablePreview({ page }: { page: KitPage }) {
 }
 
 function OutputPanel({
+  branchLabel,
+  designLabel,
   isWorking,
   onDownloadFillable,
   onDownloadMockup,
@@ -806,6 +1516,8 @@ function OutputPanel({
   progressValue,
   status,
 }: {
+  branchLabel: string
+  designLabel: string
   isWorking: boolean
   onDownloadFillable: () => void
   onDownloadMockup: () => void
@@ -819,7 +1531,9 @@ function OutputPanel({
       <CardHeader>
         <div>
           <CardTitle>Build Status</CardTitle>
-          <CardDescription>{status}</CardDescription>
+          <CardDescription>
+            {status} - {branchLabel} / {designLabel}
+          </CardDescription>
         </div>
         <CardAction>
           <Badge variant={status === "Error" ? "destructive" : "secondary"}>{status}</Badge>
@@ -918,10 +1632,144 @@ function filenameFromResponse(response: Response, fallback: string) {
   return match?.[1] ?? fallback
 }
 
+function updateMarkdownFrontmatter(source: string, fields: Record<string, string>) {
+  const newline = source.includes("\r\n") ? "\r\n" : "\n"
+  const frontmatterMatch = source.match(/^---\r?\n([\s\S]*?)\r?\n---/)
+  const fieldEntries = Object.entries(fields)
+
+  if (!frontmatterMatch) {
+    const frontmatter = fieldEntries.map(([key, value]) => `${key}: ${value}`).join(newline)
+
+    return `---${newline}${frontmatter}${newline}---${newline}${newline}${source}`
+  }
+
+  const seen = new Set<string>()
+  const block = frontmatterMatch[1].split(/\r?\n/)
+  const nextBlock = block.map((line) => {
+    const keyMatch = line.match(/^([A-Za-z0-9_-]+):/)
+    const key = keyMatch?.[1]
+
+    if (key && Object.hasOwn(fields, key)) {
+      seen.add(key)
+      return `${key}: ${fields[key]}`
+    }
+
+    return line
+  })
+
+  for (const [key, value] of fieldEntries) {
+    if (!seen.has(key)) {
+      nextBlock.push(`${key}: ${value}`)
+    }
+  }
+
+  return `${source.slice(0, frontmatterMatch.index ?? 0)}---${newline}${nextBlock.join(
+    newline
+  )}${newline}---${source.slice(frontmatterMatch[0].length)}`
+}
+
 function fallbackFilename(kind: "render" | "fillable", target: string) {
   if (kind === "fillable") {
     return target === "complete" ? "kit-fillable.pdf" : "kit-workbook-fillable.pdf"
   }
 
   return target === "complete" ? "kit-complete.pdf" : "kit-lesson-guide.pdf"
+}
+
+function createPackageMarkdowns(): PackageMarkdowns {
+  return {
+    lessonBook: createMeetAtTheHealMarkdown({
+      title: "Meet at the Heal Lesson Book",
+      subtitle: "Two Worlds. One Choice. A Stronger We.",
+      designPreset: "meetatheal",
+      pageType: "lesson",
+    }),
+    couplesWorkbook: createMeetAtTheHealMarkdown({
+      title: "Meet at the Heal Couples Workbook",
+      subtitle: "Let's heal together.",
+      designPreset: "meetatheal",
+      pageType: "workbook",
+    }),
+    riseWorkbook: createMeetAtTheHealMarkdown({
+      title: "Meet at the Heal Rise Individual Workbook",
+      subtitle: "Come back to yourself.",
+      designPreset: "meetatheal-rise",
+      pageType: "workbook",
+    }),
+    landWorkbook: createMeetAtTheHealMarkdown({
+      title: "Meet at the Heal Land Individual Workbook",
+      subtitle: "Build. Grow. Stand Firm.",
+      designPreset: "meetatheal-land",
+      pageType: "workbook",
+    }),
+  }
+}
+
+function createMeetAtTheHealMarkdown({
+  title,
+  subtitle,
+  designPreset,
+  pageType,
+}: {
+  title: string
+  subtitle: string
+  designPreset: string
+  pageType: "lesson" | "workbook"
+}) {
+  const innerPage =
+    pageType === "lesson"
+      ? `<!-- PAGE: lesson -->
+
+SECTION: Lesson 01
+TITLE: Healing Together
+
+This is the shared lesson space for the couple. Replace this starter text with the final lesson copy.
+
+CHECK: Come back to us.
+CHECK: Recognize the patterns.
+CHECK: Communicate with care.
+
+REFLECT: What would feel different if we chose repair instead of defense?
+
+BOTTOM_NOTE: We choose us, every day.`
+      : `<!-- PAGE: workbook -->
+
+SECTION: Workbook
+TITLE: Get Honest With You
+
+PROMPT: What do I keep ignoring about myself?
+PROMPT: What do I know deep down I deserve?
+PROMPT: What support would help me show up with more honesty?
+
+BOTTOM_NOTE: Healing starts with the truth we are brave enough to name.`
+
+  return `---
+title: ${title}
+subtitle: ${subtitle}
+branch: meetatheal
+design_preset: ${designPreset}
+product_type: workbook
+output_mode: all-in-one
+author: Best Collective
+tagline: Two worlds. One choice. A stronger we.
+---
+
+<!-- PAGE: cover -->
+
+TITLE: ${title}
+SUBTITLE: ${subtitle}
+TAGLINE: Two worlds. One choice. A stronger we.
+ICON: branch-default
+IMAGE_SLOT: cover-lifestyle
+
+${innerPage}
+
+<!-- PAGE: closing -->
+
+TITLE: Meet at the Heal
+SUBTITLE: Two Worlds. One Choice. A Stronger We.
+TAGLINE: We choose us, every day.
+ICON: branch-default
+IMAGE_SLOT: closing-lifestyle
+`
 }

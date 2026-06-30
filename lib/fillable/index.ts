@@ -5,6 +5,7 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib"
 import { type ParsedKit } from "@/lib/parser/pageTypes"
 import { type RenderTarget } from "@/lib/renderer"
 import { mapFillableFields } from "@/lib/fillable/fieldMapper"
+import { getDesignPreset } from "@/tokens"
 
 export async function addFillableFields(
   pdfBuffer: Buffer,
@@ -16,6 +17,9 @@ export async function addFillableFields(
   const pages = pdf.getPages()
   const font = await pdf.embedFont(StandardFonts.Helvetica)
   const fields = mapFillableFields(kit, target)
+  const preset = getDesignPreset(kit.designPreset, kit.branch)
+  const inkColor = hexToRgb(preset.ink)
+  const lineColor = hexToRgb(preset.line)
 
   fields.forEach((fieldSpec) => {
     const page = pages[fieldSpec.pageIndex]
@@ -32,7 +36,7 @@ export async function addFillableFields(
         width: fieldSpec.width,
         height: fieldSpec.height,
         backgroundColor: undefined,
-        borderColor: rgb(0.83, 0.77, 0.92),
+        borderColor: lineColor,
         borderWidth: 1,
       })
       return
@@ -54,8 +58,7 @@ export async function addFillableFields(
       borderColor: undefined,
       borderWidth: 0,
       backgroundColor: undefined,
-      textColor:
-        fieldSpec.textColor === "white" ? rgb(1, 0.98, 0.95) : rgb(0.2, 0.08, 0.16),
+      textColor: fieldSpec.textColor === "white" ? rgb(1, 0.98, 0.95) : inkColor,
       font,
     })
     field.setFontSize(fieldSpec.fontSize ?? 10)
@@ -64,4 +67,13 @@ export async function addFillableFields(
   form.updateFieldAppearances(font)
 
   return Buffer.from(await pdf.save())
+}
+
+function hexToRgb(hex: string) {
+  const clean = hex.replace("#", "")
+  const red = parseInt(clean.slice(0, 2), 16) / 255
+  const green = parseInt(clean.slice(2, 4), 16) / 255
+  const blue = parseInt(clean.slice(4, 6), 16) / 255
+
+  return rgb(red, green, blue)
 }

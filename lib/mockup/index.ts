@@ -6,7 +6,7 @@ import path from "node:path"
 import { chromium } from "playwright"
 
 import { type KitPage, type ParsedKit } from "@/lib/parser/pageTypes"
-import { getBranchTokens } from "@/tokens"
+import { getBranchInfo, getDesignPreset } from "@/tokens"
 
 const mockupWidth = 1200
 const mockupHeight = 900
@@ -39,10 +39,11 @@ export async function renderKitMockupPng(kit: ParsedKit) {
 }
 
 function buildMockupHtml(kit: ParsedKit) {
-  const tokens = getBranchTokens(kit.branch)
+  const tokens = getDesignPreset(kit.designPreset, kit.branch)
+  const branch = getBranchInfo(kit.branch)
   const workbookPage = kit.pages.find((page) => page.type === "workbook")
   const checklistPage = kit.pages.find((page) => page.type === "checklist")
-  const reflectionPage = kit.pages.find((page) => page.type === "reflection")
+  const reflectionPage = kit.pages.find((page) => page.type === "reflection" || page.type === "lesson-continue")
   const branchLabel = tokens.shortName.toUpperCase()
 
   return `<!doctype html>
@@ -55,7 +56,10 @@ function buildMockupHtml(kit: ParsedKit) {
       * { box-sizing: border-box; }
       html, body { margin: 0; width: ${mockupWidth}px; height: ${mockupHeight}px; }
       body {
-        background: ${tokens.background};
+        background:
+          radial-gradient(ellipse at 18% 18%, ${transparent(tokens.accentSoft, 0.72)}, transparent 40%),
+          radial-gradient(ellipse at 92% 10%, ${transparent(tokens.accent, 0.16)}, transparent 36%),
+          linear-gradient(135deg, ${tokens.paper} 0%, ${tokens.paperAlt} 100%);
         color: ${tokens.ink};
         font-family: "Poppins", Arial, sans-serif;
       }
@@ -66,10 +70,111 @@ function buildMockupHtml(kit: ParsedKit) {
         overflow: hidden;
         padding: 64px 70px;
       }
+      .stage::before,
+      .stage::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+      }
+      .stage::before {
+        width: 360px;
+        height: 360px;
+        right: -110px;
+        top: -92px;
+        border-radius: 50%;
+        background: ${transparent(tokens.plum, 0.35)};
+      }
+      .stage::after {
+        width: 520px;
+        height: 280px;
+        left: -150px;
+        bottom: -88px;
+        border-radius: 50%;
+        border: 1px solid ${transparent(tokens.gold, 0.55)};
+      }
+      .stage.style-rise::before {
+        width: 430px;
+        height: 560px;
+        right: -140px;
+        top: -150px;
+        border-radius: 48% 52%;
+        transform: rotate(24deg);
+        background:
+          linear-gradient(116deg, transparent 0 18%, ${transparent(tokens.rose, 0.34)} 18% 56%, transparent 57%),
+          linear-gradient(128deg, transparent 0 36%, ${transparent(tokens.accent, 0.24)} 36% 70%, transparent 71%);
+      }
+      .stage.style-rise::after {
+        border: 0;
+        width: 360px;
+        height: 460px;
+        left: -120px;
+        bottom: -150px;
+        transform: rotate(-18deg);
+        background: linear-gradient(120deg, transparent 0 35%, ${transparent(tokens.lilac, 0.28)} 35% 65%, transparent 66%);
+      }
+      .stage.style-land::before {
+        width: 430px;
+        height: 240px;
+        right: -40px;
+        top: auto;
+        bottom: 138px;
+        border-radius: 0;
+        clip-path: polygon(0 82%, 18% 48%, 31% 67%, 49% 22%, 70% 74%, 84% 52%, 100% 86%, 100% 100%, 0 100%);
+        background: ${transparent(tokens.sage, 0.3)};
+      }
+      .stage.style-land::after {
+        width: 290px;
+        height: 290px;
+        left: 28px;
+        bottom: 18px;
+        border: 0;
+        background:
+          repeating-linear-gradient(145deg, transparent 0 16px, ${transparent(tokens.gold, 0.34)} 17px 18px, transparent 19px 34px);
+        opacity: 0.72;
+      }
+      .stage.style-rebuild::before {
+        width: 460px;
+        height: 330px;
+        right: -100px;
+        top: -90px;
+        background:
+          radial-gradient(ellipse at 35% 45%, ${transparent(tokens.blue, 0.36)}, transparent 62%),
+          radial-gradient(ellipse at 68% 52%, ${transparent(tokens.rose, 0.22)}, transparent 56%);
+      }
+      .stage.style-rebuild::after {
+        border: 0;
+        width: 460px;
+        height: 280px;
+        left: -160px;
+        bottom: -100px;
+        background: radial-gradient(ellipse at 55% 45%, ${transparent(tokens.lilac, 0.28)}, transparent 62%);
+      }
+      .stage.style-meetatheal::before {
+        width: 520px;
+        height: 280px;
+        left: 330px;
+        right: auto;
+        top: auto;
+        bottom: 46px;
+        border-radius: 0;
+        background:
+          radial-gradient(ellipse at 42% 110%, transparent 0 42%, ${transparent(tokens.gold, 0.48)} 42.6% 43.4%, transparent 44%),
+          radial-gradient(ellipse at 58% 110%, transparent 0 42%, ${transparent(tokens.rose, 0.42)} 42.6% 43.4%, transparent 44%);
+      }
+      .stage.style-meetatheal::after {
+        width: 400px;
+        height: 210px;
+        right: -22px;
+        left: auto;
+        bottom: 88px;
+        border: 0;
+        clip-path: polygon(0 82%, 20% 48%, 34% 66%, 54% 26%, 74% 72%, 88% 51%, 100% 84%, 100% 100%, 0 100%);
+        background: ${transparent(tokens.blue, 0.25)};
+      }
       .paper-glow {
         position: absolute;
         inset: 36px;
-        border: 1px solid rgba(255,255,255,0.12);
+        border: 1px solid ${transparent(tokens.line, 0.85)};
         pointer-events: none;
       }
       .hero-copy {
@@ -86,14 +191,14 @@ function buildMockupHtml(kit: ParsedKit) {
         text-transform: uppercase;
       }
       h1 {
-        color: ${tokens.paper};
+        color: ${tokens.ink};
         font-family: "Cormorant Garamond", Georgia, serif;
         font-size: 66px;
         line-height: 0.92;
         margin: 20px 0 0;
       }
       .subline {
-        color: rgba(255, 250, 243, 0.76);
+        color: ${tokens.mutedInk};
         font-size: 18px;
         line-height: 1.55;
         margin-top: 26px;
@@ -104,8 +209,8 @@ function buildMockupHtml(kit: ParsedKit) {
         margin-top: 30px;
       }
       .badge {
-        border: 1px solid rgba(255,255,255,0.18);
-        color: ${tokens.paper};
+        border: 1px solid ${tokens.line};
+        color: ${tokens.ink};
         font-size: 12px;
         font-weight: 700;
         letter-spacing: 0.18em;
@@ -125,7 +230,7 @@ function buildMockupHtml(kit: ParsedKit) {
         height: 502px;
         background: ${tokens.paper};
         border: 1px solid ${tokens.line};
-        box-shadow: 0 28px 55px rgba(0,0,0,0.28);
+        box-shadow: 0 28px 55px rgba(42, 21, 56, 0.18);
       }
       .sheet.back {
         left: 58px;
@@ -166,6 +271,36 @@ function buildMockupHtml(kit: ParsedKit) {
         overflow: hidden;
         padding: 30px;
         text-align: center;
+      }
+      .stage.style-rise .cover-panel,
+      .stage.style-meetatheal .cover-panel {
+        background:
+          linear-gradient(120deg, ${transparent(tokens.accent, 0.22)}, transparent 55%),
+          ${tokens.paper};
+        color: ${tokens.ink};
+        border: 1px solid ${transparent(tokens.accent, 0.42)};
+      }
+      .stage.style-rise .cover-title,
+      .stage.style-rise .cover-kicker,
+      .stage.style-meetatheal .cover-title,
+      .stage.style-meetatheal .cover-kicker {
+        color: ${tokens.ink};
+      }
+      .stage.style-land .cover-panel {
+        background:
+          linear-gradient(145deg, ${transparent(tokens.sage, 0.2)} 0 36%, transparent 37%),
+          ${tokens.plum};
+      }
+      .stage.style-rebuild .cover-panel {
+        background:
+          radial-gradient(ellipse at 82% 18%, ${transparent(tokens.blue, 0.24)}, transparent 42%),
+          ${tokens.paper};
+        color: ${tokens.ink};
+        border: 1px solid ${transparent(tokens.blue, 0.42)};
+      }
+      .stage.style-rebuild .cover-title,
+      .stage.style-rebuild .cover-kicker {
+        color: ${tokens.ink};
       }
       .cover-panel::before {
         content: "";
@@ -300,7 +435,7 @@ function buildMockupHtml(kit: ParsedKit) {
     </style>
   </head>
   <body>
-    <main class="stage">
+    <main class="stage style-${escapeHtml(tokens.styleFamily)} motif-${escapeHtml(tokens.motif)}">
       <div class="paper-glow"></div>
       <section class="stack">
         <div class="sheet back"><div class="ribbon">Workbook</div></div>
@@ -314,7 +449,7 @@ function buildMockupHtml(kit: ParsedKit) {
               <div class="cover-line"></div>
             </div>
           </div>
-          <div class="cover-foot"><span>${escapeHtml(tokens.footer)}</span><span>01</span></div>
+          <div class="cover-foot"><span>${escapeHtml(branch.footer)}</span><span>01</span></div>
         </div>
       </section>
       <section class="hero-copy">
@@ -351,7 +486,7 @@ function renderWorkbookThumb(page?: KitPage) {
 }
 
 function renderChecklistThumb(page?: KitPage) {
-  const items = page?.prompts.slice(0, 3) ?? []
+  const items = page?.checks.slice(0, 3) ?? []
   const safeItems = items.length > 0 ? items : ["Choose the next step.", "Make the setup simple.", "Check the final file."]
 
   return `<article class="thumb">
@@ -362,7 +497,7 @@ function renderChecklistThumb(page?: KitPage) {
 }
 
 function renderReflectionThumb(page?: KitPage) {
-  const prompt = page?.prompts[0] ?? "One thing I learned is:"
+  const prompt = page?.reflects[0] ?? page?.prompts[0] ?? "One thing I learned is:"
 
   return `<article class="thumb">
     <div class="thumb-label">Reflection</div>
@@ -372,6 +507,15 @@ function renderReflectionThumb(page?: KitPage) {
       <div class="lines"><span></span><span></span><span></span></div>
     </div>
   </article>`
+}
+
+function transparent(hex: string, alpha: number) {
+  const trimmed = hex.replace("#", "")
+  const red = parseInt(trimmed.slice(0, 2), 16)
+  const green = parseInt(trimmed.slice(2, 4), 16)
+  const blue = parseInt(trimmed.slice(4, 6), 16)
+
+  return `rgba(${red}, ${green}, ${blue}, ${alpha})`
 }
 
 function escapeHtml(value: string) {
