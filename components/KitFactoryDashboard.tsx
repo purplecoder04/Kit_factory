@@ -1221,6 +1221,7 @@ function MiniPagePreview({
   const section = page?.section || page?.rawType || kit?.branch || "brand"
   const footer = getBranchInfo(selectedBranch).footer
   const showRibbon = page?.type !== "cover" && page?.type !== "closing"
+  const isCover = page?.type === "cover"
 
   return (
     <div
@@ -1244,7 +1245,14 @@ function MiniPagePreview({
         </div>
       )}
       <MiniPageBody kit={kit} page={page} tokens={tokens} />
-      <div className="absolute bottom-5 left-7 right-7 z-20 flex justify-between border-t border-[var(--preview-line)] pt-3 text-[8px] text-muted-foreground">
+      <div
+        className={cn(
+          "absolute bottom-5 left-7 right-7 z-20 flex justify-between text-[8px]",
+          isCover
+            ? "text-[var(--preview-paper)] drop-shadow"
+            : "border-t border-[var(--preview-line)] pt-3 text-muted-foreground"
+        )}
+      >
         <span>{footer}</span>
         <span>
           {total > 0 ? pageNumber : 0} / {total}
