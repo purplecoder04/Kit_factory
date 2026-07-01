@@ -89,6 +89,15 @@ const proofPresets = [
     subtitle: "Build. Grow. Stand Firm.",
     tagline: "Two worlds. One choice. A stronger we.",
   },
+  {
+    label: "Umbrella",
+    branch: "umbrella",
+    designPreset: "umbrella",
+    slug: "umbrella",
+    title: "Best Collective Kit",
+    subtitle: "One House. Clear Rooms. Practical Tools.",
+    tagline: "All for the work you are building.",
+  },
 ]
 
 async function main() {
@@ -176,6 +185,9 @@ async function main() {
     imageWidth: 520,
   })
 
+  if (shouldCreateBrandPackage(selectedPresets)) {
+    await createBrandPackageProof(baseUrl, dirs.package, sampleMarkdown)
+  }
   if (shouldCreateMeetAtTheHealPackage(selectedPresets)) {
     await createMeetAtTheHealPackageProof(baseUrl, dirs.package)
   }
@@ -209,6 +221,12 @@ function shouldCreateMeetAtTheHealPackage(selectedPresets) {
   return isFullPack || selectedPresets.some((preset) => preset.branch === "meetatheal")
 }
 
+function shouldCreateBrandPackage(selectedPresets) {
+  const isFullPack = selectedPresets.length === proofPresets.length
+
+  return isFullPack || selectedPresets.some((preset) => preset.branch === "brand")
+}
+
 async function prepareOutput() {
   await fs.rm(outputRoot, { recursive: true, force: true })
 
@@ -224,6 +242,35 @@ async function prepareOutput() {
   await Promise.all(Object.values(dirs).map((dir) => fs.mkdir(dir, { recursive: true })))
 
   return dirs
+}
+
+async function createBrandPackageProof(baseUrl, packageDir, markdown) {
+  const zipPath = path.join(packageDir, "brand-kit-package.zip")
+  const zip = await postBuffer(baseUrl, "/api/package/brand", {
+    markdown,
+  })
+  const expectedFiles = ["brand-complete.pdf", "brand-land-complete.pdf"]
+  const zipText = zip.toString("latin1")
+  const missing = expectedFiles.filter((filename) => !zipText.includes(filename))
+
+  if (missing.length > 0) {
+    throw new Error(`Brand package is missing: ${missing.join(", ")}`)
+  }
+
+  await writeBuffer(zipPath, zip)
+  await fs.writeFile(
+    path.join(packageDir, "brand-package-summary.txt"),
+    [
+      "Brand package proof",
+      "",
+      `ZIP: ${zipPath}`,
+      `Size: ${zip.length} bytes`,
+      "",
+      "Files confirmed in ZIP:",
+      ...expectedFiles.map((filename) => `- ${filename}`),
+      "",
+    ].join("\n")
+  )
 }
 
 async function createMeetAtTheHealPackageProof(baseUrl, packageDir) {
@@ -405,7 +452,7 @@ async function writeReadme(baseUrl, rows) {
     "- `cover-overview.png` compares the first page for every preset.",
     "- `mockup-overview.png` compares the website mockup image for every preset.",
     "- `contact-sheets/` contains one full-PDF contact sheet per preset.",
-    "- `package/package-summary.txt` confirms the Meet at the Heal package ZIP file names.",
+    "- `package/` contains ZIP proof artifacts and package summaries.",
     "",
     "## Presets",
     "",

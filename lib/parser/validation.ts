@@ -227,7 +227,12 @@ function validatePage(
     )
   }
 
-  if (page.content.some((block) => block.type === "alert") && page.type !== "how-to-use") {
+  if (
+    page.content.some((block) => block.type === "alert") &&
+    page.type !== "how-to-use" &&
+    page.type !== "important-to-know" &&
+    page.type !== "resource"
+  ) {
     issues.push(
       warning(
         "alert-outside-how-to-use",

@@ -38,17 +38,9 @@ TITLE: Table of Contents
 01 | Get Clear on Your Business | 1
 02 | Your Offer That Actually Sells | 11
 03 | Set Your Foundation | 21
+04 | Build Your Weekly System | 31
 Resources | 81
 Notes | 87
-
-<!-- PAGE: how-to-use -->
-
-SECTION: Important to Know
-TITLE: Important to Know
-
-ALERT:
-
-BOTTOM_NOTE: Verify official requirements before making legal, tax, or financial decisions.
 
 <!-- PAGE: quote -->
 
@@ -62,6 +54,28 @@ SECTION: Section 01
 TITLE: Get Clear on Your Business
 SUBTITLE: Everything you need before you spend a dollar.
 IMAGE_SLOT: section-lifestyle
+
+<!-- PAGE: how-to-use -->
+
+SECTION: Start Here
+TITLE: How To Use This Kit
+
+Move through the lesson first, then complete the workbook pages while the ideas are still fresh.
+
+CHECK: Read one section at a time.
+CHECK: Answer with the truth you can act on.
+CHECK: Come back to the trackers weekly.
+
+BOTTOM_NOTE: Simple pages are easier to finish and easier to use.
+
+<!-- PAGE: important-to-know -->
+
+SECTION: Important to Know
+TITLE: Before You Begin
+
+ALERT:
+
+BOTTOM_NOTE: Verify official requirements before making legal, tax, or financial decisions.
 
 <!-- PAGE: lesson -->
 
@@ -158,6 +172,46 @@ SECTION: Notes
 TITLE: Just for me.
 
 BOTTOM_NOTE: Best Collective
+
+<!-- PAGE: reflection -->
+
+SECTION: Reflection
+TITLE: Check In With Yourself
+
+REFLECT: What feels clearer now than it did before?
+REFLECT: What still needs a decision?
+REFLECT: What are you ready to stop overcomplicating?
+
+BOTTOM_NOTE: Reflection is for noticing the truth before you move.
+
+<!-- PAGE: progress-check -->
+
+SECTION: Progress Check
+TITLE: Before You Move On
+
+CHECK: I understand what this section is asking me to decide.
+CHECK: I completed the workbook page honestly.
+CHECK: I know the next action I will take.
+CHECK: I marked anything that needs outside help or official confirmation.
+
+QUOTE: Progress counts when it creates a cleaner next step.
+ATTRIBUTION: Best Collective
+
+BOTTOM_NOTE: Done is allowed to be simple.
+
+<!-- PAGE: resource -->
+
+SECTION: Resource
+TITLE: Helpful Links + Notes
+
+Use this page for official links, trusted tools, or extra context the reader should keep nearby.
+
+KEY_TERM: Official Source
+KEY_TERM_BODY: An official source is the government, platform, provider, or professional source responsible for the requirement you are checking.
+
+ALERT: Do not rely on social media posts for legal, tax, financial, or compliance decisions. Verify anything high-risk before acting.
+
+BOTTOM_NOTE: Keep the resources practical and specific.
 
 <!-- PAGE: case-study -->
 

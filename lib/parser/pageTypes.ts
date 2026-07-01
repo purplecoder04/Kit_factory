@@ -54,6 +54,8 @@ export const pageTypes = [
   "action-plan",
   "notes",
   "reflection",
+  "progress-check",
+  "resource",
   "case-study",
   "closing",
 ] as const

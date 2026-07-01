@@ -1,7 +1,7 @@
 import { addFillableFields } from "@/lib/fillable"
 import { parseKitMarkdown } from "@/lib/parser"
 import { hasBlockingErrors, validateKit } from "@/lib/parser/validation"
-import { renderKitPdf, type RenderTarget } from "@/lib/renderer"
+import { renderKitPdfWithFillableFields, type RenderTarget } from "@/lib/renderer"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -21,8 +21,8 @@ export async function POST(request: Request) {
     return Response.json({ issues }, { status: 400 })
   }
 
-  const basePdf = await renderKitPdf(kit, target)
-  const fillablePdf = await addFillableFields(basePdf, kit, target)
+  const { pdf: basePdf, fields } = await renderKitPdfWithFillableFields(kit, target)
+  const fillablePdf = await addFillableFields(basePdf, kit, target, fields)
   const stem = `${kit.slug}-${kit.designPreset || kit.branch || "brand"}`
   const filename =
     target === "complete" ? `${stem}-fillable.pdf` : `${stem}-workbook-fillable.pdf`

@@ -24,6 +24,7 @@ async function main() {
   await testSplitPdfOutputs(baseUrl, markdown)
   await testFillableFields(baseUrl, markdown)
   await testMockupOutput(baseUrl, markdown)
+  await testBrandPackage(baseUrl, markdown)
   await testMeetAtTheHealPackage(baseUrl)
 
   console.log("Kit Factory regression smoke tests passed.")
@@ -127,13 +128,24 @@ async function testParserDefaults(baseUrl, markdown) {
   const lessonPage = payload.kit.pages.find((page) => page.type === "lesson")
   const reflectionPage = payload.kit.pages.find((page) => page.type === "lesson-continue")
   const checklistPage = payload.kit.pages.find((page) => page.type === "checklist")
+  const progressPage = payload.kit.pages.find((page) => page.type === "progress-check")
+  const resourcePage = payload.kit.pages.find((page) => page.type === "resource")
 
   assert(lessonPage?.content.some((block) => block.type === "key-term"), "KEY_TERM was not parsed on lesson page.")
   assert(reflectionPage?.reflects.length === 1, "REFLECT field was not parsed.")
   assert(checklistPage?.checks.length >= 3, "CHECK fields were not parsed on checklist page.")
+  assert(progressPage?.content.some((block) => block.type === "check-list"), "Progress CHECK fields were not parsed as non-fillable checks.")
+  assert(resourcePage?.content.some((block) => block.type === "key-term"), "Resource KEY_TERM was not parsed.")
 }
 
 async function testSplitPdfOutputs(baseUrl, markdown) {
+  const complete = await postBuffer(baseUrl, "/api/render", {
+    markdown,
+    branch: "brand",
+    designPreset: "brand",
+    outputMode: "all-in-one",
+    target: "complete",
+  })
   const guide = await postBuffer(baseUrl, "/api/render", {
     markdown,
     branch: "brand",
@@ -149,7 +161,8 @@ async function testSplitPdfOutputs(baseUrl, markdown) {
     target: "workbook",
   })
 
-  assert((await pageCount(guide)) === 10, "Lesson guide should include cover, guide pages, and closing page.")
+  assert((await pageCount(complete)) === 19, "Complete PDF should include every page in the proof kit.")
+  assert((await pageCount(guide)) === 14, "Lesson guide should include cover, guide pages, and closing page.")
   assert((await pageCount(workbook)) === 7, "Workbook PDF should include cover, workbook pages, and closing page.")
 }
 
@@ -162,9 +175,17 @@ async function testFillableFields(baseUrl, markdown) {
     target: "workbook",
   })
   const pdf = await PDFDocument.load(fillable)
-  const fieldCount = pdf.getForm().getFields().length
+  const fields = pdf.getForm().getFields()
+  const fieldCount = fields.length
+  const firstCheckbox = fields.find((field) => field.getName().includes("check_01"))
+  const firstCheckboxRect = firstCheckbox?.acroField?.getWidgets?.()[0]?.getRectangle?.()
 
   assert(fieldCount >= 30, `Expected fillable workbook fields, got ${fieldCount}.`)
+  assert(firstCheckboxRect, "Expected a fillable checklist checkbox field.")
+  assert(
+    firstCheckboxRect.x > 60 && firstCheckboxRect.x < 85,
+    `Checklist checkbox should align to the designed box, got x=${firstCheckboxRect.x}.`
+  )
 }
 
 async function testMockupOutput(baseUrl, markdown) {
@@ -177,6 +198,22 @@ async function testMockupOutput(baseUrl, markdown) {
 
   assert(mockup.length > 100_000, "Mockup PNG is unexpectedly small.")
   assert(mockup[0] === 0x89 && mockup[1] === 0x50 && mockup[2] === 0x4e && mockup[3] === 0x47, "Mockup is not a PNG.")
+}
+
+async function testBrandPackage(baseUrl, markdown) {
+  const zip = await postBuffer(baseUrl, "/api/package/brand", {
+    markdown,
+  })
+  const zipText = zip.toString("latin1")
+  const filenames = [
+    "brand-complete.pdf",
+    "brand-land-complete.pdf",
+  ]
+
+  assert(zip.length > 100_000, "Brand package ZIP is unexpectedly small.")
+  for (const filename of filenames) {
+    assert(zipText.includes(filename), `Brand package ZIP is missing ${filename}.`)
+  }
 }
 
 async function testMeetAtTheHealPackage(baseUrl) {

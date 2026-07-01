@@ -626,7 +626,7 @@ function buildCoverAssetDataUri(tokens: DesignPresetTokens) {
     return ""
   }
 
-  const filePath = path.join(process.cwd(), "public", "kit-assets", fileName)
+  const filePath = path.join(/*turbopackIgnore: true*/ process.cwd(), "public", "kit-assets", fileName)
 
   if (!fs.existsSync(filePath)) {
     return ""
@@ -694,7 +694,7 @@ function buildFontFaces() {
 
   return fonts
     .map(([family, weight, style, file]) => {
-      const filePath = path.join(process.cwd(), "node_modules", "@fontsource", file)
+      const filePath = path.join(/*turbopackIgnore: true*/ process.cwd(), "node_modules", "@fontsource", file)
       const data = fs.readFileSync(filePath).toString("base64")
 
       return `@font-face { font-family: "${family}"; font-weight: ${weight}; font-style: ${style}; font-display: swap; src: url(data:font/woff2;base64,${data}) format("woff2"); }`

@@ -5,21 +5,23 @@ import { PDFDocument, rgb, StandardFonts } from "pdf-lib"
 import { type ParsedKit } from "@/lib/parser/pageTypes"
 import { type RenderTarget } from "@/lib/renderer"
 import { mapFillableFields } from "@/lib/fillable/fieldMapper"
+import { type FieldSpec } from "@/lib/fillable/types"
 import { getDesignPreset } from "@/tokens"
 
 export async function addFillableFields(
   pdfBuffer: Buffer,
   kit: ParsedKit,
-  target: RenderTarget
+  target: RenderTarget,
+  measuredFields?: FieldSpec[]
 ) {
   const pdf = await PDFDocument.load(pdfBuffer)
   const form = pdf.getForm()
   const pages = pdf.getPages()
   const font = await pdf.embedFont(StandardFonts.Helvetica)
-  const fields = mapFillableFields(kit, target)
+  const fields = measuredFields?.length ? measuredFields : mapFillableFields(kit, target)
   const preset = getDesignPreset(kit.designPreset, kit.branch)
   const inkColor = hexToRgb(preset.ink)
-  const lineColor = hexToRgb(preset.line)
+  const checkboxColor = hexToRgb(preset.plum)
 
   fields.forEach((fieldSpec) => {
     const page = pages[fieldSpec.pageIndex]
@@ -36,8 +38,8 @@ export async function addFillableFields(
         width: fieldSpec.width,
         height: fieldSpec.height,
         backgroundColor: undefined,
-        borderColor: lineColor,
-        borderWidth: 1,
+        borderColor: checkboxColor,
+        borderWidth: 0.75,
       })
       return
     }

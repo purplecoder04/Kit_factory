@@ -2,19 +2,7 @@ import "server-only"
 
 import { type KitPage, type ParsedKit } from "@/lib/parser/pageTypes"
 import { type RenderTarget, selectPagesForTarget } from "@/lib/renderer"
-
-export type FieldSpec = {
-  pageIndex: number
-  name: string
-  kind: "text" | "checkbox"
-  x: number
-  y: number
-  width: number
-  height: number
-  multiline?: boolean
-  fontSize?: number
-  textColor?: "plum" | "white"
-}
+import { type FieldSpec } from "@/lib/fillable/types"
 
 const pageHeight = 792
 const promptFieldLeft = 56

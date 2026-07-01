@@ -800,6 +800,8 @@ function buildCss(tokens: DesignPresetTokens) {
           radial-gradient(circle at -4% 2%, ${transparent(tokens.plum, 0.34)} 0 0.75in, transparent 0.77in),
           radial-gradient(circle at 15% 8%, ${transparent(tokens.lilac, 0.22)} 0 0.92in, transparent 0.94in),
           radial-gradient(circle at 96% 3%, ${transparent(tokens.plum, 0.22)} 0 0.56in, transparent 0.58in),
+          radial-gradient(circle at 104% 101%, ${transparent(tokens.plum, 0.2)} 0 1.24in, transparent 1.26in),
+          radial-gradient(ellipse at 8% 80%, ${transparent(tokens.accent, 0.08)}, transparent 1.42in),
           linear-gradient(126deg, transparent 0 70%, ${transparent(tokens.lilac, 0.12)} 70.4% 100%),
           linear-gradient(172deg, ${transparent(tokens.paperAlt, 0.2)} 0 10%, transparent 28%),
           ${tokens.paper};
@@ -838,6 +840,8 @@ function buildCss(tokens: DesignPresetTokens) {
           radial-gradient(circle at -4% 2%, ${transparent(tokens.plum, 0.34)} 0 0.75in, transparent 0.77in),
           radial-gradient(circle at 15% 8%, ${transparent(tokens.lilac, 0.22)} 0 0.92in, transparent 0.94in),
           radial-gradient(circle at 96% 3%, ${transparent(tokens.plum, 0.2)} 0 0.54in, transparent 0.56in),
+          radial-gradient(circle at 104% 101%, ${transparent(tokens.plum, 0.18)} 0 1.18in, transparent 1.2in),
+          radial-gradient(ellipse at 6% 82%, ${transparent(tokens.accent, 0.08)}, transparent 1.38in),
           linear-gradient(126deg, transparent 0 70%, ${transparent(tokens.lilac, 0.12)} 70.4% 100%),
           linear-gradient(172deg, ${transparent(tokens.paperAlt, 0.18)} 0 10%, transparent 28%),
           ${tokens.paper};
@@ -867,6 +871,32 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-brand.motif-grounded-circles .decor::before {
         background: ${transparent(tokens.sage, 0.24)};
+      }
+      .style-brand:not(.cover) .spark-lines {
+        display: block;
+        right: -0.18in;
+        top: 0.16in;
+        opacity: 0.18;
+        transform: rotate(-10deg);
+      }
+      .style-brand:not(.cover) .brand-arc {
+        display: block;
+        left: -0.54in;
+        bottom: 0.82in;
+        width: 2.65in;
+        height: 2.65in;
+        opacity: 0.46;
+      }
+      .style-brand:not(.cover) .brand-cup,
+      .style-brand:not(.cover) .brand-card,
+      .style-brand:not(.cover) .brand-laptop,
+      .style-brand:not(.cover) .brand-plant,
+      .style-brand:not(.cover) .brand-door,
+      .style-brand:not(.cover) .brand-book,
+      .style-brand:not(.cover) .brand-light,
+      .style-brand:not(.cover) .brand-pen,
+      .style-brand:not(.cover) .brand-glasses {
+        filter: drop-shadow(0 0.06in 0.12in ${transparent(tokens.ink, 0.12)});
       }
       .style-rise .wash-a,
       .style-meetatheal.motif-rose-ribbons .wash-a {
@@ -968,37 +998,46 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-meetatheal.motif-roads-hearts:not(.cover) {
         background:
-          linear-gradient(116deg, ${transparent(tokens.sage, 0.12)} 0 22%, transparent 45%),
-          linear-gradient(64deg, transparent 0 58%, ${transparent(tokens.rose, 0.1)} 78%, transparent 100%),
-          radial-gradient(ellipse at 18% 78%, ${transparent(tokens.blue, 0.13)}, transparent 44%),
-          radial-gradient(ellipse at 88% 76%, ${transparent(tokens.rose, 0.12)}, transparent 42%),
+          linear-gradient(116deg, ${transparent(tokens.sage, 0.2)} 0 24%, transparent 47%),
+          linear-gradient(64deg, transparent 0 54%, ${transparent(tokens.rose, 0.18)} 77%, transparent 100%),
+          radial-gradient(ellipse at 17% 77%, ${transparent(tokens.blue, 0.2)}, transparent 42%),
+          radial-gradient(ellipse at 84% 75%, ${transparent(tokens.rose, 0.18)}, transparent 42%),
+          radial-gradient(ellipse at 50% 96%, ${transparent(tokens.gold, 0.1)}, transparent 36%),
           ${tokens.paper};
       }
       .style-meetatheal.motif-roads-hearts:not(.cover) .mountain-mark {
         left: -0.18in;
         right: auto;
         bottom: 0.8in;
-        width: 2.92in;
-        height: 1.34in;
-        opacity: 0.2;
+        width: 3.28in;
+        height: 1.48in;
+        opacity: 0.32;
       }
       .style-meetatheal.motif-roads-hearts:not(.cover) .road-mark {
-        width: 3.8in;
-        height: 1.34in;
+        width: 4.2in;
+        height: 1.46in;
         bottom: 0.72in;
-        opacity: 0.34;
+        opacity: 0.42;
       }
       .style-meetatheal.motif-roads-hearts:not(.cover) .floral-left {
-        left: 0.16in;
-        bottom: 0.78in;
-        transform: scale(0.92);
-        opacity: 0.42;
+        left: 0.1in;
+        bottom: 0.7in;
+        transform: scale(1.02);
+        opacity: 0.56;
       }
       .style-meetatheal.motif-roads-hearts:not(.cover) .floral-right {
         right: 0.18in;
         top: 1.22in;
-        transform: scale(1.08);
-        opacity: 0.55;
+        transform: scale(1.16);
+        opacity: 0.72;
+      }
+      .style-meetatheal.motif-roads-hearts:not(.cover) .spark-lines {
+        display: block;
+        left: -0.18in;
+        right: auto;
+        top: -0.18in;
+        opacity: 0.2;
+        transform: rotate(8deg);
       }
       .style-land .swoop,
       .style-rebuild .swoop {
@@ -1091,9 +1130,17 @@ function buildCss(tokens: DesignPresetTokens) {
         height: 1px;
         background: ${tokens.accent};
       }
+      .style-rise:not(.cover) .page-ribbon,
+      .style-rebuild:not(.cover) .page-ribbon,
+      .style-meetatheal:not(.cover) .page-ribbon {
+        display: none;
+      }
       .style-land .page-ribbon {
         background: ${tokens.plum};
         color: ${tokens.paper};
+      }
+      .style-land:not(.cover) .section-label {
+        display: none;
       }
       .section-label {
         color: ${tokens.accent};
@@ -1273,6 +1320,20 @@ function buildCss(tokens: DesignPresetTokens) {
         border-radius: 8px;
         background: rgba(255, 253, 248, 0.58);
         padding: 15px 17px 12px;
+      }
+      .fillable-text-target {
+        position: absolute;
+        left: 0.22in;
+        right: 0.22in;
+        top: 0.48in;
+        bottom: 0.12in;
+        pointer-events: none;
+      }
+      .prompt-card.lines-1 .fillable-text-target {
+        top: 0.38in;
+      }
+      .prompt-card.lines-3 .fillable-text-target {
+        top: 0.54in;
       }
       .style-rise .prompt-card {
         border-left: 0;
@@ -1481,6 +1542,49 @@ function buildCss(tokens: DesignPresetTokens) {
         color: ${tokens.ink};
         font-weight: 600;
       }
+      .type-reflection .content,
+      .type-progress-check .content,
+      .type-resource .content {
+        max-width: 6.18in;
+        margin-top: 0.34in;
+      }
+      .type-reflection .reflect-box {
+        min-height: 1.1in;
+        background:
+          linear-gradient(135deg, ${transparent(tokens.accentSoft, 0.34)}, transparent 68%),
+          ${transparent(tokens.paper, 0.72)};
+        box-shadow: 0 0.08in 0.2in ${transparent(tokens.ink, 0.055)};
+      }
+      .type-progress-check .content {
+        border: 1px solid ${transparent(tokens.line, 0.72)};
+        border-left: 0.06in solid ${tokens.accent};
+        border-radius: 0.08in;
+        padding: 0.26in 0.3in;
+        background:
+          linear-gradient(120deg, ${transparent(tokens.accentSoft, 0.3)}, transparent 64%),
+          ${transparent(tokens.paper, 0.78)};
+        box-shadow: 0 0.12in 0.28in ${transparent(tokens.ink, 0.06)};
+      }
+      .type-progress-check .check-list {
+        gap: 0.13in;
+      }
+      .type-progress-check .quote-box {
+        margin-top: 0.24in;
+      }
+      .type-resource .content {
+        display: grid;
+        gap: 0.14in;
+      }
+      .type-resource .content > p:first-child {
+        max-width: 5.5in;
+        color: ${tokens.ink};
+        font-size: 12.4px;
+      }
+      .type-resource .key-term-box,
+      .type-resource .alert-box {
+        margin: 0;
+        box-shadow: 0 0.1in 0.24in ${transparent(tokens.ink, 0.055)};
+      }
       .image-slot {
         min-height: 1.28in;
         border-radius: 8px;
@@ -1675,19 +1779,19 @@ function buildCss(tokens: DesignPresetTokens) {
         margin-bottom: 0.08in;
       }
       .style-brand.cover .cover-title {
-        font-size: 76px;
+        font-size: 88px;
         line-height: 0.84;
-        max-width: 5.55in;
+        max-width: 5.72in;
       }
       .style-brand.cover .cover-title.is-long {
-        font-size: 64px;
+        font-size: 72px;
         line-height: 0.86;
         max-width: 6.12in;
       }
       .style-brand.cover .cover-subtitle {
         color: ${tokens.ink};
         font-family: "Poppins", Arial, sans-serif;
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 700;
         letter-spacing: 0.28em;
         margin-top: 0.18in;
@@ -1871,33 +1975,33 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-brand.type-toc .brand-book {
         display: block;
-        right: 0.78in;
-        bottom: 1.05in;
-        transform: rotate(6deg) scale(0.95);
+        right: 0.68in;
+        bottom: 0.96in;
+        transform: rotate(6deg) scale(1.12);
       }
       .style-brand.type-toc .brand-plant {
         display: block;
-        left: 0.7in;
-        bottom: 1in;
-        transform: scale(0.78);
+        left: 0.62in;
+        bottom: 0.92in;
+        transform: scale(0.9);
       }
       .style-brand.type-toc .brand-pen {
         display: block;
-        right: 1.42in;
-        bottom: 1.42in;
-        transform: rotate(-19deg) scale(0.82);
+        right: 1.38in;
+        bottom: 1.48in;
+        transform: rotate(-19deg) scale(0.94);
       }
       .style-brand.type-quote .brand-laptop {
         display: block;
         right: 0.56in;
         top: 0.58in;
-        transform: rotate(4deg) scale(0.92);
+        transform: rotate(4deg) scale(1.05);
       }
       .style-brand.type-quote .brand-cup {
         display: block;
-        right: 1.08in;
-        bottom: 1.3in;
-        transform: scale(0.86);
+        right: 1.02in;
+        bottom: 1.18in;
+        transform: scale(1.02);
       }
       .style-brand.type-quote .quote-page {
         min-height: 8.65in;
@@ -1916,7 +2020,7 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-brand.type-quote .quote-page .quote-text {
         color: ${tokens.ink};
-        font-size: 43px;
+        font-size: 45px;
         line-height: 1.02;
       }
       .style-brand.type-quote .quote-page .quote-mark {
@@ -2070,6 +2174,9 @@ function buildCss(tokens: DesignPresetTokens) {
         font-size: 20.5px;
         line-height: 1.05;
       }
+      .style-brand.type-workbook .fillable-text-target {
+        top: 0.64in;
+      }
       .style-brand.type-workbook .writing-lines {
         gap: 0.13in;
       }
@@ -2080,12 +2187,12 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-brand.type-workbook .brand-pen {
         right: 0.86in;
         bottom: 1.55in;
-        transform: rotate(-17deg) scale(0.95);
+        transform: rotate(-17deg) scale(1.04);
       }
       .style-brand.type-workbook .brand-card {
-        right: 1.42in;
-        bottom: 1.02in;
-        transform: rotate(7deg) scale(0.86);
+        right: 1.38in;
+        bottom: 0.96in;
+        transform: rotate(7deg) scale(0.98);
       }
       .style-brand.type-checklist .prompt-stack,
       .style-brand.type-tracker .tracker-table,
@@ -2113,26 +2220,29 @@ function buildCss(tokens: DesignPresetTokens) {
         color: ${tokens.ink};
         font-size: 12px;
       }
+      .style-brand.type-checklist .prompt-card .fillable-text-target {
+        top: 0.44in;
+      }
       .style-brand.type-checklist .brand-book,
       .style-brand.type-checklist .brand-pen,
       .style-brand.type-checklist .brand-plant {
         display: block;
       }
       .style-brand.type-checklist .brand-book {
-        right: 0.84in;
-        bottom: 1.08in;
-        transform: rotate(8deg) scale(0.92);
+        right: 0.74in;
+        bottom: 1in;
+        transform: rotate(8deg) scale(1.06);
       }
       .style-brand.type-checklist .brand-pen {
         right: 1.2in;
         bottom: 1.58in;
-        transform: rotate(-18deg) scale(0.82);
+        transform: rotate(-18deg) scale(0.96);
       }
       .style-brand.type-checklist .brand-plant {
-        right: 0.58in;
-        bottom: 1.2in;
-        transform: scale(0.76);
-        opacity: 0.78;
+        right: 0.48in;
+        bottom: 1.12in;
+        transform: scale(0.9);
+        opacity: 0.86;
       }
       .style-brand.type-tracker .tracker-table {
         border-collapse: separate;
@@ -2170,22 +2280,22 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-brand.type-action-plan .brand-card {
         display: block;
-        right: 0.76in;
-        bottom: 1.02in;
-        transform: rotate(7deg) scale(0.92);
+        right: 0.64in;
+        bottom: 0.92in;
+        transform: rotate(7deg) scale(1.05);
       }
       .style-brand.type-action-plan .brand-cup {
         display: block;
         left: 0.66in;
         bottom: 1.08in;
-        transform: scale(0.72);
+        transform: scale(0.84);
       }
       .style-brand.type-action-plan .brand-laptop {
         display: block;
-        left: 0.52in;
-        bottom: 1.02in;
-        transform: rotate(-3deg) scale(0.82);
-        opacity: 0.82;
+        left: 0.46in;
+        bottom: 0.92in;
+        transform: rotate(-3deg) scale(0.94);
+        opacity: 0.88;
       }
       .style-brand.type-action-plan .prompt-card {
         border-left-color: ${tokens.accent};
@@ -2205,20 +2315,20 @@ function buildCss(tokens: DesignPresetTokens) {
         display: block;
       }
       .style-brand.type-notes .brand-cup {
-        right: 0.72in;
-        bottom: 0.98in;
-        transform: scale(0.72);
+        right: 0.64in;
+        bottom: 0.92in;
+        transform: scale(0.86);
       }
       .style-brand.type-notes .brand-card {
-        left: 0.68in;
-        bottom: 1.02in;
-        transform: rotate(-5deg) scale(0.82);
+        left: 0.58in;
+        bottom: 0.92in;
+        transform: rotate(-5deg) scale(0.96);
       }
       .style-brand.type-notes .brand-plant {
         right: 1.18in;
         top: 1.95in;
-        transform: scale(0.72);
-        opacity: 0.78;
+        transform: scale(0.86);
+        opacity: 0.86;
       }
       .style-brand.type-notes .notes-field {
         min-height: 6.72in;
@@ -2251,23 +2361,67 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-brand.type-case-study .brand-card {
         display: block;
-        right: 0.82in;
-        bottom: 1.02in;
-        transform: rotate(7deg) scale(0.9);
+        right: 0.7in;
+        bottom: 0.92in;
+        transform: rotate(7deg) scale(1.06);
       }
       .style-brand.type-case-study .brand-pen,
       .style-brand.type-case-study .brand-glasses {
         display: block;
       }
       .style-brand.type-case-study .brand-pen {
-        left: 0.78in;
-        bottom: 1.2in;
-        transform: rotate(-16deg) scale(0.86);
+        left: 0.68in;
+        bottom: 1.06in;
+        transform: rotate(-16deg) scale(1);
       }
       .style-brand.type-case-study .brand-glasses {
         left: 1.08in;
         bottom: 1.62in;
-        transform: rotate(-5deg);
+        transform: rotate(-5deg) scale(1.08);
+      }
+      .style-brand.type-reflection .brand-cup,
+      .style-brand.type-reflection .brand-light,
+      .style-brand.type-progress-check .brand-card,
+      .style-brand.type-progress-check .brand-plant,
+      .style-brand.type-resource .brand-book,
+      .style-brand.type-resource .brand-pen,
+      .style-brand.type-resource .brand-light {
+        display: block;
+      }
+      .style-brand.type-reflection .brand-cup {
+        right: 0.84in;
+        bottom: 1.02in;
+        transform: scale(0.78);
+      }
+      .style-brand.type-reflection .brand-light {
+        right: 1.02in;
+        top: 0;
+        transform: scale(0.88);
+      }
+      .style-brand.type-progress-check .brand-card {
+        right: 0.76in;
+        bottom: 1.02in;
+        transform: rotate(6deg) scale(0.86);
+      }
+      .style-brand.type-progress-check .brand-plant {
+        right: 1.18in;
+        bottom: 1.56in;
+        transform: scale(0.72);
+      }
+      .style-brand.type-resource .brand-book {
+        right: 0.74in;
+        bottom: 1.04in;
+        transform: rotate(5deg) scale(0.96);
+      }
+      .style-brand.type-resource .brand-pen {
+        right: 1.2in;
+        bottom: 1.52in;
+        transform: rotate(-18deg) scale(0.82);
+      }
+      .style-brand.type-resource .brand-light {
+        right: 0.86in;
+        top: 0;
+        transform: scale(0.88);
       }
       .style-brand.type-closing {
         text-align: center;
@@ -2275,7 +2429,8 @@ function buildCss(tokens: DesignPresetTokens) {
         background:
           radial-gradient(circle at -4% 2%, ${transparent(tokens.plum, 0.42)} 0 0.88in, transparent 0.9in),
           radial-gradient(circle at 96% 6%, ${transparent(tokens.plum, 0.28)} 0 0.72in, transparent 0.74in),
-          radial-gradient(circle at 14% 88%, ${transparent(tokens.lilac, 0.2)} 0 1.2in, transparent 1.22in),
+          radial-gradient(circle at 14% 88%, ${transparent(tokens.lilac, 0.28)} 0 1.28in, transparent 1.3in),
+          radial-gradient(ellipse at 88% 88%, ${transparent(tokens.accent, 0.1)}, transparent 1.55in),
           linear-gradient(126deg, transparent 0 68%, ${transparent(tokens.lilac, 0.14)} 68.5% 100%),
           ${tokens.paper};
       }
@@ -2283,6 +2438,7 @@ function buildCss(tokens: DesignPresetTokens) {
         min-height: 8.5in;
         display: grid;
         place-items: center;
+        position: relative;
       }
       .style-brand.type-closing .image-slot {
         display: none;
@@ -2326,24 +2482,24 @@ function buildCss(tokens: DesignPresetTokens) {
         display: block;
       }
       .style-brand.type-closing .brand-laptop {
-        left: 0.7in;
-        bottom: 0.92in;
-        transform: rotate(-3deg) scale(0.92);
+        left: 0.52in;
+        bottom: 0.76in;
+        transform: rotate(-3deg) scale(1.12);
       }
       .style-brand.type-closing .brand-book {
-        right: 0.84in;
-        bottom: 1.1in;
-        transform: rotate(5deg) scale(1.04);
+        right: 0.58in;
+        bottom: 0.88in;
+        transform: rotate(5deg) scale(1.22);
       }
       .style-brand.type-closing .brand-plant {
-        right: 1.06in;
-        bottom: 1.72in;
-        transform: scale(0.9);
+        right: 0.96in;
+        bottom: 1.58in;
+        transform: scale(1.04);
       }
       .style-brand.type-closing .brand-cup {
-        left: 2.12in;
-        bottom: 0.94in;
-        transform: scale(0.74);
+        left: 2.04in;
+        bottom: 0.78in;
+        transform: scale(0.88);
       }
       .style-rise.cover {
         align-content: start;
@@ -2458,7 +2614,7 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-rise h2 {
         color: ${tokens.plum};
-        font-size: 35px;
+        font-size: 39px;
         letter-spacing: 0.02em;
         line-height: 0.98;
         text-transform: uppercase;
@@ -2603,10 +2759,22 @@ function buildCss(tokens: DesignPresetTokens) {
         bottom: 1.1in;
       }
       .style-rise.type-checklist .floral-right,
-      .style-rise.type-tracker .floral-right {
+      .style-rise.type-tracker .floral-right,
+      .style-rise.type-reflection .floral-right,
+      .style-rise.type-progress-check .floral-right,
+      .style-rise.type-resource .floral-right {
         display: block;
         right: 0.48in;
         bottom: 1.1in;
+      }
+      .style-rise.type-progress-check .content {
+        border-left-color: ${tokens.rose};
+        background:
+          linear-gradient(112deg, ${transparent(tokens.rose, 0.12)}, transparent 58%),
+          ${transparent(tokens.paper, 0.78)};
+      }
+      .style-rise.type-resource .alert-box {
+        border-left-color: ${tokens.rose};
       }
       .style-rise.type-notes .rise-glass,
       .style-rise.type-notes .rise-cake,
@@ -2870,6 +3038,10 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-land.type-workbook .mountain-mark,
       .style-land.type-checklist .land-wrench,
+      .style-land.type-reflection .land-compass,
+      .style-land.type-progress-check .land-leaf,
+      .style-land.type-resource .mountain-mark,
+      .style-land.type-resource .land-wrench,
       .style-land.type-tracker .land-leaf,
       .style-land.type-action-plan .land-compass,
       .style-land.type-notes .land-wrench,
@@ -2889,6 +3061,31 @@ function buildCss(tokens: DesignPresetTokens) {
         right: 0.7in;
         bottom: 0.96in;
         transform: rotate(-18deg) scale(0.76);
+      }
+      .style-land.type-reflection .land-compass {
+        right: 0.7in;
+        bottom: 1.05in;
+        transform: scale(0.76);
+      }
+      .style-land.type-progress-check .land-leaf {
+        right: 0.58in;
+        bottom: 0.92in;
+        transform: scale(0.82);
+      }
+      .style-land.type-progress-check .content {
+        border-left-color: ${tokens.gold};
+        border-radius: 0.04in;
+      }
+      .style-land.type-resource .mountain-mark {
+        width: 2.95in;
+        right: -0.2in;
+        bottom: 0.78in;
+        opacity: 0.24;
+      }
+      .style-land.type-resource .land-wrench {
+        right: 0.64in;
+        bottom: 0.96in;
+        transform: rotate(-16deg) scale(0.72);
       }
       .style-land.type-tracker .land-leaf {
         right: 0.54in;
@@ -2942,14 +3139,14 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-rebuild.cover .cover-title {
         color: ${tokens.ink};
-        font-size: 88px;
+        font-size: 104px;
         max-width: 5.75in;
         margin: 0;
         letter-spacing: 0.08em;
         line-height: 0.86;
       }
       .style-rebuild.cover .cover-title.is-long {
-        font-size: 62px;
+        font-size: 72px;
         line-height: 0.88;
         letter-spacing: 0.035em;
         max-width: 6.28in;
@@ -2968,7 +3165,7 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-rebuild h2 {
         color: ${tokens.blue};
-        font-size: 35px;
+        font-size: 41px;
         letter-spacing: 0.018em;
         line-height: 0.98;
         text-transform: uppercase;
@@ -3153,6 +3350,9 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-rebuild.type-workbook .floral-right,
       .style-rebuild.type-checklist .floral-right,
+      .style-rebuild.type-reflection .floral-right,
+      .style-rebuild.type-progress-check .floral-right,
+      .style-rebuild.type-resource .floral-right,
       .style-rebuild.type-tracker .rebuild-boxes,
       .style-rebuild.type-action-plan .rebuild-paint,
       .style-rebuild.type-notes .rebuild-paint,
@@ -3164,9 +3364,18 @@ function buildCss(tokens: DesignPresetTokens) {
         display: block;
       }
       .style-rebuild.type-workbook .floral-right,
-      .style-rebuild.type-checklist .floral-right {
+      .style-rebuild.type-checklist .floral-right,
+      .style-rebuild.type-reflection .floral-right,
+      .style-rebuild.type-progress-check .floral-right,
+      .style-rebuild.type-resource .floral-right {
         right: 0.42in;
         bottom: 1.02in;
+      }
+      .style-rebuild.type-progress-check .content {
+        border-left-color: ${tokens.blue};
+      }
+      .style-rebuild.type-resource .key-term-box {
+        border-left-color: ${tokens.blue};
       }
       .style-rebuild.type-tracker .rebuild-boxes {
         right: 0.56in;
@@ -3226,7 +3435,7 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-meetatheal.cover .cover-copy {
         margin: 0 auto;
-        max-width: 4.8in;
+        max-width: 5.05in;
         position: static;
       }
       .style-meetatheal.cover .brand-mark {
@@ -3244,15 +3453,15 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-meetatheal.cover .cover-title {
         color: ${tokens.ink};
-        font-size: 53px;
+        font-size: 60px;
         letter-spacing: 0.045em;
         line-height: 0.9;
         margin: 0 auto;
-        max-width: 4.15in;
+        max-width: 4.5in;
         text-transform: uppercase;
       }
       .style-meetatheal.cover .cover-title.is-long {
-        font-size: 46px;
+        font-size: 50px;
         line-height: 0.94;
         max-width: 4.4in;
       }
@@ -3357,6 +3566,15 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-meetatheal.type-lesson .content,
       .style-meetatheal.type-lesson-continue .content {
         max-width: 4.85in;
+        border: 1px solid ${transparent(tokens.line, 0.64)};
+        border-left: 0.05in solid ${tokens.gold};
+        border-radius: 0.08in;
+        padding: 0.22in 0.26in;
+        background:
+          linear-gradient(112deg, ${transparent(tokens.sage, 0.1)} 0 34%, transparent 62%),
+          linear-gradient(70deg, transparent 0 58%, ${transparent(tokens.rose, 0.08)} 86%, transparent 100%),
+          ${transparent(tokens.paper, 0.78)};
+        box-shadow: 0 0.1in 0.24in ${transparent(tokens.background, 0.055)};
       }
       .style-meetatheal.type-welcome .heal-heart,
       .style-meetatheal.type-welcome .floral-right,
@@ -3378,7 +3596,7 @@ function buildCss(tokens: DesignPresetTokens) {
         right: 0.32in;
         left: auto;
         bottom: 0.74in;
-        opacity: 0.24;
+        opacity: 0.34;
       }
       .style-meetatheal.type-lesson-continue .heal-journals {
         right: 0.7in;
@@ -3430,6 +3648,12 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-meetatheal.type-workbook .heal-heart,
       .style-meetatheal.type-workbook .floral-right,
       .style-meetatheal.type-checklist .floral-right,
+      .style-meetatheal.type-reflection .heal-heart,
+      .style-meetatheal.type-reflection .floral-right,
+      .style-meetatheal.type-progress-check .road-mark,
+      .style-meetatheal.type-progress-check .floral-right,
+      .style-meetatheal.type-resource .mountain-mark,
+      .style-meetatheal.type-resource .floral-left,
       .style-meetatheal.type-tracker .heal-journals,
       .style-meetatheal.type-action-plan .road-mark,
       .style-meetatheal.type-notes .heal-journals,
@@ -3449,9 +3673,42 @@ function buildCss(tokens: DesignPresetTokens) {
         transform: rotate(-45deg) scale(0.5);
       }
       .style-meetatheal.type-workbook .floral-right,
-      .style-meetatheal.type-checklist .floral-right {
+      .style-meetatheal.type-checklist .floral-right,
+      .style-meetatheal.type-reflection .floral-right,
+      .style-meetatheal.type-progress-check .floral-right {
         right: 0.46in;
         bottom: 1.02in;
+      }
+      .style-meetatheal.type-reflection .heal-heart {
+        right: 0.92in;
+        bottom: 1.18in;
+        transform: rotate(-45deg) scale(0.48);
+      }
+      .style-meetatheal.type-progress-check .road-mark {
+        width: 3.4in;
+        right: 0.22in;
+        left: auto;
+        bottom: 0.72in;
+        opacity: 0.22;
+      }
+      .style-meetatheal.type-progress-check .content {
+        border-left-color: ${tokens.gold};
+        background:
+          linear-gradient(112deg, ${transparent(tokens.sage, 0.14)} 0 36%, transparent 62%),
+          linear-gradient(68deg, transparent 0 54%, ${transparent(tokens.rose, 0.12)} 86%, transparent 100%),
+          ${transparent(tokens.paper, 0.8)};
+      }
+      .style-meetatheal.type-resource .mountain-mark {
+        width: 2.9in;
+        left: -0.18in;
+        bottom: 0.78in;
+        opacity: 0.24;
+      }
+      .style-meetatheal.type-resource .floral-left {
+        left: 0.38in;
+        bottom: 0.88in;
+        top: auto;
+        color: ${tokens.sage};
       }
       .style-meetatheal.type-tracker .heal-journals {
         right: 0.68in;
@@ -3900,7 +4157,12 @@ function renderContent(blocks: ContentBlock[]) {
 function renderFillableArea(page: KitPage) {
   if (page.type === "workbook") {
     return `<div class="prompt-stack">${page.prompts
-      .map((prompt) => renderPromptCard(prompt, 3))
+      .map((prompt, index) =>
+        renderPromptCard(prompt, 3, {
+          suffix: `prompt_${String(index + 1).padStart(2, "0")}`,
+          multiline: true,
+        })
+      )
       .join("")}</div>`
   }
 
@@ -3909,11 +4171,21 @@ function renderFillableArea(page: KitPage) {
 
     return `<div class="prompt-stack">${items
       .map(
-        (item) => `<div class="check-row"><span class="check-box"></span><span class="prompt-text">${escapeHtml(
-          item
-        )}</span></div>`
+        (item, index) =>
+          `<div class="check-row"><span class="check-box" ${fillableAttrs({
+            kind: "checkbox",
+            suffix: `check_${String(index + 1).padStart(2, "0")}`,
+          })}></span><span class="prompt-text">${escapeHtml(item)}</span></div>`
       )
-      .join("")}</div>${page.noteLabel ? renderPromptCard(page.noteLabel, 2) : ""}`
+      .join("")}</div>${
+      page.noteLabel
+        ? renderPromptCard(page.noteLabel, 2, {
+            suffix: "notes_01",
+            multiline: true,
+            fontSize: 9.5,
+          })
+        : ""
+    }`
   }
 
   if (page.type === "tracker") {
@@ -3927,25 +4199,62 @@ function renderFillableArea(page: KitPage) {
       .map(
         (action, index) => `<div class="action-card"><span class="action-num">${index + 1}</span><div>${renderPromptCard(
           action,
-          2
+          2,
+          {
+            suffix: `action_${String(index + 1).padStart(2, "0")}`,
+            multiline: true,
+          }
         )}</div></div>`
       )
-      .join("")}</div>${page.questions.map((question) => renderPromptCard(question, 1)).join("")}`
+      .join("")}</div>${page.questions
+      .map((question, index) =>
+        renderPromptCard(question, 1, {
+          suffix: `question_${String(index + 1).padStart(2, "0")}`,
+          multiline: true,
+          fontSize: 9.5,
+        })
+      )
+      .join("")}`
   }
 
   if (page.type === "notes") {
-    return `<div class="notes-field"></div>`
+    return `<div class="notes-field" ${fillableAttrs({
+      kind: "text",
+      suffix: "notes_01",
+      multiline: true,
+      insetX: 8,
+      insetY: 22,
+    })}></div>`
   }
 
   return ""
 }
 
-function renderPromptCard(prompt: string, lineCount: number) {
-  return `<div class="prompt-card"><div class="prompt-text">${escapeHtml(
+function renderPromptCard(
+  prompt: string,
+  lineCount: number,
+  field?: {
+    suffix: string
+    multiline?: boolean
+    fontSize?: number
+    textColor?: "plum" | "white"
+  }
+) {
+  return `<div class="prompt-card lines-${lineCount}"><div class="prompt-text">${escapeHtml(
     prompt
   )}</div><div class="writing-lines">${Array.from({ length: lineCount })
     .map(() => "<span></span>")
-    .join("")}</div></div>`
+    .join("")}</div>${
+    field
+      ? `<div class="fillable-text-target" ${fillableAttrs({
+          kind: "text",
+          suffix: field.suffix,
+          multiline: field.multiline,
+          fontSize: field.fontSize,
+          textColor: field.textColor,
+        })}></div>`
+      : ""
+  }</div>`
 }
 
 function renderTracker(page: KitPage) {
@@ -3956,14 +4265,56 @@ function renderTracker(page: KitPage) {
     <thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead>
     <tbody>${rows
       .map(
-        (row) =>
+        (row, rowIndex) =>
           `<tr><td>${escapeHtml(row)}</td>${headers
             .slice(1)
-            .map(() => "<td></td>")
+            .map(
+              (_, columnIndex) =>
+                `<td ${fillableAttrs({
+                  kind: "text",
+                  suffix: `table_row${String(rowIndex + 1).padStart(2, "0")}_col${String(
+                    columnIndex + 2
+                  ).padStart(2, "0")}`,
+                  multiline: columnIndex === headers.length - 2,
+                  fontSize: 8.5,
+                  insetX: 4,
+                  insetY: 4,
+                })}></td>`
+            )
             .join("")}</tr>`
       )
       .join("")}</tbody>
-  </table>${page.noteLabel ? renderPromptCard(page.noteLabel, 2) : ""}`
+  </table>${
+    page.noteLabel
+      ? renderPromptCard(page.noteLabel, 2, {
+          suffix: "notes_01",
+          multiline: true,
+          fontSize: 9.5,
+        })
+      : ""
+  }`
+}
+
+function fillableAttrs(options: {
+  kind: "text" | "checkbox"
+  suffix: string
+  multiline?: boolean
+  fontSize?: number
+  textColor?: "plum" | "white"
+  insetX?: number
+  insetY?: number
+}) {
+  return [
+    `data-fillable-kind="${options.kind}"`,
+    `data-fillable-suffix="${escapeHtml(options.suffix)}"`,
+    options.multiline === undefined ? "" : `data-fillable-multiline="${options.multiline ? "true" : "false"}"`,
+    options.fontSize ? `data-fillable-font-size="${options.fontSize}"` : "",
+    options.textColor ? `data-fillable-text-color="${options.textColor}"` : "",
+    options.insetX ? `data-fillable-inset-x="${options.insetX}"` : "",
+    options.insetY ? `data-fillable-inset-y="${options.insetY}"` : "",
+  ]
+    .filter(Boolean)
+    .join(" ")
 }
 
 function renderToc(page: KitPage) {
@@ -4212,7 +4563,7 @@ function transparent(hex: string, alpha: number) {
 }
 
 function buildAssetDataUri(relativePath: string) {
-  const filePath = path.join(process.cwd(), relativePath)
+  const filePath = path.join(/*turbopackIgnore: true*/ process.cwd(), relativePath)
 
   if (!fs.existsSync(filePath)) {
     return ""
@@ -4296,7 +4647,7 @@ function buildFontFaces() {
 
   return fonts
     .map(([family, weight, style, file]) => {
-      const filePath = path.join(process.cwd(), "node_modules", "@fontsource", file)
+      const filePath = path.join(/*turbopackIgnore: true*/ process.cwd(), "node_modules", "@fontsource", file)
       const data = fs.readFileSync(filePath).toString("base64")
 
       return `@font-face { font-family: "${family}"; font-weight: ${weight}; font-style: ${style}; font-display: swap; src: url(data:font/woff2;base64,${data}) format("woff2"); }`
