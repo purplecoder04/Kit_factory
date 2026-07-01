@@ -139,6 +139,9 @@ function buildCss(tokens: DesignPresetTokens) {
       .brand-plant,
       .brand-door,
       .brand-book,
+      .brand-light,
+      .brand-pen,
+      .brand-glasses,
       .rise-glass,
       .rise-cake,
       .rise-crown,
@@ -161,6 +164,9 @@ function buildCss(tokens: DesignPresetTokens) {
       .brand-plant,
       .brand-door,
       .brand-book,
+      .brand-light,
+      .brand-pen,
+      .brand-glasses,
       .rise-glass,
       .rise-cake,
       .rise-crown,
@@ -390,6 +396,66 @@ function buildCss(tokens: DesignPresetTokens) {
         height: 0.06in;
         border-radius: 50%;
         background: ${tokens.accent};
+      }
+      .brand-light {
+        width: 0.5in;
+        height: 1.6in;
+        color: ${tokens.accent};
+      }
+      .brand-light::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 0;
+        width: 1px;
+        height: 0.98in;
+        background: ${transparent(tokens.ink, 0.46)};
+      }
+      .brand-light::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 0.84in;
+        width: 0.34in;
+        height: 0.42in;
+        border-radius: 50% 50% 44% 44%;
+        transform: translateX(-50%);
+        background:
+          radial-gradient(circle at 50% 45%, ${transparent(tokens.paper, 0.94)} 0 0.12in, transparent 0.13in),
+          linear-gradient(to bottom, ${transparent(tokens.gold, 0.58)}, ${transparent(tokens.gold, 0.28)});
+        border: 1px solid ${transparent(tokens.gold, 0.72)};
+        box-shadow: 0 0.1in 0.26in ${transparent(tokens.gold, 0.24)};
+      }
+      .brand-pen {
+        width: 1.56in;
+        height: 0.15in;
+        border-radius: 999px;
+        background:
+          linear-gradient(90deg, ${tokens.ink} 0 0.18in, ${transparent(tokens.gold, 0.86)} 0.19in 0.36in, ${transparent(tokens.paper, 0.94)} 0.37in 1.34in, ${tokens.ink} 1.35in);
+        border: 1px solid ${transparent(tokens.line, 0.7)};
+        box-shadow: 0 0.07in 0.18in ${transparent(tokens.ink, 0.13)};
+      }
+      .brand-glasses {
+        width: 1.32in;
+        height: 0.45in;
+        color: ${tokens.ink};
+      }
+      .brand-glasses::before,
+      .brand-glasses::after {
+        content: "";
+        position: absolute;
+        top: 0.04in;
+        width: 0.42in;
+        height: 0.28in;
+        border: 0.035in solid ${transparent(tokens.ink, 0.56)};
+        border-radius: 999px;
+        background: ${transparent(tokens.paper, 0.38)};
+      }
+      .brand-glasses::before { left: 0.12in; }
+      .brand-glasses::after { right: 0.12in; }
+      .brand-glasses {
+        background:
+          linear-gradient(90deg, transparent 0 43%, ${transparent(tokens.ink, 0.56)} 44% 56%, transparent 57%);
       }
       .rise-glass {
         width: 0.7in;
@@ -728,36 +794,73 @@ function buildCss(tokens: DesignPresetTokens) {
         top: -0.78in;
         opacity: 0.74;
       }
-      .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing) {
+      .style-brand:not(.cover) {
+        padding: 0.78in 0.68in 0.62in;
         background:
-          radial-gradient(circle at 91% 18%, ${transparent(tokens.paperAlt, 0.38)} 0 0.46in, transparent 0.48in),
-          radial-gradient(circle at 8% 92%, ${transparent(tokens.lilac, 0.34)} 0 0.64in, transparent 0.66in),
-          linear-gradient(135deg, ${transparent(tokens.paperAlt, 0.16)} 0 16%, transparent 34%),
-          linear-gradient(45deg, transparent 0 76%, ${transparent(tokens.plum, 0.08)} 100%),
+          radial-gradient(circle at -4% 2%, ${transparent(tokens.plum, 0.34)} 0 0.75in, transparent 0.77in),
+          radial-gradient(circle at 15% 8%, ${transparent(tokens.lilac, 0.22)} 0 0.92in, transparent 0.94in),
+          radial-gradient(circle at 96% 3%, ${transparent(tokens.plum, 0.22)} 0 0.56in, transparent 0.58in),
+          linear-gradient(126deg, transparent 0 70%, ${transparent(tokens.lilac, 0.12)} 70.4% 100%),
+          linear-gradient(172deg, ${transparent(tokens.paperAlt, 0.2)} 0 10%, transparent 28%),
           ${tokens.paper};
       }
-      .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing)::before {
-        border-color: ${transparent(tokens.line, 0.72)};
+      .style-brand:not(.cover)::before {
+        border-color: ${transparent(tokens.line, 0.78)};
+        inset: 0.18in;
+      }
+      .style-brand:not(.cover)::after {
+        opacity: 0.12;
+      }
+      .style-brand:not(.cover) .dots {
+        display: block;
+        right: 0.52in;
+        top: 0.48in;
+        opacity: 0.5;
+      }
+      .style-brand:not(.cover) .swoop {
+        display: block;
+        left: -0.46in;
+        bottom: -0.18in;
+        opacity: 0.74;
+      }
+      .style-brand:not(.cover) .decor::before {
+        right: -0.9in;
+        bottom: -0.6in;
+        opacity: 0.42;
+      }
+      .style-brand:not(.cover) .decor::after {
+        left: -0.76in;
+        top: -0.72in;
+        opacity: 0.42;
+      }
+      .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing) {
+        background:
+          radial-gradient(circle at -4% 2%, ${transparent(tokens.plum, 0.34)} 0 0.75in, transparent 0.77in),
+          radial-gradient(circle at 15% 8%, ${transparent(tokens.lilac, 0.22)} 0 0.92in, transparent 0.94in),
+          radial-gradient(circle at 96% 3%, ${transparent(tokens.plum, 0.2)} 0 0.54in, transparent 0.56in),
+          linear-gradient(126deg, transparent 0 70%, ${transparent(tokens.lilac, 0.12)} 70.4% 100%),
+          linear-gradient(172deg, ${transparent(tokens.paperAlt, 0.18)} 0 10%, transparent 28%),
+          ${tokens.paper};
       }
       .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing) h2 {
         color: ${tokens.ink};
-        font-size: 39px;
-        line-height: 0.96;
-        max-width: 5.72in;
+        font-size: 43px;
+        line-height: 0.92;
+        max-width: 6.18in;
       }
       .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing) .section-label {
         color: ${tokens.accent};
-        font-size: 8.8px;
+        font-size: 9px;
         letter-spacing: 0.3em;
-        margin-bottom: 0.1in;
+        margin-bottom: 0.12in;
       }
       .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing) .content {
         color: ${tokens.mutedInk};
-        font-size: 12.2px;
+        font-size: 12.4px;
       }
       .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing) p {
-        font-size: 12.4px;
-        line-height: 1.58;
+        font-size: 12.8px;
+        line-height: 1.6;
       }
       .style-brand.motif-grounded-circles .spark-lines {
         display: block;
@@ -1569,7 +1672,7 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-brand.cover .brand-mark {
         color: ${tokens.ink};
         font-size: 22px;
-        margin-bottom: 0.24in;
+        margin-bottom: 0.08in;
       }
       .style-brand.cover .cover-title {
         font-size: 76px;
@@ -1582,10 +1685,28 @@ function buildCss(tokens: DesignPresetTokens) {
         max-width: 6.12in;
       }
       .style-brand.cover .cover-subtitle {
+        color: ${tokens.ink};
+        font-family: "Poppins", Arial, sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.28em;
         margin-top: 0.18in;
       }
+      .style-brand.cover .cover-divider {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 0.28in;
+        margin-top: 0.1in;
+      }
+      .style-brand.cover .cover-divider span {
+        display: block;
+        width: 0.64in;
+        height: 1px;
+        background: ${tokens.accent};
+      }
       .style-brand.cover .cover-product {
-        margin-top: 0.3in;
+        margin-top: 0.08in;
       }
       .style-brand.cover .cover-tagline {
         margin-top: 0.48in;
@@ -1628,69 +1749,102 @@ function buildCss(tokens: DesignPresetTokens) {
         opacity: 0.82;
       }
       .style-brand.type-welcome .brand-plant,
-      .style-brand.type-welcome .brand-cup,
       .style-brand.type-welcome .brand-card,
+      .style-brand.type-welcome .brand-light,
       .style-brand.type-welcome .brand-arc {
         display: block;
       }
       .style-brand.type-welcome .brand-plant {
-        right: 0.78in;
-        top: 4.15in;
-        transform: scale(1.08);
-      }
-      .style-brand.type-welcome .brand-cup {
-        left: 0.6in;
-        bottom: 1.12in;
-        transform: scale(0.72);
+        right: 0.84in;
+        top: 4.52in;
+        transform: scale(1.02);
       }
       .style-brand.type-welcome .brand-card {
-        right: 0.86in;
-        top: 2.52in;
-        transform: rotate(5deg) scale(0.9);
+        right: 1.22in;
+        top: 5.78in;
+        transform: rotate(6deg) scale(0.78);
+      }
+      .style-brand.type-welcome .brand-light {
+        right: 1.32in;
+        top: 0;
       }
       .style-brand.type-welcome .brand-arc {
-        right: -0.36in;
-        top: 2.24in;
+        right: -0.3in;
+        top: 3.9in;
         left: auto;
-        width: 2.1in;
-        height: 2.1in;
+        width: 2.25in;
+        height: 2.25in;
         opacity: 0.42;
       }
       .style-brand.type-welcome .content {
-        max-width: 4.92in;
-        margin-top: 0.24in;
-        border-left: 0.04in solid ${tokens.accent};
-        padding: 0.18in 0.24in 0.2in;
+        max-width: 5.05in;
+        margin-top: 0.34in;
+        border: 1px solid ${transparent(tokens.line, 0.62)};
+        border-left: 0.06in solid ${tokens.accent};
+        border-radius: 0.08in;
+        padding: 0.26in 0.3in 0.28in;
         background:
-          linear-gradient(90deg, ${transparent(tokens.paperAlt, 0.28)}, transparent 72%),
-          ${transparent(tokens.paper, 0.64)};
-        box-shadow: 0 0.08in 0.22in ${transparent(tokens.ink, 0.045)};
+          linear-gradient(90deg, ${transparent(tokens.paperAlt, 0.38)}, transparent 76%),
+          ${transparent(tokens.paper, 0.86)};
+        box-shadow: 0 0.12in 0.34in ${transparent(tokens.ink, 0.09)};
       }
       .style-brand.type-welcome .check-list {
-        gap: 0.11in;
-        max-width: 4.35in;
+        gap: 0.14in;
+        max-width: 4.48in;
+        margin-top: 0.2in;
       }
       .style-brand.type-welcome .check-list li {
         border-bottom: 1px solid ${transparent(tokens.line, 0.62)};
-        padding-bottom: 0.07in;
+        color: ${tokens.ink};
+        font-size: 12.2px;
+        font-weight: 500;
+        padding-bottom: 0.08in;
       }
       .style-brand.type-toc .page-ribbon,
       .style-brand.type-quote .page-ribbon,
       .style-brand.type-section-divider .page-ribbon {
         display: none;
       }
+      .style-brand.type-section-divider .section-divider-page {
+        min-height: 8.45in;
+        display: grid;
+        place-items: center;
+      }
+      .style-brand.type-how-to-use .content {
+        max-width: 6.18in;
+        margin-top: 0.44in;
+      }
+      .style-brand.type-how-to-use .alert-box {
+        min-height: 1.48in;
+        border-left-width: 0.06in;
+        border-radius: 0.08in;
+        padding: 0.24in 0.3in;
+        background:
+          linear-gradient(135deg, ${transparent(tokens.paperAlt, 0.48)}, transparent 64%),
+          ${transparent(tokens.paper, 0.88)};
+        box-shadow: 0 0.12in 0.32in ${transparent(tokens.ink, 0.08)};
+      }
+      .style-brand.type-how-to-use .alert-icon {
+        margin-top: 0.02in;
+      }
+      .style-brand.type-how-to-use .alert-text {
+        font-size: 11.4px;
+        line-height: 1.58;
+      }
       .style-brand.type-toc h2 {
         text-align: center;
         max-width: none;
-        margin-top: 0.36in;
-        font-size: 42px;
+        margin-top: 0.48in;
+        font-size: 48px;
       }
       .style-brand.type-toc .content {
-        max-width: 5.65in;
-        margin: 0.52in auto 0;
-        padding: 0.18in 0.26in 0.22in;
-        background: ${transparent(tokens.paper, 0.58)};
-        box-shadow: 0 0.08in 0.2in ${transparent(tokens.ink, 0.035)};
+        max-width: 6.05in;
+        margin: 0.64in auto 0;
+        padding: 0.22in 0.34in 0.28in;
+        border: 1px solid ${transparent(tokens.line, 0.62)};
+        border-radius: 0.08in;
+        background: ${transparent(tokens.paper, 0.88)};
+        box-shadow: 0 0.12in 0.34in ${transparent(tokens.ink, 0.075)};
       }
       .style-brand.type-toc .tracker-table {
         border-collapse: separate;
@@ -1698,11 +1852,12 @@ function buildCss(tokens: DesignPresetTokens) {
         font-family: "Poppins", Arial, sans-serif;
       }
       .style-brand.type-toc .tracker-table td {
-        height: 0.36in;
+        height: 0.42in;
         border: 0;
         border-bottom: 1px dotted ${transparent(tokens.mutedInk, 0.48)};
-        background: transparent;
-        padding: 0.08in 0;
+        background: transparent !important;
+        padding: 0.1in 0;
+        font-size: 11.2px;
       }
       .style-brand.type-toc .tracker-table td:first-child {
         width: 0.44in;
@@ -1716,15 +1871,21 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-brand.type-toc .brand-book {
         display: block;
-        right: 0.8in;
-        bottom: 0.98in;
-        transform: rotate(6deg);
+        right: 0.78in;
+        bottom: 1.05in;
+        transform: rotate(6deg) scale(0.95);
       }
       .style-brand.type-toc .brand-plant {
         display: block;
-        left: 0.68in;
-        bottom: 0.92in;
-        transform: scale(0.82);
+        left: 0.7in;
+        bottom: 1in;
+        transform: scale(0.78);
+      }
+      .style-brand.type-toc .brand-pen {
+        display: block;
+        right: 1.42in;
+        bottom: 1.42in;
+        transform: rotate(-19deg) scale(0.82);
       }
       .style-brand.type-quote .brand-laptop {
         display: block;
@@ -1739,7 +1900,7 @@ function buildCss(tokens: DesignPresetTokens) {
         transform: scale(0.86);
       }
       .style-brand.type-quote .quote-page {
-        min-height: 8.15in;
+        min-height: 8.65in;
         display: grid;
         place-items: center;
         padding: 0.68in;
@@ -1747,15 +1908,16 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-brand.type-quote .quote-page .quote-box {
         border-left: 0;
         border-radius: 0;
-        background: transparent;
-        max-width: 4.85in;
-        padding: 0.3in 0.28in 0.28in;
+        background: ${transparent(tokens.paper, 0.66)};
+        max-width: 5.25in;
+        padding: 0.42in 0.44in 0.38in;
         text-align: center;
+        box-shadow: 0 0.14in 0.34in ${transparent(tokens.ink, 0.055)};
       }
       .style-brand.type-quote .quote-page .quote-text {
         color: ${tokens.ink};
-        font-size: 38px;
-        line-height: 1.08;
+        font-size: 43px;
+        line-height: 1.02;
       }
       .style-brand.type-quote .quote-page .quote-mark {
         color: ${transparent(tokens.plum, 0.26)};
@@ -1775,13 +1937,14 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-brand.type-section-divider .section-divider-box {
         position: relative;
-        width: 5.85in;
-        min-height: 3in;
-        border-radius: 0.1in;
+        width: 6.18in;
+        min-height: 3.45in;
+        border-radius: 0.12in;
         background: ${tokens.plum};
         color: ${tokens.paper};
         overflow: hidden;
-        padding: 0.5in 0.58in;
+        padding: 0.58in 0.66in;
+        box-shadow: 0 0.16in 0.38in ${transparent(tokens.ink, 0.12)};
       }
       .style-brand.type-section-divider .section-divider-box::before {
         content: "";
@@ -1807,23 +1970,30 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-brand.type-section-divider h2 {
         color: ${tokens.paper};
-        max-width: 4.1in;
+        font-size: 43px;
+        max-width: 4.7in;
       }
       .style-brand.type-section-divider .subtitle {
         color: ${transparent(tokens.paper, 0.84)};
       }
       .style-brand.type-lesson .content,
       .style-brand.type-lesson-continue .content {
-        max-width: 4.85in;
+        max-width: 5.08in;
+        margin-top: 0.28in;
+        padding: 0.22in 0.26in;
+        border-radius: 0.08in;
+        background: ${transparent(tokens.paper, 0.72)};
+        box-shadow: 0 0.1in 0.26in ${transparent(tokens.ink, 0.052)};
       }
       .style-brand.type-lesson .key-term-box {
-        margin-top: 0.2in;
-        max-width: 4.72in;
+        margin-top: 0.24in;
+        max-width: 4.92in;
         border-left-width: 0.05in;
+        border-radius: 0.08in;
         background:
           linear-gradient(135deg, ${transparent(tokens.lilac, 0.16)}, transparent 62%),
           ${transparent(tokens.paperAlt, 0.82)};
-        box-shadow: 0 0.08in 0.18in ${transparent(tokens.ink, 0.055)};
+        box-shadow: 0 0.1in 0.24in ${transparent(tokens.ink, 0.08)};
       }
       .style-brand.type-lesson .brand-door {
         display: block;
@@ -1844,11 +2014,12 @@ function buildCss(tokens: DesignPresetTokens) {
         transform: scale(0.92);
       }
       .style-brand.type-lesson-continue .reflect-box {
-        max-width: 4.8in;
-        min-height: 1.18in;
+        max-width: 4.92in;
+        min-height: 1.32in;
         border-left-width: 0.05in;
-        background: ${transparent(tokens.paper, 0.74)};
-        box-shadow: 0 0.08in 0.18in ${transparent(tokens.ink, 0.035)};
+        border-radius: 0.08in;
+        background: ${transparent(tokens.paper, 0.86)};
+        box-shadow: 0 0.1in 0.24in ${transparent(tokens.ink, 0.055)};
       }
       .style-brand.type-lesson-continue .brand-cup {
         display: block;
@@ -1862,69 +2033,134 @@ function buildCss(tokens: DesignPresetTokens) {
         top: 2.3in;
         transform: rotate(6deg) scale(0.88);
       }
+      .style-brand.type-lesson-continue .brand-light {
+        display: block;
+        right: 0.86in;
+        top: 0;
+        transform: scale(0.94);
+      }
       .style-brand.type-workbook .content,
       .style-brand.type-checklist .content,
       .style-brand.type-action-plan .content,
       .style-brand.type-notes .content {
         max-width: 6.65in;
       }
+      .style-brand.type-workbook .content,
+      .style-brand.type-checklist .content,
+      .style-brand.type-action-plan .content,
+      .style-brand.type-tracker .content,
+      .style-brand.type-case-study .content {
+        margin-top: 0.34in;
+      }
+      .style-brand.type-workbook .prompt-stack,
+      .style-brand.type-action-plan .action-grid {
+        gap: 0.2in;
+      }
       .style-brand.type-workbook .prompt-card {
-        min-height: 1.34in;
+        min-height: 1.48in;
         border-left-width: 0.06in;
-        border-radius: 0.06in;
+        border-radius: 0.08in;
         background:
           linear-gradient(135deg, ${transparent(tokens.paperAlt, 0.22)}, transparent 72%),
-          ${transparent(tokens.paper, 0.82)};
-        box-shadow: 0 0.1in 0.22in ${transparent(tokens.ink, 0.055)};
-        padding: 0.17in 0.2in 0.14in;
+          ${transparent(tokens.paper, 0.9)};
+        box-shadow: 0 0.12in 0.3in ${transparent(tokens.ink, 0.08)};
+        padding: 0.2in 0.24in 0.17in;
       }
       .style-brand.type-workbook .prompt-text {
-        font-size: 19px;
+        font-size: 20.5px;
+        line-height: 1.05;
       }
       .style-brand.type-workbook .writing-lines {
-        gap: 0.12in;
+        gap: 0.13in;
+      }
+      .style-brand.type-workbook .brand-pen,
+      .style-brand.type-workbook .brand-card {
+        display: block;
+      }
+      .style-brand.type-workbook .brand-pen {
+        right: 0.86in;
+        bottom: 1.55in;
+        transform: rotate(-17deg) scale(0.95);
+      }
+      .style-brand.type-workbook .brand-card {
+        right: 1.42in;
+        bottom: 1.02in;
+        transform: rotate(7deg) scale(0.86);
       }
       .style-brand.type-checklist .prompt-stack,
       .style-brand.type-tracker .tracker-table,
       .style-brand.type-action-plan .action-grid {
-        max-width: 6.25in;
+        max-width: 6.42in;
       }
       .style-brand.type-checklist .prompt-stack {
         border: 1px solid ${transparent(tokens.line, 0.78)};
         border-left: 0.05in solid ${tokens.accent};
-        border-radius: 0.06in;
-        background: ${transparent(tokens.paper, 0.72)};
-        box-shadow: 0 0.1in 0.22in ${transparent(tokens.ink, 0.045)};
-        padding: 0.12in 0.22in 0.1in;
+        border-radius: 0.08in;
+        background: ${transparent(tokens.paper, 0.88)};
+        box-shadow: 0 0.12in 0.3in ${transparent(tokens.ink, 0.075)};
+        padding: 0.18in 0.26in 0.16in;
       }
       .style-brand.type-checklist .check-row {
-        min-height: 0.32in;
-        padding: 0.08in 0.02in;
+        min-height: 0.36in;
+        padding: 0.09in 0.02in;
       }
       .style-brand.type-checklist .check-box {
+        width: 0.16in;
+        height: 0.16in;
         border-color: ${transparent(tokens.plum, 0.46)};
       }
       .style-brand.type-checklist .check-row .prompt-text {
         color: ${tokens.ink};
-        font-size: 11.8px;
+        font-size: 12px;
+      }
+      .style-brand.type-checklist .brand-book,
+      .style-brand.type-checklist .brand-pen,
+      .style-brand.type-checklist .brand-plant {
+        display: block;
+      }
+      .style-brand.type-checklist .brand-book {
+        right: 0.84in;
+        bottom: 1.08in;
+        transform: rotate(8deg) scale(0.92);
+      }
+      .style-brand.type-checklist .brand-pen {
+        right: 1.2in;
+        bottom: 1.58in;
+        transform: rotate(-18deg) scale(0.82);
+      }
+      .style-brand.type-checklist .brand-plant {
+        right: 0.58in;
+        bottom: 1.2in;
+        transform: scale(0.76);
+        opacity: 0.78;
       }
       .style-brand.type-tracker .tracker-table {
         border-collapse: separate;
         border-spacing: 0;
+        border-radius: 0.06in;
         overflow: hidden;
-        box-shadow: 0 0.1in 0.24in ${transparent(tokens.ink, 0.055)};
+        background: ${transparent(tokens.paper, 0.86)};
+        box-shadow: 0 0.12in 0.3in ${transparent(tokens.ink, 0.08)};
       }
       .style-brand.type-tracker .tracker-table th {
         background: ${tokens.plum};
         border-color: ${transparent(tokens.plum, 0.34)};
-        padding: 0.1in;
+        font-size: 8.4px;
+        padding: 0.11in;
       }
       .style-brand.type-tracker .tracker-table td {
-        background: ${transparent(tokens.paper, 0.66)};
+        height: 0.43in;
+        background: ${transparent(tokens.paper, 0.78)};
       }
       .style-brand.type-tracker .tracker-table td:first-child {
         color: ${tokens.ink};
         font-weight: 600;
+      }
+      .style-brand.type-tracker .prompt-card {
+        max-width: 6.42in;
+        border-radius: 0.08in;
+        background: ${transparent(tokens.paper, 0.88)};
+        box-shadow: 0 0.1in 0.24in ${transparent(tokens.ink, 0.055)};
       }
       .style-brand.type-tracker .brand-plant {
         display: block;
@@ -1944,13 +2180,23 @@ function buildCss(tokens: DesignPresetTokens) {
         bottom: 1.08in;
         transform: scale(0.72);
       }
+      .style-brand.type-action-plan .brand-laptop {
+        display: block;
+        left: 0.52in;
+        bottom: 1.02in;
+        transform: rotate(-3deg) scale(0.82);
+        opacity: 0.82;
+      }
       .style-brand.type-action-plan .prompt-card {
         border-left-color: ${tokens.accent};
-        background: ${transparent(tokens.paper, 0.76)};
-        box-shadow: 0 0.08in 0.18in ${transparent(tokens.ink, 0.04)};
+        border-radius: 0.08in;
+        background: ${transparent(tokens.paper, 0.9)};
+        box-shadow: 0 0.1in 0.24in ${transparent(tokens.ink, 0.065)};
       }
       .style-brand.type-action-plan .action-num {
         background: ${tokens.plum};
+        width: 0.3in;
+        height: 0.3in;
         box-shadow: 0 0.04in 0.1in ${transparent(tokens.ink, 0.12)};
       }
       .style-brand.type-notes .brand-cup,
@@ -1975,40 +2221,103 @@ function buildCss(tokens: DesignPresetTokens) {
         opacity: 0.78;
       }
       .style-brand.type-notes .notes-field {
-        min-height: 6.85in;
-        margin-top: 0.24in;
-        border-left: 0.04in solid ${transparent(tokens.accent, 0.82)};
-        padding-left: 0.18in;
+        min-height: 6.72in;
+        margin-top: 0.34in;
+        border: 1px solid ${transparent(tokens.line, 0.62)};
+        border-left: 0.06in solid ${transparent(tokens.accent, 0.92)};
+        border-radius: 0.08in;
+        padding: 0.18in 0.22in;
+        background-color: ${transparent(tokens.paper, 0.72)};
         background-image:
           linear-gradient(90deg, ${transparent(tokens.paperAlt, 0.16)}, transparent 42%),
           repeating-linear-gradient(to bottom, transparent 0 0.34in, ${transparent(tokens.line, 0.86)} 0.35in 0.36in);
+        box-shadow: 0 0.12in 0.28in ${transparent(tokens.ink, 0.06)};
       }
       .style-brand.type-case-study .story-box {
         background:
           linear-gradient(115deg, ${transparent(tokens.accentSoft, 0.76)}, transparent 62%),
-          rgba(255,255,255,0.58);
+          ${transparent(tokens.paper, 0.88)};
         border-left: 0.05in solid ${tokens.accent};
-        box-shadow: 0 0.08in 0.2in ${transparent(tokens.ink, 0.045)};
+        border-radius: 0.08in;
+        min-height: 1.08in;
+        box-shadow: 0 0.12in 0.3in ${transparent(tokens.ink, 0.07)};
       }
       .style-brand.type-case-study .takeaway-box {
         background: ${tokens.plum};
         color: ${tokens.paper};
-        box-shadow: 0 0.08in 0.18in ${transparent(tokens.ink, 0.055)};
+        border-radius: 0.06in;
+        letter-spacing: 0.04em;
+        box-shadow: 0 0.1in 0.24in ${transparent(tokens.ink, 0.07)};
       }
       .style-brand.type-case-study .brand-card {
         display: block;
-        right: 0.76in;
+        right: 0.82in;
         bottom: 1.02in;
-        transform: rotate(7deg);
+        transform: rotate(7deg) scale(0.9);
+      }
+      .style-brand.type-case-study .brand-pen,
+      .style-brand.type-case-study .brand-glasses {
+        display: block;
+      }
+      .style-brand.type-case-study .brand-pen {
+        left: 0.78in;
+        bottom: 1.2in;
+        transform: rotate(-16deg) scale(0.86);
+      }
+      .style-brand.type-case-study .brand-glasses {
+        left: 1.08in;
+        bottom: 1.62in;
+        transform: rotate(-5deg);
       }
       .style-brand.type-closing {
         text-align: center;
+        padding: 0.72in 0.74in 0.86in;
+        background:
+          radial-gradient(circle at -4% 2%, ${transparent(tokens.plum, 0.42)} 0 0.88in, transparent 0.9in),
+          radial-gradient(circle at 96% 6%, ${transparent(tokens.plum, 0.28)} 0 0.72in, transparent 0.74in),
+          radial-gradient(circle at 14% 88%, ${transparent(tokens.lilac, 0.2)} 0 1.2in, transparent 1.22in),
+          linear-gradient(126deg, transparent 0 68%, ${transparent(tokens.lilac, 0.14)} 68.5% 100%),
+          ${tokens.paper};
       }
       .style-brand.type-closing .closing-panel {
-        min-height: 7.4in;
+        min-height: 8.5in;
+        display: grid;
+        place-items: center;
       }
       .style-brand.type-closing .image-slot {
         display: none;
+      }
+      .style-brand.type-closing .brand-mark {
+        color: ${tokens.ink};
+        font-size: 22px;
+        margin-bottom: 0.18in;
+      }
+      .style-brand.type-closing h1 {
+        color: ${tokens.ink};
+        font-size: 50px;
+        line-height: 0.94;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+      }
+      .style-brand.type-closing .subtitle {
+        color: ${tokens.ink};
+        font-family: "Poppins", Arial, sans-serif;
+        font-size: 10px;
+        font-style: normal;
+        font-weight: 700;
+        letter-spacing: 0.34em;
+        line-height: 1.45;
+        margin: 0.18in auto 0;
+        max-width: 4.2in;
+        text-transform: uppercase;
+      }
+      .style-brand.type-closing .cover-tagline {
+        color: ${tokens.mutedInk};
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.28em;
+        margin-top: 0.42in;
+        text-transform: uppercase;
       }
       .style-brand.type-closing .brand-laptop,
       .style-brand.type-closing .brand-book,
@@ -2017,14 +2326,14 @@ function buildCss(tokens: DesignPresetTokens) {
         display: block;
       }
       .style-brand.type-closing .brand-laptop {
-        left: 0.72in;
-        bottom: 1.02in;
-        transform: rotate(-2deg) scale(0.86);
+        left: 0.7in;
+        bottom: 0.92in;
+        transform: rotate(-3deg) scale(0.92);
       }
       .style-brand.type-closing .brand-book {
         right: 0.84in;
         bottom: 1.1in;
-        transform: rotate(5deg);
+        transform: rotate(5deg) scale(1.04);
       }
       .style-brand.type-closing .brand-plant {
         right: 1.06in;
@@ -2032,9 +2341,9 @@ function buildCss(tokens: DesignPresetTokens) {
         transform: scale(0.9);
       }
       .style-brand.type-closing .brand-cup {
-        left: 2.18in;
-        bottom: 1in;
-        transform: scale(0.72);
+        left: 2.12in;
+        bottom: 0.94in;
+        transform: scale(0.74);
       }
       .style-rise.cover {
         align-content: start;
@@ -3376,6 +3685,24 @@ function renderCoverPage(
   const presetClasses = presetClassName(preset)
   const titleClass = `cover-title ${title.length > 24 ? "is-long" : ""}`.trim()
 
+  if (preset.styleFamily === "brand") {
+    const kitTitle = cleanCoverKitTitle(title)
+
+    return `<section class="page cover ${presetClasses} type-cover">
+    ${renderDecor()}
+    <div class="cover-copy">
+      <div class="brand-mark">${renderIcon(preset)}</div>
+      <div class="cover-brandline">Best Collective</div>
+      <h1 class="cover-title">Brand</h1>
+      <div class="cover-subtitle">${escapeHtml(kitTitle)}</div>
+      <div class="cover-divider"><span></span></div>
+      <div class="cover-product">${escapeHtml(coverProductLabel(kit, preset))}</div>
+      ${tagline ? `<div class="cover-tagline">${escapeHtml(tagline)}</div>` : ""}
+    </div>
+    ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
+  </section>`
+  }
+
   if (preset.styleFamily === "land") {
     const collectionTitle = landCoverCollectionTitle(preset)
     const collectionSubtitle = landCoverSubtitle(page, kit, preset)
@@ -3463,6 +3790,24 @@ function renderClosingPage(
   const subtitle = page.subtitle || kit.subtitle
   const tagline = page.tagline || kit.tagline
   const presetClasses = presetClassName(preset)
+
+  if (preset.styleFamily === "brand") {
+    const closingHeadline = subtitle || kit.subtitle || title
+
+    return `<section class="page ${presetClasses} type-closing">
+    ${renderDecor()}
+    <div class="closing-panel">
+      <div>
+        <div class="brand-mark">${renderIcon(preset)}</div>
+        <div class="cover-brandline">${escapeHtml(title)}</div>
+        <h1>${escapeHtml(closingHeadline)}</h1>
+        ${tagline ? `<div class="cover-tagline">${escapeHtml(tagline)}</div>` : ""}
+      </div>
+    </div>
+    ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
+    ${footer(index, total, branch)}
+  </section>`
+  }
 
   return `<section class="page ${presetClasses} type-closing">
     ${renderDecor()}
@@ -3665,6 +4010,9 @@ function renderDecor() {
     <span class="brand-plant"></span>
     <span class="brand-door"></span>
     <span class="brand-book"></span>
+    <span class="brand-light"></span>
+    <span class="brand-pen"></span>
+    <span class="brand-glasses"></span>
     <span class="rise-glass"></span>
     <span class="rise-cake"></span>
     <span class="rise-crown"></span>
@@ -3829,6 +4177,10 @@ function productLabel(productType: string, outputMode?: string) {
 }
 
 function coverProductLabel(kit: ParsedKit, preset: DesignPresetTokens) {
+  if (preset.styleFamily === "brand") {
+    return "Lesson Guide + Workbook"
+  }
+
   if (preset.slug === "meetatheal") {
     if (/lesson\s+book/i.test(kit.title)) {
       return "Lesson Book"

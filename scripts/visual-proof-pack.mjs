@@ -97,7 +97,9 @@ async function main() {
   const dirs = await prepareOutput()
   const proofRows = []
 
-  for (const preset of proofPresets) {
+  const selectedPresets = filterProofPresets(proofPresets)
+
+  for (const preset of selectedPresets) {
     const markdown = markdownForPreset(sampleMarkdown, preset)
     const pdfPath = path.join(dirs.pdfs, `${preset.slug}-complete.pdf`)
     const mockupPath = path.join(dirs.mockups, `${preset.slug}-mockup.png`)
@@ -174,10 +176,37 @@ async function main() {
     imageWidth: 520,
   })
 
-  await createMeetAtTheHealPackageProof(baseUrl, dirs.package)
+  if (shouldCreateMeetAtTheHealPackage(selectedPresets)) {
+    await createMeetAtTheHealPackageProof(baseUrl, dirs.package)
+  }
   await writeReadme(baseUrl, proofRows)
 
   console.log(`Visual proof pack ready: ${outputRoot}`)
+}
+
+function filterProofPresets(presets) {
+  const selected = (process.env.KIT_FACTORY_PROOF_PRESETS || "")
+    .split(",")
+    .map((slug) => slug.trim())
+    .filter(Boolean)
+
+  if (selected.length === 0) {
+    return presets
+  }
+
+  const filtered = presets.filter((preset) => selected.includes(preset.slug))
+
+  if (filtered.length === 0) {
+    throw new Error(`No proof presets matched KIT_FACTORY_PROOF_PRESETS=${selected.join(",")}`)
+  }
+
+  return filtered
+}
+
+function shouldCreateMeetAtTheHealPackage(selectedPresets) {
+  const isFullPack = selectedPresets.length === proofPresets.length
+
+  return isFullPack || selectedPresets.some((preset) => preset.branch === "meetatheal")
 }
 
 async function prepareOutput() {
