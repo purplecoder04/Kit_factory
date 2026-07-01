@@ -723,6 +723,42 @@ function buildCss(tokens: DesignPresetTokens) {
         top: -0.42in;
         background: ${transparent(tokens.plum, 0.3)};
       }
+      .style-brand:not(.cover) .decor::after {
+        left: -0.78in;
+        top: -0.78in;
+        opacity: 0.74;
+      }
+      .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing) {
+        background:
+          radial-gradient(circle at 91% 18%, ${transparent(tokens.paperAlt, 0.38)} 0 0.46in, transparent 0.48in),
+          radial-gradient(circle at 8% 92%, ${transparent(tokens.lilac, 0.34)} 0 0.64in, transparent 0.66in),
+          linear-gradient(135deg, ${transparent(tokens.paperAlt, 0.16)} 0 16%, transparent 34%),
+          linear-gradient(45deg, transparent 0 76%, ${transparent(tokens.plum, 0.08)} 100%),
+          ${tokens.paper};
+      }
+      .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing)::before {
+        border-color: ${transparent(tokens.line, 0.72)};
+      }
+      .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing) h2 {
+        color: ${tokens.ink};
+        font-size: 39px;
+        line-height: 0.96;
+        max-width: 5.72in;
+      }
+      .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing) .section-label {
+        color: ${tokens.accent};
+        font-size: 8.8px;
+        letter-spacing: 0.3em;
+        margin-bottom: 0.1in;
+      }
+      .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing) .content {
+        color: ${tokens.mutedInk};
+        font-size: 12.2px;
+      }
+      .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing) p {
+        font-size: 12.4px;
+        line-height: 1.58;
+      }
       .style-brand.motif-grounded-circles .spark-lines {
         display: block;
       }
@@ -912,6 +948,23 @@ function buildCss(tokens: DesignPresetTokens) {
         position: absolute;
         left: 0.58in;
         bottom: 0.02in;
+        width: 0.72in;
+        height: 1px;
+        background: ${tokens.accent};
+      }
+      .style-brand:not(.cover) .page-ribbon {
+        display: none;
+      }
+      .style-brand .section-label {
+        display: inline-block;
+        position: relative;
+        padding-bottom: 0.07in;
+      }
+      .style-brand .section-label::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: 0;
         width: 0.72in;
         height: 1px;
         background: ${tokens.accent};
@@ -1604,7 +1657,14 @@ function buildCss(tokens: DesignPresetTokens) {
         opacity: 0.42;
       }
       .style-brand.type-welcome .content {
-        max-width: 4.55in;
+        max-width: 4.92in;
+        margin-top: 0.24in;
+        border-left: 0.04in solid ${tokens.accent};
+        padding: 0.18in 0.24in 0.2in;
+        background:
+          linear-gradient(90deg, ${transparent(tokens.paperAlt, 0.28)}, transparent 72%),
+          ${transparent(tokens.paper, 0.64)};
+        box-shadow: 0 0.08in 0.22in ${transparent(tokens.ink, 0.045)};
       }
       .style-brand.type-welcome .check-list {
         gap: 0.11in;
@@ -1623,10 +1683,14 @@ function buildCss(tokens: DesignPresetTokens) {
         text-align: center;
         max-width: none;
         margin-top: 0.36in;
+        font-size: 42px;
       }
       .style-brand.type-toc .content {
         max-width: 5.65in;
         margin: 0.52in auto 0;
+        padding: 0.18in 0.26in 0.22in;
+        background: ${transparent(tokens.paper, 0.58)};
+        box-shadow: 0 0.08in 0.2in ${transparent(tokens.ink, 0.035)};
       }
       .style-brand.type-toc .tracker-table {
         border-collapse: separate;
@@ -1676,14 +1740,38 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-brand.type-quote .quote-page {
         min-height: 8.15in;
+        display: grid;
+        place-items: center;
+        padding: 0.68in;
+      }
+      .style-brand.type-quote .quote-page .quote-box {
+        border-left: 0;
+        border-radius: 0;
+        background: transparent;
+        max-width: 4.85in;
+        padding: 0.3in 0.28in 0.28in;
+        text-align: center;
       }
       .style-brand.type-quote .quote-page .quote-text {
         color: ${tokens.ink};
-        font-size: 34px;
-        line-height: 1.12;
+        font-size: 38px;
+        line-height: 1.08;
       }
       .style-brand.type-quote .quote-page .quote-mark {
-        color: ${tokens.ink};
+        color: ${transparent(tokens.plum, 0.26)};
+        left: 50%;
+        top: -0.26in;
+        transform: translateX(-50%);
+        font-size: 96px;
+      }
+      .style-brand.type-quote .quote-page .quote-by {
+        display: inline-block;
+        margin-top: 0.22in;
+        padding-top: 0.12in;
+      }
+      .style-brand.type-quote .quote-page .quote-by::before {
+        left: 50%;
+        transform: translateX(-50%);
       }
       .style-brand.type-section-divider .section-divider-box {
         position: relative;
@@ -1726,12 +1814,22 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-brand.type-lesson .content,
       .style-brand.type-lesson-continue .content {
-        max-width: 4.45in;
+        max-width: 4.85in;
+      }
+      .style-brand.type-lesson .key-term-box {
+        margin-top: 0.2in;
+        max-width: 4.72in;
+        border-left-width: 0.05in;
+        background:
+          linear-gradient(135deg, ${transparent(tokens.lilac, 0.16)}, transparent 62%),
+          ${transparent(tokens.paperAlt, 0.82)};
+        box-shadow: 0 0.08in 0.18in ${transparent(tokens.ink, 0.055)};
       }
       .style-brand.type-lesson .brand-door {
         display: block;
         right: 0.76in;
         top: 2.18in;
+        opacity: 0.82;
       }
       .style-brand.type-lesson .brand-card {
         display: block;
@@ -1748,6 +1846,9 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-brand.type-lesson-continue .reflect-box {
         max-width: 4.8in;
         min-height: 1.18in;
+        border-left-width: 0.05in;
+        background: ${transparent(tokens.paper, 0.74)};
+        box-shadow: 0 0.08in 0.18in ${transparent(tokens.ink, 0.035)};
       }
       .style-brand.type-lesson-continue .brand-cup {
         display: block;
@@ -1768,27 +1869,62 @@ function buildCss(tokens: DesignPresetTokens) {
         max-width: 6.65in;
       }
       .style-brand.type-workbook .prompt-card {
-        min-height: 1.28in;
-        border-left-width: 0.05in;
-        background: ${transparent(tokens.paper, 0.78)};
-        box-shadow: 0 0.08in 0.18in ${transparent(tokens.ink, 0.04)};
+        min-height: 1.34in;
+        border-left-width: 0.06in;
+        border-radius: 0.06in;
+        background:
+          linear-gradient(135deg, ${transparent(tokens.paperAlt, 0.22)}, transparent 72%),
+          ${transparent(tokens.paper, 0.82)};
+        box-shadow: 0 0.1in 0.22in ${transparent(tokens.ink, 0.055)};
+        padding: 0.17in 0.2in 0.14in;
+      }
+      .style-brand.type-workbook .prompt-text {
+        font-size: 19px;
+      }
+      .style-brand.type-workbook .writing-lines {
+        gap: 0.12in;
       }
       .style-brand.type-checklist .prompt-stack,
       .style-brand.type-tracker .tracker-table,
       .style-brand.type-action-plan .action-grid {
         max-width: 6.25in;
       }
+      .style-brand.type-checklist .prompt-stack {
+        border: 1px solid ${transparent(tokens.line, 0.78)};
+        border-left: 0.05in solid ${tokens.accent};
+        border-radius: 0.06in;
+        background: ${transparent(tokens.paper, 0.72)};
+        box-shadow: 0 0.1in 0.22in ${transparent(tokens.ink, 0.045)};
+        padding: 0.12in 0.22in 0.1in;
+      }
       .style-brand.type-checklist .check-row {
-        padding-left: 0.02in;
+        min-height: 0.32in;
+        padding: 0.08in 0.02in;
       }
       .style-brand.type-checklist .check-box {
         border-color: ${transparent(tokens.plum, 0.46)};
       }
+      .style-brand.type-checklist .check-row .prompt-text {
+        color: ${tokens.ink};
+        font-size: 11.8px;
+      }
       .style-brand.type-tracker .tracker-table {
-        box-shadow: 0 0.06in 0.15in ${transparent(tokens.ink, 0.04)};
+        border-collapse: separate;
+        border-spacing: 0;
+        overflow: hidden;
+        box-shadow: 0 0.1in 0.24in ${transparent(tokens.ink, 0.055)};
       }
       .style-brand.type-tracker .tracker-table th {
-        background: ${transparent(tokens.rose, 0.92)};
+        background: ${tokens.plum};
+        border-color: ${transparent(tokens.plum, 0.34)};
+        padding: 0.1in;
+      }
+      .style-brand.type-tracker .tracker-table td {
+        background: ${transparent(tokens.paper, 0.66)};
+      }
+      .style-brand.type-tracker .tracker-table td:first-child {
+        color: ${tokens.ink};
+        font-weight: 600;
       }
       .style-brand.type-tracker .brand-plant {
         display: block;
@@ -1807,6 +1943,15 @@ function buildCss(tokens: DesignPresetTokens) {
         left: 0.66in;
         bottom: 1.08in;
         transform: scale(0.72);
+      }
+      .style-brand.type-action-plan .prompt-card {
+        border-left-color: ${tokens.accent};
+        background: ${transparent(tokens.paper, 0.76)};
+        box-shadow: 0 0.08in 0.18in ${transparent(tokens.ink, 0.04)};
+      }
+      .style-brand.type-action-plan .action-num {
+        background: ${tokens.plum};
+        box-shadow: 0 0.04in 0.1in ${transparent(tokens.ink, 0.12)};
       }
       .style-brand.type-notes .brand-cup,
       .style-brand.type-notes .brand-card,
@@ -1832,11 +1977,23 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-brand.type-notes .notes-field {
         min-height: 6.85in;
         margin-top: 0.24in;
+        border-left: 0.04in solid ${transparent(tokens.accent, 0.82)};
+        padding-left: 0.18in;
+        background-image:
+          linear-gradient(90deg, ${transparent(tokens.paperAlt, 0.16)}, transparent 42%),
+          repeating-linear-gradient(to bottom, transparent 0 0.34in, ${transparent(tokens.line, 0.86)} 0.35in 0.36in);
       }
       .style-brand.type-case-study .story-box {
         background:
           linear-gradient(115deg, ${transparent(tokens.accentSoft, 0.76)}, transparent 62%),
           rgba(255,255,255,0.58);
+        border-left: 0.05in solid ${tokens.accent};
+        box-shadow: 0 0.08in 0.2in ${transparent(tokens.ink, 0.045)};
+      }
+      .style-brand.type-case-study .takeaway-box {
+        background: ${tokens.plum};
+        color: ${tokens.paper};
+        box-shadow: 0 0.08in 0.18in ${transparent(tokens.ink, 0.055)};
       }
       .style-brand.type-case-study .brand-card {
         display: block;
