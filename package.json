@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "proofs": "node scripts/visual-proof-pack.mjs",
     "test": "node scripts/regression-smoke.mjs"
   },
   "dependencies": {
