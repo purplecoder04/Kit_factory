@@ -425,6 +425,43 @@ export function KitFactoryDashboard() {
     setStatus("Draft")
   }
 
+  async function handlePackageFileUpload(fileList: FileList | null) {
+    const files = Array.from(fileList ?? [])
+
+    if (files.length === 0) {
+      return
+    }
+
+    const updates: Partial<PackageMarkdowns> = {}
+
+    await Promise.all(
+      files.map(async (file) => {
+        const key = packageKeyFromFilename(file.name)
+
+        if (!key) {
+          return
+        }
+
+        updates[key] = await file.text()
+      })
+    )
+
+    const loadedCount = Object.keys(updates).length
+
+    if (loadedCount === 0) {
+      setStatus("Error")
+      setMessage("No Meet at the Heal package files were recognized.")
+      return
+    }
+
+    setPackageMarkdowns((current) => ({
+      ...current,
+      ...updates,
+    }))
+    setStatus("Draft")
+    setMessage(`${loadedCount} Meet at the Heal package file${loadedCount === 1 ? "" : "s"} loaded.`)
+  }
+
   async function handleFileUpload(file: File | undefined) {
     if (!file) {
       return
@@ -671,6 +708,7 @@ export function KitFactoryDashboard() {
                   isWorking={isWorking}
                   markdowns={packageMarkdowns}
                   onDownloadPackage={downloadMeetPackage}
+                  onUploadFiles={handlePackageFileUpload}
                   onUpdateMarkdown={updatePackageMarkdown}
                 />
               )}
@@ -833,11 +871,13 @@ function MeetPackagePanel({
   isWorking,
   markdowns,
   onDownloadPackage,
+  onUploadFiles,
   onUpdateMarkdown,
 }: {
   isWorking: boolean
   markdowns: PackageMarkdowns
   onDownloadPackage: () => void
+  onUploadFiles: (fileList: FileList | null) => void
   onUpdateMarkdown: (key: PackageKey, value: string) => void
 }) {
   return (
@@ -858,7 +898,21 @@ function MeetPackagePanel({
           </Button>
         </CardAction>
       </CardHeader>
-      <CardContent>
+      <CardContent className="grid gap-3">
+        <Field>
+          <FieldLabel htmlFor="meet-package-upload">Upload package markdown files</FieldLabel>
+          <Input
+            accept=".md,.markdown,.txt"
+            disabled={isWorking}
+            id="meet-package-upload"
+            multiple
+            onChange={(event) => {
+              onUploadFiles(event.target.files)
+              event.target.value = ""
+            }}
+            type="file"
+          />
+        </Field>
         <Tabs defaultValue="lessonBook">
           <TabsList className="flex w-full flex-wrap justify-start">
             {packageDocuments.map((document) => (
@@ -2940,6 +2994,28 @@ function errorMessageFromPayload(payload: ApiErrorPayload, validationFallback: s
   }
 
   return payload.error || payload.detail || "The file could not be generated."
+}
+
+function packageKeyFromFilename(filename: string): PackageKey | null {
+  const normalized = filename.toLowerCase().replace(/[_-]+/g, " ")
+
+  if (/\brise\b|individual\s+rise|her\s+workbook|women|woman/.test(normalized)) {
+    return "riseWorkbook"
+  }
+
+  if (/\bland\b|individual\s+land|his\s+workbook|men|man/.test(normalized)) {
+    return "landWorkbook"
+  }
+
+  if (/couples?|shared|together|partner/.test(normalized)) {
+    return "couplesWorkbook"
+  }
+
+  if (/lesson|guide|teaching/.test(normalized)) {
+    return "lessonBook"
+  }
+
+  return null
 }
 
 function updateMarkdownFrontmatter(source: string, fields: Record<string, string>) {

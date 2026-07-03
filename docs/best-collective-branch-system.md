@@ -177,6 +177,13 @@ Meet at the Heal package format should support four documents:
 
 This package should not be forced into a single-person workbook structure.
 
+In the dashboard, these four documents can be loaded as separate markdown files. File names should include one clear routing word so the app can place them correctly:
+
+- `lesson` or `guide` for the Lesson Book
+- `couple`, `couples`, `shared`, or `together` for the Couples Workbook
+- `rise`, `her`, `woman`, or `women` for the Rise Individual Workbook
+- `land`, `his`, `man`, or `men` for the Land Individual Workbook
+
 ### 1. Lesson Book
 
 Purpose: teach the psychology, communication skills, relationship concepts, and relationship framework.
