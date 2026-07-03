@@ -15,6 +15,12 @@ type SyncedKit = {
   documentId: string | null
 }
 
+export type SavedKitSummary = {
+  id: string
+  name: string
+  status: string
+}
+
 type ExportKind = "pdf" | "fillable" | "mockup" | "zip"
 
 const missingColumnPattern = /column ['"]?([^'"\s]+)['"]?/i
@@ -294,6 +300,31 @@ export async function markKitReadyToSell(kitId: string) {
     { productId: null },
     "markKitReadyToSell"
   )
+}
+
+export async function listSavedKits() {
+  const supabase = getSupabaseServerClient()
+
+  if (!supabase) {
+    return []
+  }
+
+  const { data, error } = await supabase
+    .from("kits")
+    .select("id,name,status")
+    .order("id", { ascending: false })
+    .limit(6)
+
+  if (error) {
+    logSupabaseDataWarning("listSavedKits", error)
+    return []
+  }
+
+  return (data ?? []).map((kit): SavedKitSummary => ({
+    id: stringValue(kit.id),
+    name: stringValue(kit.name) || "Untitled Kit",
+    status: stringValue(kit.status) || "draft",
+  }))
 }
 
 async function markKitReadyToSellNow(kitId: string) {

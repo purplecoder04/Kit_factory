@@ -76,6 +76,12 @@ type PackageKey =
 
 type PackageMarkdowns = Record<PackageKey, string>
 
+type SavedKitSummary = {
+  id: string
+  name: string
+  status: string
+}
+
 const packageDocuments: {
   key: PackageKey
   title: string
@@ -85,12 +91,6 @@ const packageDocuments: {
   { key: "couplesWorkbook", title: "Couples Workbook", bodyKey: "couplesWorkbookMarkdown" },
   { key: "riseWorkbook", title: "Rise Individual", bodyKey: "riseWorkbookMarkdown" },
   { key: "landWorkbook", title: "Land Individual", bodyKey: "landWorkbookMarkdown" },
-]
-
-const savedKits = [
-  { name: "GYBS Brand Kit", date: "Golden test", status: "Preview Ready" },
-  { name: "Offer Clarity Kit", date: "Draft", status: "Draft" },
-  { name: "Launch Reset Kit", date: "Archived", status: "PDF Generated" },
 ]
 
 export function KitFactoryDashboard() {
@@ -103,6 +103,7 @@ export function KitFactoryDashboard() {
   )
   const [result, setResult] = useState<ParseResult | null>(null)
   const [kitId, setKitId] = useState<string | null>(null)
+  const [savedKits, setSavedKits] = useState<SavedKitSummary[]>([])
   const [status, setStatus] = useState<BuildStatus>("Draft")
   const [message, setMessage] = useState("Golden kit loaded.")
   const [isWorking, setIsWorking] = useState(false)
@@ -148,8 +149,24 @@ export function KitFactoryDashboard() {
 
   useEffect(() => {
     void parseMarkdown()
+    void loadSavedKits()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  async function loadSavedKits() {
+    try {
+      const response = await fetch("/api/kits")
+
+      if (!response.ok) {
+        return
+      }
+
+      const payload = (await response.json()) as { kits?: SavedKitSummary[] }
+      setSavedKits(payload.kits ?? [])
+    } catch {
+      setSavedKits([])
+    }
+  }
 
   async function parseMarkdown() {
     setIsWorking(true)
@@ -170,6 +187,7 @@ export function KitFactoryDashboard() {
       if (payload.kitId) {
         setKitId(payload.kitId)
       }
+      void loadSavedKits()
       setStatus(hasErrors ? "Error" : "Preview Ready")
       setMessage(hasErrors ? "Fix the validation errors before rendering." : "Markdown parsed successfully.")
     } catch {
@@ -419,14 +437,18 @@ export function KitFactoryDashboard() {
             <div className="text-xs font-medium uppercase tracking-[0.12em] text-sidebar-foreground/60">
               Saved Kits
             </div>
-            {savedKits.map((kit) => (
+            {savedKits.length === 0 ? (
+              <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3 text-sm text-sidebar-foreground/65">
+                No saved kits yet.
+              </div>
+            ) : savedKits.map((kit) => (
               <div
                 className="rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3 text-sm"
-                key={kit.name}
+                key={kit.id}
               >
                 <div className="font-medium">{kit.name}</div>
                 <div className="mt-1 flex items-center justify-between gap-2 text-xs text-sidebar-foreground/65">
-                  <span>{kit.date}</span>
+                  <span>Supabase</span>
                   <span>{kit.status}</span>
                 </div>
               </div>
@@ -2747,6 +2769,14 @@ function OutputPanel({
           </Progress>
         </div>
         <div className="grid gap-3">
+          <Alert className="border-primary/30 bg-primary/5">
+            <AlertCircleIcon />
+            <AlertTitle>Local export mode</AlertTitle>
+            <AlertDescription>
+              PDF, fillable, mockup, and ZIP exports are local-only for now. Use the local app for final files.
+            </AlertDescription>
+          </Alert>
+
           <div className="flex flex-col gap-3 rounded-lg border p-3 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="font-medium">Lesson guide PDF</div>
