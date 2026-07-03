@@ -14,11 +14,17 @@ export async function POST(request: Request) {
     outputMode: body.outputMode,
   })
   const issues = validateKit(kit)
-  const syncedKit = await syncParsedKitToSupabase({
-    existingKitId: typeof body.kitId === "string" ? body.kitId : null,
-    kit,
-    sourceMarkdown: markdown,
-  })
+  const shouldPersist = body.persist !== false
+  const syncedKit = shouldPersist
+    ? await syncParsedKitToSupabase({
+        existingKitId: typeof body.kitId === "string" ? body.kitId : null,
+        kit,
+        sourceMarkdown: markdown,
+      })
+    : {
+        kitId: typeof body.kitId === "string" ? body.kitId : null,
+        documentId: null,
+      }
 
   return Response.json({
     kit,

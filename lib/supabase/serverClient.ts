@@ -2,8 +2,16 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js"
 
 let cachedClient: SupabaseClient | null = null
 
+function supabaseUrl() {
+  return process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || ""
+}
+
+function supabaseAnonKey() {
+  return process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ""
+}
+
 export function isSupabaseConfigured() {
-  return Boolean(process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY)
+  return Boolean(supabaseUrl() && supabaseAnonKey())
 }
 
 export function getSupabaseServerClient() {
@@ -13,8 +21,8 @@ export function getSupabaseServerClient() {
 
   if (!cachedClient) {
     cachedClient = createClient(
-      process.env.VITE_SUPABASE_URL ?? "",
-      process.env.VITE_SUPABASE_ANON_KEY ?? "",
+      supabaseUrl(),
+      supabaseAnonKey(),
       {
         auth: {
           persistSession: false,

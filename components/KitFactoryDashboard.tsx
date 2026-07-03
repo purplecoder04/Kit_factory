@@ -64,6 +64,14 @@ type ApiErrorPayload = {
   issues?: ValidationIssue[]
 }
 
+type SavedKitLoadResult = ParseResult & {
+  branch: string
+  designPreset: string
+  markdown: string
+  outputMode: OutputMode
+  status: string
+}
+
 type BuildStatus =
   | "Draft"
   | "Parsed"
@@ -155,7 +163,7 @@ export function KitFactoryDashboard() {
   }, [status])
 
   useEffect(() => {
-    void parseMarkdown()
+    void parseMarkdown({ persist: false })
     void loadSavedKits()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -175,7 +183,43 @@ export function KitFactoryDashboard() {
     }
   }
 
-  async function parseMarkdown() {
+  async function openSavedKit(savedKitId: string) {
+    setIsWorking(true)
+    setMessage("Opening saved kit.")
+
+    try {
+      const response = await fetch(`/api/kits/${savedKitId}`)
+
+      if (!response.ok) {
+        setStatus("Error")
+        setMessage("The saved kit could not be opened.")
+        return
+      }
+
+      const payload = (await response.json()) as SavedKitLoadResult
+      const hasErrors = payload.issues.some((issue) => issue.level === "error")
+
+      setMarkdown(payload.markdown)
+      setBranch(payload.branch)
+      setDesignPreset(payload.designPreset)
+      setOutputMode(payload.outputMode)
+      setKitId(payload.kitId ?? savedKitId)
+      setResult({
+        kit: payload.kit,
+        issues: payload.issues,
+        kitId: payload.kitId ?? savedKitId,
+      })
+      setStatus(hasErrors ? "Error" : "Preview Ready")
+      setMessage(hasErrors ? "Saved kit opened with validation errors." : "Saved kit opened.")
+    } catch {
+      setStatus("Error")
+      setMessage("The saved kit could not be opened.")
+    } finally {
+      setIsWorking(false)
+    }
+  }
+
+  async function parseMarkdown({ persist = true }: { persist?: boolean } = {}) {
     setIsWorking(true)
     setMessage("Checking markdown.")
 
@@ -185,7 +229,7 @@ export function KitFactoryDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ markdown, branch, designPreset, outputMode, kitId }),
+        body: JSON.stringify({ markdown, branch, designPreset, outputMode, kitId, persist }),
       })
       const payload = (await response.json()) as ParseResult
       const hasErrors = payload.issues.some((issue) => issue.level === "error")
@@ -518,16 +562,23 @@ export function KitFactoryDashboard() {
                 No saved kits yet.
               </div>
             ) : savedKits.map((kit) => (
-              <div
-                className="rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3 text-sm"
+              <button
+                className={cn(
+                  "rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3 text-left text-sm transition-colors hover:bg-sidebar-accent/70 disabled:cursor-wait disabled:opacity-70",
+                  kit.id === kitId && "border-sidebar-primary bg-sidebar-accent text-sidebar-accent-foreground"
+                )}
+                data-testid={`saved-kit-${kit.id}`}
+                disabled={isWorking}
                 key={kit.id}
+                onClick={() => void openSavedKit(kit.id)}
+                type="button"
               >
                 <div className="font-medium">{kit.name}</div>
                 <div className="mt-1 flex items-center justify-between gap-2 text-xs text-sidebar-foreground/65">
                   <span>Supabase</span>
                   <span>{kit.status}</span>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
 
@@ -647,7 +698,7 @@ export function KitFactoryDashboard() {
                 </ToggleGroup>
               </Field>
 
-              <Button disabled={isWorking} onClick={parseMarkdown}>
+              <Button disabled={isWorking} onClick={() => void parseMarkdown()}>
                 {isWorking ? (
                   <LoaderCircleIcon data-icon="inline-start" />
                 ) : (
@@ -717,7 +768,7 @@ export function KitFactoryDashboard() {
                 blockingErrors={blockingErrors}
                 isWorking={isWorking}
                 issues={result?.issues ?? []}
-                onRevalidate={parseMarkdown}
+                onRevalidate={() => void parseMarkdown()}
                 warnings={warningIssues}
               />
             </section>

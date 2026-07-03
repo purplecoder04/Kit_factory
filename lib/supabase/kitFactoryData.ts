@@ -21,9 +21,19 @@ export type SavedKitSummary = {
   status: string
 }
 
+export type SavedKitDetail = SavedKitSummary & {
+  branch: string
+  designPreset: string
+  outputMode: string
+  sourceMarkdown: string
+}
+
 type ExportKind = "pdf" | "fillable" | "mockup" | "zip"
 
-const missingColumnPattern = /column ['"]?([^'"\s]+)['"]?/i
+const missingColumnPatterns = [
+  /find the ['"]([^'"]+)['"] column/i,
+  /column ['"]?([^'"\s]+)['"]?/i,
+]
 
 export async function syncParsedKitToSupabase({
   existingKitId,
@@ -325,6 +335,43 @@ export async function listSavedKits() {
     name: stringValue(kit.name) || "Untitled Kit",
     status: stringValue(kit.status) || "draft",
   }))
+}
+
+export async function getSavedKit(kitId: string): Promise<SavedKitDetail | null> {
+  const supabase = getSupabaseServerClient()
+
+  if (!supabase || !kitId) {
+    return null
+  }
+
+  const { data: kit, error } = await supabase
+    .from("kits")
+    .select("*")
+    .eq("id", kitId)
+    .maybeSingle()
+
+  if (error || !kit) {
+    if (error) {
+      logSupabaseDataWarning("getSavedKit.kit", error)
+    }
+
+    return null
+  }
+
+  const sourceMarkdown =
+    stringValue(kit.source_markdown) || (await findLatestSourceMarkdown(supabase, kitId))
+
+  return {
+    id: stringValue(kit.id),
+    name: stringValue(kit.name) || stringValue(kit.title) || "Untitled Kit",
+    status: stringValue(kit.status) || "draft",
+    branch: stringValue(kit.branch) || (await resolveReferenceSlug(supabase, "branches", stringValue(kit.branch_id))),
+    designPreset:
+      stringValue(kit.design_preset) ||
+      (await resolveReferenceSlug(supabase, "design_presets", stringValue(kit.design_preset_id))),
+    outputMode: stringValue(kit.output_mode),
+    sourceMarkdown,
+  }
 }
 
 async function markKitReadyToSellNow(kitId: string) {
@@ -662,6 +709,26 @@ async function nextVersionNumber(supabase: SupabaseClient, kitId: string) {
   return data.version_number + 1
 }
 
+async function findLatestSourceMarkdown(supabase: SupabaseClient, kitId: string) {
+  const { data, error } = await supabase
+    .from("kit_versions")
+    .select("source_markdown")
+    .eq("kit_id", kitId)
+    .order("version_number", { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data) {
+    if (error) {
+      logSupabaseDataWarning("findLatestSourceMarkdown", error)
+    }
+
+    return ""
+  }
+
+  return stringValue(data.source_markdown)
+}
+
 async function findLatestExportUrl(supabase: SupabaseClient, kitId: string) {
   const { data, error } = await supabase
     .from("export_files")
@@ -831,9 +898,16 @@ async function deleteRows(
 
 function missingColumnFromError(error: PostgrestError) {
   const combined = [error.message, error.details, error.hint].filter(Boolean).join(" ")
-  const match = combined.match(missingColumnPattern)
 
-  return match?.[1] ?? null
+  for (const pattern of missingColumnPatterns) {
+    const match = combined.match(pattern)
+
+    if (match?.[1]) {
+      return match[1]
+    }
+  }
+
+  return null
 }
 
 function rowsHaveColumn(rows: UnknownRow[], column: string) {
