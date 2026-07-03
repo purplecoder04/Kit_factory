@@ -3,7 +3,7 @@ import "server-only"
 import { chromium, type Page } from "playwright"
 
 import { buildKitHtml } from "@/lib/renderer/htmlBuilder"
-import { type ParsedKit } from "@/lib/parser/pageTypes"
+import { type ContentBlock, type KitPage, type ParsedKit } from "@/lib/parser/pageTypes"
 import { type FieldSpec } from "@/lib/fillable/types"
 
 export type RenderTarget = "guide" | "workbook" | "complete"
@@ -25,6 +25,17 @@ export function selectPagesForTarget(kit: ParsedKit, target: RenderTarget): Pars
     return !page.fillable
   })
 
+  if (target === "workbook") {
+    const coverIndex = pages.findIndex((page) => page.type === "cover")
+    const introPage = createWorkbookIntroPage(kit)
+
+    if (coverIndex >= 0) {
+      pages.splice(coverIndex + 1, 0, introPage)
+    } else {
+      pages.unshift(introPage)
+    }
+  }
+
   return {
     ...kit,
     pages,
@@ -33,14 +44,14 @@ export function selectPagesForTarget(kit: ParsedKit, target: RenderTarget): Pars
 
 export async function renderKitPdf(kit: ParsedKit, target: RenderTarget) {
   const renderKit = selectPagesForTarget(kit, target)
-  const html = buildKitHtml(renderKit)
+  const html = buildKitHtml(renderKit, target)
 
   return renderHtmlToPdf(html)
 }
 
 export async function renderKitPdfWithFillableFields(kit: ParsedKit, target: RenderTarget) {
   const renderKit = selectPagesForTarget(kit, target)
-  const html = buildKitHtml(renderKit)
+  const html = buildKitHtml(renderKit, target)
   const browser = await chromium.launch({ headless: true })
 
   try {
@@ -169,4 +180,52 @@ function fieldName(slug: string, pageIndex: number, suffix: string) {
   const pageNum = String(pageIndex + 1).padStart(3, "0")
 
   return `${slug}_${pageNum}_${suffix}`
+}
+
+function createWorkbookIntroPage(kit: ParsedKit): KitPage {
+  const content: ContentBlock[] = [
+    {
+      type: "paragraph",
+      text:
+        "Use this workbook alongside the matching lesson guide when one is included. Complete each page after the matching chapter or section so your notes stay connected to the lesson.",
+    },
+    {
+      type: "check-list",
+      items: [
+        "Read the matching lesson first.",
+        "Complete the reflection or action page that belongs with that chapter.",
+        "Return to your tracker after each section so progress stays visible.",
+      ],
+    },
+  ]
+
+  return {
+    id: "workbook-intro",
+    type: "how-to-use",
+    rawType: "how-to-use",
+    section: "Workbook",
+    title: "How To Use This Workbook",
+    subtitle: kit.title ? `For ${kit.title}` : "",
+    tagline: "",
+    content,
+    prompts: [],
+    checks: [],
+    noteLabel: "",
+    tableHeaders: [],
+    tableRows: [],
+    actions: [],
+    questions: [],
+    storyLabel: "",
+    story: "",
+    takeaway: "",
+    imageSlot: "",
+    icon: "",
+    reflects: [],
+    bottomNote: "",
+    fillable: false,
+    raw: "",
+    unsupportedFields: [],
+    parserErrors: [],
+    parserWarnings: [],
+  }
 }

@@ -84,6 +84,12 @@ TITLE: Get Clear on Your Business
 
 You cannot build a business you love without getting clear on your why, who you do it for, and what you offer.
 
+Your foundation is the filter: A clear business foundation makes every next decision easier. It helps you know what to say yes to, what to ignore, and where your energy belongs.
+
+Your person gives the work direction: A business grows faster when you know exactly who the work is for. The more specific the reader is, the easier the offer, content, and systems become.
+
+Your offer needs a clean promise: The reader should leave this lesson able to name the change their work creates. That promise becomes the anchor for the workbook page that follows.
+
 In this lesson, you will:
 
 CHECK: Define your mission and vision.

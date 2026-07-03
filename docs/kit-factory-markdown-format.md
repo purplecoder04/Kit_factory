@@ -2,6 +2,8 @@
 
 Use this format when pasting text into Kit Factory. The app reads the frontmatter, page markers, and field labels to build PDFs, fillable workbooks, packages, and website mockups.
 
+Before writing or generating a full kit, choose the branch identity, design preset, and product flow separately. See `docs/best-collective-branch-system.md` for the Best Collective branch philosophy, product-flow rules, and Meet at the Heal package structure.
+
 ## 1. Kit Details
 
 Put this at the top of every markdown file:
@@ -68,27 +70,91 @@ Every page starts with a page marker:
 
 Supported page types:
 
-- `cover`
-- `welcome`
-- `toc`
-- `quote`
-- `section-divider`
-- `how-to-use`
-- `important-to-know`
-- `lesson`
-- `lesson-continue`
-- `workbook`
-- `checklist`
-- `tracker`
-- `action-plan`
-- `notes`
-- `reflection`
-- `progress-check`
-- `resource`
-- `case-study`
-- `closing`
+| Page type slug | Page name | Main purpose | Fillable? |
+| --- | --- | --- | --- |
+| `cover` | Cover Page | Front cover and product title | No |
+| `welcome` | Welcome Page | Intro, promise, and quick outcomes | No |
+| `toc` | Table of Contents Page | Chapter/section list | No |
+| `quote` | Quote / Inspiration Page | Large editorial quote or reminder | No |
+| `section-divider` | Section Divider Page | New chapter or part opener | No |
+| `how-to-use` | How To Use Page | Instructions for using the kit | No |
+| `important-to-know` | Important To Know / Alert Page | Required context, disclaimer, or warning | No |
+| `lesson` | Lesson Content Page | Teaching content with bullets and key terms | No |
+| `lesson-continue` | Lesson Continuation / Reflection Page | Second lesson page or reflection teaching page | No |
+| `workbook` | Workbook Prompt Page | Fillable writing prompts | Yes |
+| `checklist` | Checklist Page | Fillable checklist rows and optional notes | Yes |
+| `tracker` | Tracker / Table Page | Fillable table rows | Yes |
+| `action-plan` | Action Plan Page | Fillable action prompts and deadline questions | Yes |
+| `notes` | Notes Page | Fillable lined notes page | Yes |
+| `reflection` | Reflection Page | Non-fillable thinking prompts | No |
+| `progress-check` | Progress Check Page | Non-fillable completion checks before moving on | No |
+| `resource` | Resource Page | Links, key terms, warnings, and reference notes | No |
+| `case-study` | Case Study / Story Page | Real story, example, and takeaway | No |
+| `closing` | Closing / Back Cover Page | Final promise, footer, or back cover | No |
 
 The first page should be `cover`. The last page should be `closing`.
+
+For a layout test file, use one page for each page type. That creates a clean 19-page test kit.
+
+## 2A. Recommended Test Kit Size
+
+For layout testing, use:
+
+- 19 pages total: one page for each supported page type.
+- 15 chapters in the table of contents: enough to test long TOC spacing without making the sample huge.
+- 3-4 prompts on workbook and action-plan pages.
+- 6-8 checks on checklist and progress-check pages.
+- 8-10 rows on tracker pages.
+
+I recommend 15 chapters, not 20, for the normal layout test. Fifteen catches most spacing problems and still stays easy to review. Use 20 only when you want a stress test for very long products.
+
+## 2B. Prompt For Claude Or ChatGPT
+
+Use this prompt when asking another AI to generate test content:
+
+```text
+Create a Kit Factory markdown test sample using the exact format below.
+
+Goal:
+Generate one page for every supported Kit Factory page type so I can test the PDF layouts.
+
+Rules:
+- Use the exact page marker slugs from the list.
+- Do not invent new page types.
+- Keep all fields in ALL CAPS exactly as shown.
+- Use 15 table-of-contents chapter entries.
+- Make the content realistic but short enough to fit cleanly.
+- Use 3 workbook prompts.
+- Use 6 checklist items.
+- Use 8 tracker rows.
+- Use 3 action prompts and 1-2 deadline questions.
+- REFLECT fields are non-fillable.
+- CHECK fields are fillable only on checklist pages.
+- End with a closing page.
+
+Supported page types:
+1. cover
+2. welcome
+3. toc
+4. quote
+5. section-divider
+6. how-to-use
+7. important-to-know
+8. lesson
+9. lesson-continue
+10. workbook
+11. checklist
+12. tracker
+13. action-plan
+14. notes
+15. reflection
+16. progress-check
+17. resource
+18. case-study
+19. closing
+
+Return only the markdown file content.
+```
 
 ## 3. Field Labels
 
@@ -335,6 +401,8 @@ Meet at the Heal packages use four markdown files:
 - Couples Workbook
 - Rise Individual Workbook
 - Land Individual Workbook
+
+See `docs/best-collective-branch-system.md` for the Meet at the Heal rule: each chapter should teach in the Lesson Book, create private Rise and Land reflection, then bring both partners together in the Couples Workbook.
 
 ## Quick Rule
 

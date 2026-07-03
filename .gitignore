@@ -34,6 +34,7 @@ start-server*.log
 
 # generated local artifacts
 /output/
+/tmp/
 
 # env files (can opt-in for committing if needed)
 .env*

@@ -163,7 +163,7 @@ async function testSplitPdfOutputs(baseUrl, markdown) {
 
   assert((await pageCount(complete)) === 19, "Complete PDF should include every page in the proof kit.")
   assert((await pageCount(guide)) === 14, "Lesson guide should include cover, guide pages, and closing page.")
-  assert((await pageCount(workbook)) === 7, "Workbook PDF should include cover, workbook pages, and closing page.")
+  assert((await pageCount(workbook)) === 8, "Workbook PDF should include cover, intro, workbook pages, and closing page.")
 }
 
 async function testFillableFields(baseUrl, markdown) {

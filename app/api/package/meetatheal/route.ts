@@ -2,6 +2,11 @@ import { parseKitMarkdown } from "@/lib/parser"
 import { hasBlockingErrors, validateKit } from "@/lib/parser/validation"
 import { type ValidationIssue } from "@/lib/parser/pageTypes"
 import { renderKitPdf } from "@/lib/renderer"
+import {
+  failExportJob,
+  finishExportJob,
+  startExportJob,
+} from "@/lib/supabase/kitFactoryData"
 import { createZip } from "@/lib/zip"
 
 export const runtime = "nodejs"
@@ -32,6 +37,7 @@ const packageDocuments = [
 
 export async function POST(request: Request) {
   const body = await request.json()
+  const kitId = typeof body.kitId === "string" ? body.kitId : null
   const files: { filename: string; data: Buffer }[] = []
   const allIssues: ValidationIssue[] = []
 
@@ -69,12 +75,36 @@ export async function POST(request: Request) {
     return Response.json({ issues: allIssues }, { status: 400 })
   }
 
-  const zip = createZip(files)
+  const jobId = await startExportJob({ exportKind: "zip", kitId, target: "meetatheal-package" })
+  let zip: ReturnType<typeof createZip>
+
+  try {
+    zip = createZip(files)
+  } catch (error) {
+    await failExportJob({
+      errorMessage:
+        error instanceof Error ? error.message : "Meet at the Heal package export failed.",
+      jobId,
+    })
+    throw error
+  }
+
+  const filename = "meet-at-the-heal-kit-package.zip"
+
+  await finishExportJob({
+    byteSize: zip.byteLength,
+    contentType: "application/zip",
+    exportKind: "zip",
+    filename,
+    jobId,
+    kitId,
+    target: "meetatheal-package",
+  })
 
   return new Response(zip, {
     headers: {
       "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="meet-at-the-heal-kit-package.zip"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
     },
   })
 }

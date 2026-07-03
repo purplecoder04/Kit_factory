@@ -2,6 +2,11 @@ import { addFillableFields } from "@/lib/fillable"
 import { parseKitMarkdown } from "@/lib/parser"
 import { hasBlockingErrors, validateKit } from "@/lib/parser/validation"
 import { renderKitPdfWithFillableFields, type RenderTarget } from "@/lib/renderer"
+import {
+  failExportJob,
+  finishExportJob,
+  startExportJob,
+} from "@/lib/supabase/kitFactoryData"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -21,11 +26,34 @@ export async function POST(request: Request) {
     return Response.json({ issues }, { status: 400 })
   }
 
-  const { pdf: basePdf, fields } = await renderKitPdfWithFillableFields(kit, target)
-  const fillablePdf = await addFillableFields(basePdf, kit, target, fields)
+  const kitId = typeof body.kitId === "string" ? body.kitId : null
+  const jobId = await startExportJob({ exportKind: "fillable", kitId, target })
+  let fillablePdf: Awaited<ReturnType<typeof addFillableFields>>
+
+  try {
+    const { pdf: basePdf, fields } = await renderKitPdfWithFillableFields(kit, target)
+    fillablePdf = await addFillableFields(basePdf, kit, target, fields)
+  } catch (error) {
+    await failExportJob({
+      errorMessage: error instanceof Error ? error.message : "Fillable export failed.",
+      jobId,
+    })
+    throw error
+  }
+
   const stem = `${kit.slug}-${kit.designPreset || kit.branch || "brand"}`
   const filename =
     target === "complete" ? `${stem}-fillable.pdf` : `${stem}-workbook-fillable.pdf`
+
+  await finishExportJob({
+    byteSize: fillablePdf.byteLength,
+    contentType: "application/pdf",
+    exportKind: "fillable",
+    filename,
+    jobId,
+    kitId,
+    target,
+  })
 
   return new Response(fillablePdf, {
     headers: {

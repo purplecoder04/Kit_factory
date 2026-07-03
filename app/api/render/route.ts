@@ -1,6 +1,11 @@
 import { parseKitMarkdown } from "@/lib/parser"
 import { hasBlockingErrors, validateKit } from "@/lib/parser/validation"
 import { renderKitPdf, type RenderTarget } from "@/lib/renderer"
+import {
+  failExportJob,
+  finishExportJob,
+  startExportJob,
+} from "@/lib/supabase/kitFactoryData"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -20,7 +25,21 @@ export async function POST(request: Request) {
     return Response.json({ issues }, { status: 400 })
   }
 
-  const pdf = await renderKitPdf(kit, target)
+  const kitId = typeof body.kitId === "string" ? body.kitId : null
+  const jobId = await startExportJob({ exportKind: "pdf", kitId, target })
+
+  let pdf: Awaited<ReturnType<typeof renderKitPdf>>
+
+  try {
+    pdf = await renderKitPdf(kit, target)
+  } catch (error) {
+    await failExportJob({
+      errorMessage: error instanceof Error ? error.message : "PDF export failed.",
+      jobId,
+    })
+    throw error
+  }
+
   const stem = `${kit.slug}-${kit.designPreset || kit.branch || "brand"}`
   const filename =
     target === "complete"
@@ -28,6 +47,16 @@ export async function POST(request: Request) {
       : target === "workbook"
         ? `${stem}-workbook.pdf`
         : `${stem}-lesson-guide.pdf`
+
+  await finishExportJob({
+    byteSize: pdf.byteLength,
+    contentType: "application/pdf",
+    exportKind: "pdf",
+    filename,
+    jobId,
+    kitId,
+    target,
+  })
 
   return new Response(pdf, {
     headers: {

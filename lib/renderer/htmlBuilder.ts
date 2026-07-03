@@ -13,11 +13,13 @@ import {
 
 const fontFaces = buildFontFaces()
 
-export function buildKitHtml(kit: ParsedKit) {
+type RenderTarget = "guide" | "workbook" | "complete"
+
+export function buildKitHtml(kit: ParsedKit, target: RenderTarget = "complete") {
   const preset = getDesignPreset(kit.designPreset, kit.branch)
   const branch = getBranchInfo(kit.branch)
   const pages = kit.pages.map((page, index) =>
-    renderPage(page, index, kit.pages.length, kit, preset, branch)
+    renderPage(page, index, kit.pages.length, kit, preset, branch, target)
   )
 
   return `<!doctype html>
@@ -1619,9 +1621,8 @@ function buildCss(tokens: DesignPresetTokens) {
         z-index: 4;
       }
       .cover {
-        display: grid;
-        align-content: center;
-        padding: 0.62in;
+        display: block;
+        padding: 0.54in 0.62in 0.58in;
         text-align: center;
       }
       .cover::before {
@@ -1630,6 +1631,38 @@ function buildCss(tokens: DesignPresetTokens) {
       .cover-copy {
         position: relative;
         z-index: 3;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 5.75in;
+        min-height: 7.05in;
+        margin: 0 auto;
+      }
+      .cover-brandline {
+        color: ${tokens.background};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        line-height: 1;
+        margin-bottom: 0.12in;
+        text-transform: uppercase;
+        text-shadow: 0 1px 0 ${transparent(tokens.paper, 0.72)};
+      }
+      .branch-cover-mark {
+        color: ${tokens.accent};
+        --mark-accent: ${tokens.gold};
+        --mark-soft: ${transparent(tokens.accentSoft, 0.72)};
+        display: block;
+        width: 0.78in;
+        height: 0.58in;
+        margin: 0 auto 0.13in;
+      }
+      .branch-cover-mark svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
       }
       .brand-mark {
         color: ${tokens.accent};
@@ -1639,67 +1672,91 @@ function buildCss(tokens: DesignPresetTokens) {
         letter-spacing: 0.04em;
         margin-bottom: 14px;
       }
-      .cover-brandline {
-        color: ${tokens.mutedInk};
-        font-size: 9px;
-        font-weight: 800;
-        letter-spacing: 0.34em;
-        margin-bottom: 14px;
-        text-transform: uppercase;
-      }
       .cover-title {
-        font-size: 58px;
+        color: ${tokens.ink};
+        font-size: 84px;
+        letter-spacing: 0.16em;
+        line-height: 0.84;
         max-width: 5.8in;
         margin: 0 auto;
         text-transform: uppercase;
       }
       .cover-title.is-long {
-        font-size: 48px;
-        line-height: 0.98;
+        font-size: 56px;
+        letter-spacing: 0.045em;
+        line-height: 0.92;
         max-width: 6.05in;
       }
       .cover-subtitle {
-        color: ${tokens.ink};
-        font-size: 12px;
-        font-weight: 600;
-        letter-spacing: 0.28em;
-        margin-top: 18px;
+        color: ${tokens.background};
+        font-size: 9.5px;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        margin-top: 0.14in;
         text-transform: uppercase;
       }
       .cover-kit-title {
-        color: ${tokens.ink};
+        color: ${tokens.background};
         font-family: "Cormorant Garamond", Georgia, serif;
-        font-size: 38px;
+        font-size: 36px;
         font-weight: 700;
-        line-height: 1.02;
-        margin-top: 22px;
+        line-height: 0.98;
+        margin-top: 0.22in;
+        max-width: 4.9in;
         text-transform: uppercase;
       }
+      .cover-kit-title.is-long {
+        font-size: 31px;
+        max-width: 5.3in;
+      }
       .cover-divider {
-        display: none;
+        align-items: center;
+        color: ${tokens.accent};
+        display: flex;
+        gap: 0.08in;
+        justify-content: center;
+        margin: 0.16in auto 0;
       }
-      .cover-mini-mark {
-        display: none;
+      .cover-divider::before,
+      .cover-divider::after {
+        content: "";
+        display: block;
+        height: 1px;
+        width: 0.48in;
+        background: currentColor;
       }
+      .cover-divider span {
+        display: block;
+        width: 0.055in;
+        height: 0.055in;
+        background: currentColor;
+        transform: rotate(45deg);
+      }
+      .cover-mini-mark { display: none; }
       .cover-product {
-        border-top: 1px solid ${tokens.accent};
-        border-bottom: 1px solid ${tokens.accent};
-        color: ${tokens.ink};
+        border: 0;
+        color: ${tokens.background};
         display: inline-block;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 700;
-        letter-spacing: 0.2em;
-        margin-top: 24px;
-        padding: 8px 14px;
+        letter-spacing: 0.28em;
+        margin-top: 0.2in;
+        padding: 0;
         text-transform: uppercase;
       }
       .cover-tagline {
-        color: ${tokens.mutedInk};
-        font-size: 9px;
+        color: ${tokens.background};
+        position: absolute;
+        left: 0.72in;
+        right: 0.72in;
+        bottom: 0.42in;
+        z-index: 3;
+        font-size: 8.4px;
         font-weight: 700;
-        letter-spacing: 0.24em;
-        margin-top: 58px;
+        letter-spacing: 0.28em;
+        margin: 0;
         text-transform: uppercase;
+        text-shadow: 0 1px 5px ${transparent(tokens.paper, 0.72)};
       }
       .cover .image-slot {
         position: absolute;
@@ -1910,9 +1967,12 @@ function buildCss(tokens: DesignPresetTokens) {
         display: none;
       }
       .style-brand.type-section-divider .section-divider-page {
-        min-height: 8.45in;
-        display: grid;
-        place-items: center;
+        min-height: 8.72in;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 1.16in 0.58in 0.48in;
+        text-align: center;
       }
       .style-brand.type-how-to-use .content {
         max-width: 6.18in;
@@ -1993,71 +2053,145 @@ function buildCss(tokens: DesignPresetTokens) {
       }
       .style-brand.type-quote .brand-laptop {
         display: block;
-        right: 0.56in;
-        top: 0.58in;
-        transform: rotate(4deg) scale(1.05);
+        right: -0.34in;
+        top: 0.28in;
+        transform: rotate(4deg) scale(1.34);
       }
       .style-brand.type-quote .brand-cup {
         display: block;
-        right: 1.02in;
-        bottom: 1.18in;
-        transform: scale(1.02);
+        right: 0.5in;
+        top: 4.48in;
+        transform: scale(1.28);
+      }
+      .style-brand.type-quote .brand-book {
+        display: block;
+        right: -0.08in;
+        bottom: 0.42in;
+        transform: rotate(-11deg) scale(1.28);
+      }
+      .style-brand.type-quote .brand-pen {
+        display: block;
+        right: 0.3in;
+        bottom: 1.08in;
+        transform: rotate(-24deg) scale(0.9);
+      }
+      .style-brand.type-quote .brand-arc {
+        display: block;
+        left: -0.58in;
+        top: 1.3in;
+        opacity: 0.68;
+        transform: scale(1.08);
+      }
+      .style-brand.type-quote .decor::before {
+        background: ${transparent(tokens.plum, 0.34)};
+        left: -0.54in;
+        top: -0.52in;
+        width: 1.92in;
+        height: 1.92in;
+      }
+      .style-brand.type-quote .decor::after {
+        background: ${transparent(tokens.lilac, 0.36)};
+        left: -0.72in;
+        bottom: -0.12in;
+        width: 1.9in;
+        height: 1.9in;
       }
       .style-brand.type-quote .quote-page {
-        min-height: 8.65in;
-        display: grid;
-        place-items: center;
-        padding: 0.68in;
+        min-height: 8.72in;
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        padding: 2.04in 1.12in 0.52in;
       }
       .style-brand.type-quote .quote-page .quote-box {
         border-left: 0;
         border-radius: 0;
-        background: ${transparent(tokens.paper, 0.66)};
-        max-width: 5.25in;
-        padding: 0.42in 0.44in 0.38in;
+        background: transparent;
+        max-width: 4.18in;
+        padding: 0;
         text-align: center;
-        box-shadow: 0 0.14in 0.34in ${transparent(tokens.ink, 0.055)};
+        box-shadow: none;
       }
       .style-brand.type-quote .quote-page .quote-text {
         color: ${tokens.ink};
-        font-size: 45px;
-        line-height: 1.02;
+        font-size: 43px;
+        line-height: 1.04;
+        font-style: normal;
+        font-weight: 600;
       }
       .style-brand.type-quote .quote-page .quote-mark {
-        color: ${transparent(tokens.plum, 0.26)};
-        left: 50%;
-        top: -0.26in;
-        transform: translateX(-50%);
-        font-size: 96px;
+        color: ${tokens.plum};
+        display: block;
+        font-size: 86px;
+        line-height: 0.68;
+        margin: 0 auto 0.2in;
+        position: relative;
+      }
+      .style-brand.type-quote .quote-page .quote-mark::after {
+        content: "";
+        display: block;
+        width: 1.02in;
+        height: 1px;
+        margin: 0.18in auto 0;
+        background: ${tokens.accent};
+        box-shadow:
+          0.47in 0 0 ${tokens.accent},
+          0.235in 0 0 0.035in ${tokens.accent};
       }
       .style-brand.type-quote .quote-page .quote-by {
         display: inline-block;
-        margin-top: 0.22in;
-        padding-top: 0.12in;
+        color: ${tokens.background};
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.38em;
+        margin-top: 0.5in;
+        padding-top: 0.42in;
+        position: relative;
       }
       .style-brand.type-quote .quote-page .quote-by::before {
+        content: "B C";
+        background: transparent;
+        color: ${tokens.ink};
+        display: block;
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 34px;
+        font-weight: 700;
+        height: auto;
         left: 50%;
+        line-height: 1;
+        position: absolute;
+        top: -0.02in;
         transform: translateX(-50%);
+        width: auto;
+      }
+      .style-brand.type-quote .quote-page .quote-by::after {
+        content: "";
+        display: block;
+        width: 0.78in;
+        height: 1px;
+        margin: 0.16in auto 0;
+        background: ${tokens.accent};
       }
       .style-brand.type-section-divider .section-divider-box {
         position: relative;
-        width: 6.18in;
-        min-height: 3.45in;
-        border-radius: 0.12in;
-        background: ${tokens.plum};
-        color: ${tokens.paper};
+        width: 5.88in;
+        min-height: 3.58in;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        color: ${tokens.ink};
         overflow: hidden;
-        padding: 0.58in 0.66in;
-        box-shadow: 0 0.16in 0.38in ${transparent(tokens.ink, 0.12)};
+        padding: 0.44in 0.36in 0.34in;
+        box-shadow: none;
       }
       .style-brand.type-section-divider .section-divider-box::before {
         content: "";
         position: absolute;
-        left: 1.1in;
-        right: 0.72in;
-        top: 0.32in;
-        height: 1.15in;
-        border: 0.26in solid ${transparent(tokens.paper, 0.09)};
+        left: 0.64in;
+        right: 0.44in;
+        top: 0.1in;
+        height: 1.3in;
+        border: 0.2in solid ${transparent(tokens.lilac, 0.16)};
         border-bottom: 0;
         border-radius: 50% 50% 0 0;
       }
@@ -2068,19 +2202,96 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-brand.type-section-divider .image-slot {
         display: none;
       }
-      .style-brand.type-section-divider .section-label,
-      .style-brand.type-section-divider .brand-mark {
+      .style-brand.type-section-divider .section-label {
         color: ${tokens.accent};
+        font-family: "Poppins", Arial, sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.36em;
+        text-transform: uppercase;
+      }
+      .style-brand.type-section-divider .section-label::after {
+        content: "";
+        display: block;
+        width: 1.08in;
+        height: 1px;
+        margin: 0.2in auto 0;
+        background: ${tokens.accent};
+        box-shadow:
+          0.48in 0 0 ${tokens.accent},
+          0.24in 0 0 0.035in ${tokens.accent};
+      }
+      .style-brand.type-section-divider .brand-mark {
+        display: none;
       }
       .style-brand.type-section-divider h2 {
-        color: ${tokens.paper};
-        font-size: 43px;
-        max-width: 4.7in;
+        color: ${tokens.ink};
+        font-size: 46px;
+        line-height: 0.98;
+        max-width: 4.9in;
+        margin: 0.42in auto 0;
+        text-align: center;
+        text-transform: uppercase;
       }
       .style-brand.type-section-divider .subtitle {
-        color: ${transparent(tokens.paper, 0.84)};
+        color: ${tokens.background};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 18px;
+        font-style: italic;
+        line-height: 1.35;
+        max-width: 3.35in;
+        margin: 0.28in auto 0;
       }
-      .style-brand.type-lesson .content,
+      .style-brand.type-section-divider .brand-light,
+      .style-brand.type-section-divider .brand-book,
+      .style-brand.type-section-divider .brand-pen,
+      .style-brand.type-section-divider .brand-plant,
+      .style-brand.type-section-divider .brand-arc {
+        display: block;
+      }
+      .style-brand.type-section-divider .brand-light {
+        right: 0.66in;
+        top: 0;
+        opacity: 0.74;
+        transform: scale(0.96);
+      }
+      .style-brand.type-section-divider .brand-book {
+        right: 0.76in;
+        bottom: 0.7in;
+        transform: rotate(-5deg) scale(1.2);
+      }
+      .style-brand.type-section-divider .brand-pen {
+        right: 1.44in;
+        bottom: 1.22in;
+        transform: rotate(-21deg) scale(0.88);
+      }
+      .style-brand.type-section-divider .brand-plant {
+        left: 0.66in;
+        bottom: 0.88in;
+        opacity: 0.82;
+        transform: scale(0.82);
+      }
+      .style-brand.type-section-divider .brand-arc {
+        right: -0.68in;
+        bottom: -0.48in;
+        width: 2.82in;
+        height: 2.82in;
+        opacity: 0.62;
+      }
+      .style-brand.type-section-divider .decor::before {
+        background: ${transparent(tokens.plum, 0.82)};
+        left: -0.54in;
+        top: -0.62in;
+        width: 2.02in;
+        height: 2.02in;
+      }
+      .style-brand.type-section-divider .decor::after {
+        background: ${transparent(tokens.lilac, 0.5)};
+        left: 0.68in;
+        top: -0.52in;
+        width: 1.82in;
+        height: 1.82in;
+      }
       .style-brand.type-lesson-continue .content {
         max-width: 5.08in;
         margin-top: 0.28in;
@@ -2089,33 +2300,213 @@ function buildCss(tokens: DesignPresetTokens) {
         background: ${transparent(tokens.paper, 0.72)};
         box-shadow: 0 0.1in 0.26in ${transparent(tokens.ink, 0.052)};
       }
-      .style-brand.type-lesson .key-term-box {
-        margin-top: 0.24in;
-        max-width: 4.92in;
-        border-left-width: 0.05in;
+      .style-brand.type-lesson {
+        padding: 0.68in 0.62in 0.64in;
+      }
+      .style-brand.type-lesson .lesson-content-page {
+        min-height: 9.55in;
+        display: grid;
+        grid-template-columns: 2.24in 1fr;
+        grid-template-rows: 1fr auto;
+        column-gap: 0.42in;
+        row-gap: 0.24in;
+      }
+      .style-brand.type-lesson .lesson-sidebar {
+        min-height: 7.15in;
+        border-left: 0.06in solid ${tokens.accent};
+        border-radius: 0.08in;
+        padding: 0.28in 0.2in 0.24in 0.28in;
+        background:
+          linear-gradient(135deg, ${transparent(tokens.lilac, 0.2)}, transparent 58%),
+          ${transparent(tokens.paper, 0.88)};
+        box-shadow: 0 0.12in 0.28in ${transparent(tokens.ink, 0.07)};
+      }
+      .style-brand.type-lesson .lesson-kicker {
+        color: ${tokens.accent};
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.32em;
+        line-height: 1;
+        text-transform: uppercase;
+      }
+      .style-brand.type-lesson .lesson-title {
+        color: ${tokens.ink};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 38px;
+        font-weight: 700;
+        line-height: 0.96;
+        margin: 0.24in 0 0;
+      }
+      .style-brand.type-lesson .lesson-intro {
+        color: ${tokens.background};
+        font-size: 11.4px;
+        font-weight: 500;
+        line-height: 1.62;
+        margin-top: 0.26in;
+      }
+      .style-brand.type-lesson .lesson-sidebar-list-label {
+        color: ${tokens.accent};
+        font-size: 8.8px;
+        font-weight: 800;
+        letter-spacing: 0.22em;
+        margin-top: 0.32in;
+        text-transform: uppercase;
+      }
+      .style-brand.type-lesson .lesson-sidebar-list {
+        display: grid;
+        gap: 0.11in;
+        list-style: none;
+        margin: 0.14in 0 0;
+        padding: 0;
+      }
+      .style-brand.type-lesson .lesson-sidebar-list li {
+        color: ${tokens.background};
+        font-size: 9.6px;
+        font-weight: 600;
+        line-height: 1.35;
+        padding-left: 0.18in;
+        position: relative;
+      }
+      .style-brand.type-lesson .lesson-sidebar-list li::before {
+        background: ${tokens.accent};
+        border-radius: 999px;
+        content: "";
+        height: 0.055in;
+        left: 0;
+        position: absolute;
+        top: 0.06in;
+        width: 0.055in;
+      }
+      .style-brand.type-lesson .lesson-sidebar-mark {
+        color: ${tokens.accent};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        margin-top: 0.42in;
+      }
+      .style-brand.type-lesson .lesson-main {
+        align-self: start;
+        padding-top: 0.08in;
+      }
+      .style-brand.type-lesson .lesson-section {
+        display: grid;
+        grid-template-columns: 0.42in 1fr;
+        column-gap: 0.18in;
+        padding: 0.04in 0 0.26in;
+      }
+      .style-brand.type-lesson .lesson-section + .lesson-section {
+        border-top: 1px solid ${transparent(tokens.line, 0.72)};
+        padding-top: 0.28in;
+      }
+      .style-brand.type-lesson .lesson-number {
+        align-items: center;
+        background: ${tokens.ink};
+        border: 1px solid ${transparent(tokens.accent, 0.72)};
+        border-radius: 999px;
+        color: ${tokens.paper};
+        display: flex;
+        font-size: 12px;
+        font-weight: 800;
+        height: 0.34in;
+        justify-content: center;
+        letter-spacing: 0.04em;
+        margin-top: 0.02in;
+        width: 0.34in;
+      }
+      .style-brand.type-lesson .lesson-section-title {
+        color: ${tokens.ink};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.05;
+      }
+      .style-brand.type-lesson .lesson-section-body {
+        color: ${tokens.background};
+        font-size: 10.8px;
+        font-weight: 500;
+        line-height: 1.56;
+        margin-top: 0.09in;
+      }
+      .style-brand.type-lesson .lesson-takeaway-box {
+        grid-column: 1 / -1;
+        border-left: 0.06in solid ${tokens.accent};
         border-radius: 0.08in;
         background:
-          linear-gradient(135deg, ${transparent(tokens.lilac, 0.16)}, transparent 62%),
-          ${transparent(tokens.paperAlt, 0.82)};
-        box-shadow: 0 0.1in 0.24in ${transparent(tokens.ink, 0.08)};
+          linear-gradient(90deg, ${transparent(tokens.lilac, 0.16)}, transparent 72%),
+          ${transparent(tokens.paperAlt, 0.78)};
+        padding: 0.22in 0.3in 0.24in;
+        box-shadow: 0 0.12in 0.3in ${transparent(tokens.ink, 0.08)};
+      }
+      .style-brand.type-lesson .lesson-takeaway-label {
+        color: ${tokens.accent};
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.3em;
+        text-transform: uppercase;
+      }
+      .style-brand.type-lesson .lesson-takeaway-text {
+        color: ${tokens.ink};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 20px;
+        font-style: italic;
+        line-height: 1.28;
+        margin-top: 0.08in;
+      }
+      .style-brand.type-lesson .lesson-footer-mark {
+        bottom: 0.32in;
+        color: ${tokens.ink};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 24px;
+        font-weight: 700;
+        left: 50%;
+        letter-spacing: 0.08em;
+        position: absolute;
+        transform: translateX(-50%);
+        z-index: 3;
+      }
+      .style-brand.type-lesson .lesson-footer-mark span {
+        color: ${tokens.accent};
+      }
+      .style-brand.type-lesson .lesson-page-number {
+        bottom: 0.34in;
+        color: ${tokens.mutedInk};
+        font-size: 9px;
+        font-weight: 700;
+        position: absolute;
+        right: 0.72in;
+        z-index: 3;
+      }
+      .style-brand.type-lesson .brand-door,
+      .style-brand.type-lesson .brand-card,
+      .style-brand.type-lesson .brand-plant,
+      .style-brand.type-lesson .brand-arc {
+        display: block;
       }
       .style-brand.type-lesson .brand-door {
-        display: block;
-        right: 0.76in;
-        top: 2.18in;
-        opacity: 0.82;
+        right: 0.56in;
+        top: 1.78in;
+        opacity: 0.2;
+        transform: scale(0.88);
       }
       .style-brand.type-lesson .brand-card {
-        display: block;
-        right: 1.06in;
-        bottom: 1.35in;
-        transform: rotate(-7deg) scale(0.88);
+        right: 0.58in;
+        bottom: 1.18in;
+        opacity: 0.82;
+        transform: rotate(-7deg) scale(0.8);
       }
       .style-brand.type-lesson .brand-plant {
-        display: block;
-        right: 0.46in;
-        bottom: 1.04in;
-        transform: scale(0.92);
+        left: 1.08in;
+        bottom: 1.3in;
+        opacity: 0.64;
+        transform: scale(0.72);
+      }
+      .style-brand.type-lesson .brand-arc {
+        left: -0.78in;
+        bottom: -0.38in;
+        width: 2.68in;
+        height: 2.68in;
+        opacity: 0.54;
       }
       .style-brand.type-lesson-continue .reflect-box {
         max-width: 4.92in;
@@ -3838,6 +4229,474 @@ function buildCss(tokens: DesignPresetTokens) {
       }`
           : ""
       }
+      .page.cover {
+        align-content: start;
+        display: block;
+        padding: 0.54in 0.62in 0.58in;
+        text-align: center;
+      }
+      .page.cover .image-slot {
+        display: none;
+      }
+      .page.cover .cover-copy {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        max-width: 5.75in;
+        min-height: 7.05in;
+        margin: 0 auto;
+        position: relative;
+      }
+      .page.cover .cover-brandline {
+        color: ${tokens.background};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        line-height: 1;
+        margin: 0 0 0.12in;
+        text-transform: uppercase;
+        text-shadow: 0 1px 0 ${transparent(tokens.paper, 0.72)};
+      }
+      .page.cover .branch-cover-mark {
+        color: ${tokens.accent};
+        --mark-accent: ${tokens.gold};
+        --mark-soft: ${transparent(tokens.accentSoft, 0.72)};
+        width: 0.78in;
+        height: 0.58in;
+        margin: 0 auto 0.13in;
+      }
+      .page.cover .cover-title {
+        color: ${tokens.ink};
+        font-size: 84px;
+        letter-spacing: 0.16em;
+        line-height: 0.84;
+        margin: 0 auto;
+        max-width: 5.8in;
+        text-align: center;
+        text-transform: uppercase;
+      }
+      .page.cover .cover-title.is-long {
+        font-size: 56px;
+        letter-spacing: 0.045em;
+        line-height: 0.92;
+        max-width: 6.05in;
+      }
+      .page.cover .cover-subtitle {
+        color: ${tokens.background};
+        font-family: "Poppins", Arial, sans-serif;
+        font-size: 9.5px;
+        font-style: normal;
+        font-weight: 700;
+        letter-spacing: 0.3em;
+        line-height: 1.3;
+        margin: 0.14in 0 0;
+        max-width: 4.7in;
+        text-transform: uppercase;
+      }
+      .page.cover .cover-divider {
+        align-items: center;
+        color: ${tokens.accent};
+        display: flex;
+        gap: 0.08in;
+        justify-content: center;
+        margin: 0.16in auto 0;
+      }
+      .page.cover .cover-divider::before,
+      .page.cover .cover-divider::after {
+        content: "";
+        display: block;
+        height: 1px;
+        width: 0.48in;
+        background: currentColor;
+      }
+      .page.cover .cover-divider span {
+        display: block;
+        width: 0.055in;
+        height: 0.055in;
+        background: currentColor;
+        transform: rotate(45deg);
+      }
+      .page.cover .cover-kit-title {
+        color: ${tokens.background};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 36px;
+        font-weight: 700;
+        line-height: 0.98;
+        margin: 0.22in auto 0;
+        max-width: 4.9in;
+        text-align: center;
+        text-transform: uppercase;
+      }
+      .page.cover .cover-kit-title.is-long {
+        font-size: 31px;
+        max-width: 5.3in;
+      }
+      .page.cover .cover-product {
+        background: transparent;
+        border: 0;
+        box-shadow: none;
+        color: ${tokens.background};
+        display: inline-block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.28em;
+        margin: 0.2in auto 0;
+        padding: 0;
+        text-transform: uppercase;
+      }
+      .page.cover .cover-mini-mark {
+        display: none;
+      }
+      .page.cover .cover-tagline {
+        color: ${tokens.background};
+        position: absolute;
+        left: 0.72in;
+        right: 0.72in;
+        bottom: 0.42in;
+        z-index: 3;
+        font-size: 8.4px;
+        font-weight: 700;
+        letter-spacing: 0.28em;
+        margin: 0;
+        text-align: center;
+        text-shadow: 0 1px 5px ${transparent(tokens.paper, 0.72)};
+        text-transform: uppercase;
+      }
+      .style-brand.page.cover .cover-title {
+        color: ${tokens.ink};
+      }
+      .style-brand.page.cover .cover-kit-title,
+      .style-brand.page.cover .cover-product,
+      .style-brand.page.cover .cover-tagline,
+      .style-brand.page.cover .cover-subtitle {
+        color: ${tokens.ink};
+      }
+      .style-brand.page.cover .cover-brandline {
+        color: ${tokens.ink};
+      }
+      .style-brand.page.cover .branch-cover-mark {
+        color: ${tokens.plum};
+        --mark-accent: ${tokens.gold};
+      }
+      .style-rise.page.cover .cover-title,
+      .style-rise.page.cover .branch-cover-mark {
+        color: ${tokens.rose};
+      }
+      .style-rise.page.cover .cover-divider {
+        color: ${tokens.rose};
+      }
+      .style-land.page.cover .branch-cover-mark,
+      .style-land.page.cover .cover-divider {
+        color: ${tokens.gold};
+      }
+      .style-land.page.cover .cover-title {
+        color: ${tokens.ink};
+      }
+      .style-land.page.cover .cover-tagline,
+      .style-meetatheal.page.cover .cover-tagline {
+        color: ${tokens.paper};
+        text-shadow: 0 1px 5px ${transparent(tokens.background, 0.78)};
+      }
+      .style-rebuild.page.cover .cover-copy {
+        align-items: center;
+      }
+      .style-rebuild.page.cover .cover-title,
+      .style-rebuild.page.cover .branch-cover-mark {
+        color: ${tokens.ink};
+      }
+      .style-rebuild.page.cover .cover-divider {
+        color: ${tokens.gold};
+      }
+      .style-meetatheal.page.cover .cover-title {
+        color: ${tokens.ink};
+      }
+      .style-meetatheal.page.cover .branch-cover-mark {
+        color: ${tokens.rose};
+        --mark-accent: ${tokens.blue};
+      }
+      ${
+        coverArt
+          ? `.page.cover,
+      .style-brand.page.cover,
+      .style-rise.page.cover,
+      .style-land.page.cover,
+      .style-rebuild.page.cover,
+      .style-meetatheal.page.cover {
+        background:
+          linear-gradient(${transparent(tokens.paper, 0.03)}, ${transparent(tokens.paper, 0.03)}),
+          url("${coverArt}") center / cover no-repeat,
+          ${tokens.paper};
+      }
+      .style-brand.page.cover {
+        background:
+          linear-gradient(${transparent(tokens.paper, 0.015)}, ${transparent(tokens.paper, 0.015)}),
+          url("${coverArt}") center bottom / 112% auto no-repeat,
+          ${tokens.paper};
+      }
+      .style-rebuild.page.cover {
+        background:
+          linear-gradient(${transparent(tokens.paper, 0.012)}, ${transparent(tokens.paper, 0.012)}),
+          url("${coverArt}") center bottom / 116% auto no-repeat,
+          ${tokens.paper};
+      }`
+          : ""
+      }
+      .type-welcome.page {
+        padding: 0.54in 0.62in 0.58in;
+      }
+      .type-welcome .watercolor,
+      .type-welcome .mountain-mark,
+      .type-welcome .tool-mark,
+      .type-welcome .road-mark,
+      .type-welcome .floral,
+      .type-welcome .spark-lines,
+      .type-welcome .brand-arc,
+      .type-welcome .brand-cup,
+      .type-welcome .brand-card,
+      .type-welcome .brand-laptop,
+      .type-welcome .brand-plant,
+      .type-welcome .brand-door,
+      .type-welcome .brand-book,
+      .type-welcome .brand-light,
+      .type-welcome .brand-pen,
+      .type-welcome .brand-glasses,
+      .type-welcome .rise-glass,
+      .type-welcome .rise-cake,
+      .type-welcome .rise-crown,
+      .type-welcome .land-compass,
+      .type-welcome .land-wrench,
+      .type-welcome .land-leaf,
+      .type-welcome .rebuild-boxes,
+      .type-welcome .rebuild-paint,
+      .type-welcome .rebuild-frame,
+      .type-welcome .heal-heart,
+      .type-welcome .heal-journals,
+      .type-welcome .heal-sun {
+        display: none !important;
+      }
+      .type-welcome .decor::before {
+        background: ${transparent(tokens.plum, 0.13)};
+        right: -0.74in;
+        bottom: -0.46in;
+        width: 2.18in;
+        height: 2.18in;
+      }
+      .type-welcome .decor::after {
+        background: ${transparent(tokens.accentSoft, 0.44)};
+        left: -0.58in;
+        top: -0.42in;
+        width: 1.46in;
+        height: 1.46in;
+      }
+      .type-welcome .welcome-frame {
+        min-height: 7.05in;
+        max-width: 5.75in;
+        margin: 0 auto;
+        padding: 0.46in 0.18in 0;
+        position: relative;
+        text-align: left;
+      }
+      .type-welcome .welcome-title {
+        color: ${tokens.ink};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 54px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        line-height: 0.9;
+        margin: 0;
+        text-transform: uppercase;
+      }
+      .type-welcome .welcome-intro {
+        color: ${tokens.background};
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.72;
+        margin: 0.32in 0 0;
+        max-width: 4.72in;
+      }
+      .type-welcome .welcome-benefits {
+        display: grid;
+        gap: 0.15in;
+        list-style: none;
+        margin: 0.42in 0 0;
+        max-width: 4.95in;
+        padding: 0;
+      }
+      .type-welcome .welcome-benefits li {
+        align-items: center;
+        color: ${tokens.ink};
+        display: grid;
+        font-size: 12px;
+        font-weight: 600;
+        gap: 0.15in;
+        grid-template-columns: 0.34in 1fr;
+        line-height: 1.42;
+      }
+      .type-welcome .welcome-benefit-icon {
+        align-items: center;
+        background: ${transparent(tokens.accentSoft, 0.58)};
+        border: 1px solid ${transparent(tokens.accent, 0.72)};
+        border-radius: 999px;
+        color: ${tokens.accent};
+        display: inline-flex;
+        height: 0.32in;
+        justify-content: center;
+        width: 0.32in;
+        --welcome-icon-accent: ${tokens.gold};
+      }
+      .type-welcome .welcome-benefit-icon svg {
+        display: block;
+        height: 0.2in;
+        width: 0.2in;
+      }
+      .type-welcome .welcome-shape {
+        border: 1px solid ${transparent(tokens.gold, 0.56)};
+        border-radius: 999px;
+        bottom: 0.78in;
+        height: 1.54in;
+        position: absolute;
+        right: 0.34in;
+        width: 1.54in;
+        background:
+          radial-gradient(circle at 44% 42%, ${transparent(tokens.accent, 0.28)} 0 0.17in, transparent 0.18in),
+          radial-gradient(circle at 64% 62%, ${transparent(tokens.lilac, 0.34)} 0 0.34in, transparent 0.35in),
+          radial-gradient(circle at 28% 72%, ${transparent(tokens.sage, 0.26)} 0 0.28in, transparent 0.29in),
+          ${transparent(tokens.paper, 0.16)};
+      }
+      .type-welcome .welcome-shape::after {
+        content: "";
+        position: absolute;
+        inset: 0.32in;
+        border: 1px solid ${transparent(tokens.accent, 0.46)};
+        border-radius: 999px;
+      }
+      .type-toc.page {
+        padding: 0.54in 0.62in 0.58in;
+      }
+      .type-toc .decor::before {
+        background: ${transparent(tokens.plum, 0.13)};
+        left: -0.62in;
+        top: -0.48in;
+        width: 2.05in;
+        height: 2.05in;
+      }
+      .type-toc .decor::after {
+        background: ${transparent(tokens.accentSoft, 0.42)};
+        right: -0.68in;
+        bottom: -0.44in;
+        width: 2.24in;
+        height: 2.24in;
+      }
+      .type-toc .toc-frame {
+        max-width: 5.75in;
+        min-height: 7.05in;
+        margin: 0 auto;
+        padding: 1.02in 0.34in 0;
+        position: relative;
+      }
+      .type-toc .toc-title {
+        color: ${tokens.ink};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 43px;
+        font-weight: 700;
+        letter-spacing: 0.035em;
+        line-height: 0.95;
+        margin: 0;
+        text-align: center;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .type-toc .toc-rule {
+        align-items: center;
+        color: ${tokens.accent};
+        display: flex;
+        gap: 0.08in;
+        justify-content: center;
+        margin: 0.32in auto 0;
+      }
+      .type-toc .toc-rule span {
+        background: currentColor;
+        display: block;
+        height: 1px;
+        width: 0.82in;
+      }
+      .type-toc .toc-rule i {
+        background: currentColor;
+        border-radius: 999px;
+        display: block;
+        height: 0.09in;
+        width: 0.09in;
+      }
+      .type-toc .toc-list {
+        display: grid;
+        gap: 0.17in;
+        margin: 0.48in auto 0;
+        max-width: 5.18in;
+      }
+      .type-toc .toc-list.toc-backmatter {
+        gap: 0.2in;
+        margin-top: 0.26in;
+      }
+      .type-toc .toc-row {
+        align-items: baseline;
+        color: ${tokens.background};
+        display: grid;
+        font-size: 15px;
+        grid-template-columns: 0.46in auto minmax(0.74in, 1fr) 0.36in;
+        gap: 0.13in;
+        line-height: 1;
+      }
+      .type-toc .toc-number {
+        color: ${tokens.ink};
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+      .type-toc .toc-list.toc-backmatter .toc-number {
+        color: transparent;
+      }
+      .type-toc .toc-section-title {
+        color: ${tokens.background};
+        font-weight: 500;
+        min-width: 0;
+        white-space: nowrap;
+      }
+      .type-toc .toc-leader {
+        border-bottom: 1px dotted ${transparent(tokens.background, 0.78)};
+        min-width: 0.48in;
+        transform: translateY(-0.04in);
+      }
+      .type-toc .toc-page-number {
+        color: ${tokens.ink};
+        font-weight: 700;
+        text-align: right;
+      }
+      .type-toc .toc-shape {
+        border: 1px solid ${transparent(tokens.gold, 0.46)};
+        border-radius: 999px;
+        bottom: 0.02in;
+        height: 1.92in;
+        position: absolute;
+        right: -0.28in;
+        width: 1.92in;
+      }
+      .type-toc .toc-shape::before {
+        content: "";
+        position: absolute;
+        inset: 0.28in;
+        border: 1px solid ${transparent(tokens.accent, 0.36)};
+        border-radius: 999px;
+      }
+      .type-toc .toc-shape::after {
+        content: "";
+        position: absolute;
+        inset: 0.68in 0.32in 0.32in 0.68in;
+        border-radius: 999px;
+        background: ${transparent(tokens.lilac, 0.36)};
+        box-shadow:
+          -0.28in 0.18in 0 ${transparent(tokens.sage, 0.24)},
+          0.16in -0.18in 0 ${transparent(tokens.accent, 0.22)};
+      }
       .quote-page {
         display: grid;
         min-height: 7.7in;
@@ -3905,10 +4764,23 @@ function renderPage(
   total: number,
   kit: ParsedKit,
   preset: DesignPresetTokens,
-  branch: BranchInfo
+  branch: BranchInfo,
+  target: RenderTarget
 ) {
   if (page.type === "cover") {
-    return renderCoverPage(page, kit, preset)
+    return renderCoverPage(page, kit, preset, target)
+  }
+
+  if (page.type === "welcome") {
+    return renderWelcomePage(page, index, total, preset, branch)
+  }
+
+  if (page.type === "toc") {
+    return renderTocPage(page, index, total, kit, preset, branch)
+  }
+
+  if (page.type === "lesson" && preset.styleFamily === "brand") {
+    return renderLessonContentPage(page, index, total, kit, preset)
   }
 
   if (page.type === "closing") {
@@ -3931,108 +4803,447 @@ function renderPage(
   </section>`
 }
 
-function renderCoverPage(
+function renderLessonContentPage(
   page: KitPage,
+  index: number,
+  total: number,
   kit: ParsedKit,
   preset: DesignPresetTokens
 ) {
-  const title = page.title || kit.title
-  const subtitle = page.subtitle || kit.subtitle
-  const tagline = page.tagline || kit.tagline
   const presetClasses = presetClassName(preset)
-  const titleClass = `cover-title ${title.length > 24 ? "is-long" : ""}`.trim()
+  const intro = lessonIntro(page)
+  const sidebarBullets = lessonSidebarBullets(page)
+  const sections = lessonContentSections(page)
+  const takeaway = lessonTakeaway(page)
 
-  if (preset.styleFamily === "brand") {
-    const kitTitle = cleanCoverKitTitle(title)
-
-    return `<section class="page cover ${presetClasses} type-cover">
+  return `<section class="page ${presetClasses} type-lesson">
     ${renderDecor()}
-    <div class="cover-copy">
-      <div class="brand-mark">${renderIcon(preset)}</div>
-      <div class="cover-brandline">Best Collective</div>
-      <h1 class="cover-title">Brand</h1>
-      <div class="cover-subtitle">${escapeHtml(kitTitle)}</div>
-      <div class="cover-divider"><span></span></div>
-      <div class="cover-product">${escapeHtml(coverProductLabel(kit, preset))}</div>
-      ${tagline ? `<div class="cover-tagline">${escapeHtml(tagline)}</div>` : ""}
+    <div class="lesson-content-page">
+      <aside class="lesson-sidebar">
+        <div class="lesson-kicker">${escapeHtml(lessonKicker(page, index))}</div>
+        <h1 class="lesson-title">${escapeHtml(page.title || kit.title)}</h1>
+        ${intro ? `<p class="lesson-intro">${escapeHtml(intro)}</p>` : ""}
+        ${
+          sidebarBullets.length > 0
+            ? `<div class="lesson-sidebar-list-label">In this lesson</div><ul class="lesson-sidebar-list">${sidebarBullets
+                .map((bullet) => `<li>${escapeHtml(bullet)}</li>`)
+                .join("")}</ul>`
+            : ""
+        }
+        <div class="lesson-sidebar-mark">B<span>C</span></div>
+      </aside>
+      <main class="lesson-main">
+        ${sections.map(renderLessonContentSection).join("")}
+      </main>
+      <div class="lesson-takeaway-box">
+        <div class="lesson-takeaway-label">Key Takeaway</div>
+        <div class="lesson-takeaway-text">${escapeHtml(takeaway)}</div>
+      </div>
     </div>
-    ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
+    <div class="lesson-footer-mark">B<span>C</span></div>
+    <div class="lesson-page-number">${index + 1} / ${total}</div>
   </section>`
+}
+
+function renderLessonContentSection(section: LessonContentSection, index: number) {
+  return `<section class="lesson-section">
+    <div class="lesson-number">${String(index + 1).padStart(2, "0")}</div>
+    <div>
+      <div class="lesson-section-title">${escapeHtml(section.title)}</div>
+      <p class="lesson-section-body">${escapeHtml(section.text)}</p>
+    </div>
+  </section>`
+}
+
+type LessonContentSection = {
+  title: string
+  text: string
+}
+
+function lessonKicker(page: KitPage, index: number) {
+  const section = page.section.trim()
+
+  if (/lesson\s+\d+/i.test(section)) {
+    return section
   }
 
-  if (preset.styleFamily === "land") {
-    const collectionTitle = landCoverCollectionTitle(preset)
-    const collectionSubtitle = landCoverSubtitle(page, kit, preset)
-    const coverTagline = landCoverTagline(page, kit, preset)
-    const kitTitle = landCoverKitTitle(title, preset)
-    const kitTitleClass = `cover-kit-title ${kitTitle.length > 24 ? "is-long" : ""}`.trim()
+  const lessonNumber = String(index + 1).padStart(2, "0")
 
-    return `<section class="page cover ${presetClasses} type-cover">
-    ${renderDecor()}
-    <div class="cover-copy">
-      <div class="brand-mark">${renderIcon(preset)}</div>
-      <div class="cover-brandline">Best Collective</div>
-      <h1 class="cover-title">${escapeHtml(collectionTitle)}</h1>
-      <div class="cover-subtitle">${escapeHtml(collectionSubtitle)}</div>
-      <div class="cover-divider"><span></span><span></span></div>
-      <div class="${kitTitleClass}">${escapeHtml(kitTitle)}</div>
-      <div class="cover-product">${escapeHtml(coverProductLabel(kit, preset))}</div>
-      ${coverTagline ? `<div class="cover-tagline">${escapeHtml(coverTagline)}</div>` : ""}
-    </div>
-    ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
-  </section>`
+  return `Lesson ${lessonNumber}`
+}
+
+function lessonIntro(page: KitPage) {
+  const firstParagraph = lessonTeachingParagraphs(page)[0]
+
+  return firstParagraph || page.subtitle
+}
+
+function lessonContentSections(page: KitPage): LessonContentSection[] {
+  const paragraphs = lessonTeachingParagraphs(page)
+  const paragraphSections = paragraphs
+    .slice(1)
+    .map(splitLessonSectionParagraph)
+    .filter((section): section is LessonContentSection => Boolean(section))
+  const bodySources = [
+    ...paragraphs.slice(1).filter((paragraph) => !splitLessonSectionParagraph(paragraph)),
+    page.bottomNote,
+    paragraphs[0],
+  ].filter((value) => value.trim())
+
+  return Array.from({ length: 3 }).map((_, index) => {
+    const structured = paragraphSections[index]
+    const title =
+      structured?.title ||
+      ["Why This Matters", "What To Decide", "How To Use It"][index]
+    const text =
+      structured?.text ||
+      bodySources[index] ||
+      bodySources[0] ||
+      page.subtitle ||
+      page.title
+
+    return {
+      title,
+      text: trimLessonBody(text),
+    }
+  })
+}
+
+function lessonTakeaway(page: KitPage) {
+  const paragraphs = lessonParagraphs(page)
+
+  return page.bottomNote || paragraphs.at(-1) || page.subtitle || page.title
+}
+
+function lessonParagraphs(page: KitPage) {
+  return page.content
+    .filter((block) => block.type === "paragraph")
+    .map((block) => block.text.trim())
+    .filter(Boolean)
+}
+
+function lessonChecks(page: KitPage) {
+  return page.content
+    .flatMap((block) => (block.type === "check-list" ? block.items : []))
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
+
+function lessonSidebarBullets(page: KitPage) {
+  return lessonChecks(page).slice(0, 4)
+}
+
+function lessonTeachingParagraphs(page: KitPage) {
+  return lessonParagraphs(page).filter((paragraph) => !/^in this lesson\b/i.test(paragraph))
+}
+
+function splitLessonSectionParagraph(text: string): LessonContentSection | null {
+  const match = text.match(/^(.{3,70}):\s+(.{12,})$/)
+
+  if (!match) {
+    return null
   }
 
-  if (preset.styleFamily === "rise") {
-    const collectionTitle = riseCoverCollectionTitle(preset)
-    const collectionSubtitle = riseCoverSubtitle(page, kit, preset)
-    const coverTagline = riseCoverTagline(page, kit, preset)
-    const titleClass = `cover-title ${collectionTitle.length > 8 ? "is-long" : ""}`.trim()
-
-    return `<section class="page cover ${presetClasses} type-cover">
-    ${renderDecor()}
-    <div class="cover-copy">
-      <div class="brand-mark">BC</div>
-      <div class="cover-brandline">Best Collective</div>
-      <div class="cover-divider"><span>&#9829;</span></div>
-      <h1 class="${titleClass}">${escapeHtml(collectionTitle)}</h1>
-      <div class="cover-subtitle">${escapeHtml(collectionSubtitle)}</div>
-      <div class="cover-product">${escapeHtml(coverProductLabel(kit, preset))}</div>
-      <div class="cover-mini-mark">&#9813;</div>
-      ${coverTagline ? `<div class="cover-tagline">${escapeHtml(coverTagline)}</div>` : ""}
-    </div>
-    ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
-  </section>`
+  return {
+    title: cleanLessonTitle(match[1]),
+    text: trimLessonBody(match[2]),
   }
+}
 
-  if (preset.styleFamily === "meetatheal") {
-    const collectionSubtitle = meetAtHealCoverSubtitle(page, kit)
+function cleanLessonTitle(value = "") {
+  return value.trim().replace(/[.:;]+$/g, "")
+}
 
-    return `<section class="page cover ${presetClasses} type-cover">
+function trimLessonBody(value: string) {
+  return value.trim().replace(/\s+/g, " ")
+}
+
+function renderWelcomePage(
+  page: KitPage,
+  index: number,
+  total: number,
+  preset: DesignPresetTokens,
+  branch: BranchInfo
+) {
+  const presetClasses = presetClassName(preset)
+  const intro = welcomeIntro(page)
+  const benefits = welcomeBenefits(page)
+
+  return `<section class="page ${presetClasses} type-welcome">
     ${renderDecor()}
-    <div class="cover-copy">
-      <div class="brand-mark">&#9825;</div>
-      <div class="cover-brandline">Best Collective</div>
-      <h1 class="cover-title">Meet at<br />the Heal</h1>
-      <div class="cover-subtitle">${escapeHtml(collectionSubtitle)}</div>
-      <div class="cover-divider"><span></span></div>
-      <div class="cover-product">${escapeHtml(coverProductLabel(kit, preset))}</div>
+    <div class="welcome-frame">
+      <h1 class="welcome-title">WELCOME</h1>
+      ${intro ? `<p class="welcome-intro">${escapeHtml(intro)}</p>` : ""}
+      ${
+        benefits.length > 0
+          ? `<ul class="welcome-benefits">${benefits
+              .map(
+                (benefit) =>
+                  `<li><span class="welcome-benefit-icon">${renderWelcomeBenefitIcon(preset)}</span><span>${escapeHtml(
+                    benefit
+                  )}</span></li>`
+              )
+              .join("")}</ul>`
+          : ""
+      }
+      <div class="welcome-shape"></div>
     </div>
-    ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
+    ${footer(index, total, branch)}
   </section>`
-  }
+}
+
+function renderTocPage(
+  page: KitPage,
+  index: number,
+  total: number,
+  kit: ParsedKit,
+  preset: DesignPresetTokens,
+  branch: BranchInfo
+) {
+  const presetClasses = presetClassName(preset)
+  const { mainRows, backMatterRows } = tableOfContentsRows(page, kit)
+
+  return `<section class="page ${presetClasses} type-toc">
+    ${renderDecor()}
+    <div class="toc-frame">
+      <h1 class="toc-title">TABLE OF CONTENTS</h1>
+      <div class="toc-rule"><span></span><i></i><span></span></div>
+      ${renderTocRowGroup(mainRows, "toc-list")}
+      ${renderTocRowGroup(backMatterRows, "toc-list toc-backmatter")}
+      <div class="toc-shape"></div>
+    </div>
+    ${footer(index, total, branch)}
+  </section>`
+}
+
+function renderCoverPage(
+  page: KitPage,
+  kit: ParsedKit,
+  preset: DesignPresetTokens,
+  target: RenderTarget
+) {
+  const cover = coverData(page, kit, preset, target)
+  const presetClasses = presetClassName(preset)
 
   return `<section class="page cover ${presetClasses} type-cover">
     ${renderDecor()}
     <div class="cover-copy">
-      <div class="brand-mark">${renderIcon(preset)}</div>
-      <h1 class="${titleClass}">${escapeHtml(title)}</h1>
-      ${subtitle ? `<div class="cover-subtitle">${escapeHtml(subtitle)}</div>` : ""}
-      <div class="cover-product">${escapeHtml(coverProductLabel(kit, preset))}</div>
-      ${tagline ? `<div class="cover-tagline">${escapeHtml(tagline)}</div>` : ""}
+      <div class="cover-brandline">Best Collective</div>
+      <div class="branch-cover-mark">${renderBranchCoverMark(preset)}</div>
+      <h1 class="${cover.branchTitleClass}">${renderCoverTitle(cover.branchTitle)}</h1>
+      <div class="cover-divider"><span></span></div>
+      <div class="${cover.kitTitleClass}">${escapeHtml(cover.kitTitle)}</div>
+      ${cover.subtitle ? `<div class="cover-subtitle">${escapeHtml(cover.subtitle)}</div>` : ""}
+      <div class="cover-product">${escapeHtml(cover.productLabel)}</div>
     </div>
+    ${cover.tagline ? `<div class="cover-tagline">${escapeHtml(cover.tagline)}</div>` : ""}
     ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
   </section>`
+}
+
+function welcomeIntro(page: KitPage) {
+  const paragraph = page.content.find((block) => block.type === "paragraph")
+
+  if (paragraph?.type === "paragraph") {
+    return paragraph.text
+  }
+
+  return page.subtitle
+}
+
+function welcomeBenefits(page: KitPage) {
+  const checks = page.content.find((block) => block.type === "check-list")
+
+  if (checks?.type === "check-list") {
+    return checks.items.slice(0, 5)
+  }
+
+  const list = page.content.find((block) => block.type === "list")
+
+  if (list?.type === "list") {
+    return list.items.slice(0, 5)
+  }
+
+  return page.checks.slice(0, 5)
+}
+
+function renderWelcomeBenefitIcon(preset: DesignPresetTokens) {
+  if (preset.branch === "rise") {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5c3.2 0 5.8 2.4 5.8 5.4 0 3.9-3 6.5-5.8 7.8-2.8-1.3-5.8-3.9-5.8-7.8C6.2 7.4 8.8 5 12 5Z" />
+      <path d="M8.4 11.2c3.4.3 6.6-.8 9.1-3.2M10.4 17.4c-3.2-.7-5.6-2.5-6.7-5.1" stroke="var(--welcome-icon-accent)" />
+    </svg>`
+  }
+
+  if (preset.branch === "land") {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3.5 18.5 8.8 9.7l3 4.2 4-7 4.7 11.6h-17Z" />
+      <path d="M8.8 9.7 10.5 14m5.3-7.1 1.1 5.4" stroke="var(--welcome-icon-accent)" />
+    </svg>`
+  }
+
+  if (preset.branch === "meetatheal") {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11.5 18.5C6.8 15 4.7 12 5.2 9.4c.6-2.8 4.1-3.5 6.3-.8 2.2-2.7 5.7-2 6.3.8.5 2.6-1.6 5.6-6.3 9.1Z" />
+      <path d="M13.2 18.5c4.7-3.5 6.8-6.5 6.3-9.1-.6-2.8-4.1-3.5-6.3-.8" stroke="var(--welcome-icon-accent)" />
+    </svg>`
+  }
+
+  if (preset.branch === "rebuild") {
+    return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 19V5h7.2A4.8 4.8 0 0 1 19 9.8V19" />
+      <path d="M11 19V8.4h4M4.5 19h15M15.5 16.5c0-3 2.4-5.4 5.1-5.4" stroke="var(--welcome-icon-accent)" />
+    </svg>`
+  }
+
+  return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M5.5 15.5h8.7v-7H5.5v7Z" />
+    <path d="M4 18h12M9 15.5 8.2 18m4.2-2.5.8 2.5" />
+    <path d="M16.2 18c2.1 0 3.6-1.4 3.6-3.8h-5c0 2.4 1.2 3.8 3.4 3.8Z" stroke="var(--welcome-icon-accent)" />
+  </svg>`
+}
+
+function coverData(
+  page: KitPage,
+  kit: ParsedKit,
+  preset: DesignPresetTokens,
+  target: RenderTarget
+) {
+  const branchTitle = coverBranchTitle(preset)
+  const productLabel = coverProductLabel(kit, preset, target)
+  const kitTitle = coverKitTitle(page.title || kit.title || productLabel, branchTitle, productLabel)
+  const subtitle = coverSubtitle(page, kit, kitTitle)
+  const tagline = page.tagline || kit.tagline || defaultCoverTagline(preset)
+
+  return {
+    branchTitle,
+    branchTitleClass: `cover-title ${branchTitle.replace(/\s+/g, "").length > 8 ? "is-long" : ""}`.trim(),
+    kitTitle,
+    kitTitleClass: `cover-kit-title ${kitTitle.length > 28 ? "is-long" : ""}`.trim(),
+    productLabel,
+    subtitle,
+    tagline,
+  }
+}
+
+function coverBranchTitle(preset: DesignPresetTokens) {
+  if (preset.branch === "meetatheal") {
+    return "Meet at\nthe Heal"
+  }
+
+  if (preset.branch === "brand") {
+    return "Brand"
+  }
+
+  if (preset.branch === "rise") {
+    return "Rise"
+  }
+
+  if (preset.branch === "land") {
+    return "Land"
+  }
+
+  if (preset.branch === "rebuild") {
+    return "Rebuild"
+  }
+
+  return "Best Collective"
+}
+
+function coverKitTitle(title: string, branchTitle: string, productLabel: string) {
+  const branchPlain = branchTitle.replace(/\s+/g, " ").trim()
+  let kitTitle = cleanCoverKitTitle(title)
+
+  kitTitle = kitTitle
+    .replace(new RegExp(`^${escapeRegExp(branchPlain)}\\s*[:|-]?\\s*`, "i"), "")
+    .replace(/^(lesson guide|workbook|lesson book|couples workbook)\s*[:|-]?\s*/i, "")
+    .trim()
+
+  return kitTitle || productLabel
+}
+
+function coverSubtitle(page: KitPage, kit: ParsedKit, kitTitle: string) {
+  const subtitle = (page.subtitle || kit.subtitle || "").trim()
+
+  if (!subtitle || subtitle.toLowerCase() === kitTitle.toLowerCase()) {
+    return ""
+  }
+
+  return subtitle
+}
+
+function renderCoverTitle(title: string) {
+  return title
+    .split(/\n+/)
+    .map((part) => escapeHtml(part))
+    .join("<br />")
+}
+
+function defaultCoverTagline(preset: DesignPresetTokens) {
+  if (preset.branch === "meetatheal") {
+    return "Two Worlds. One Choice. A Stronger We."
+  }
+
+  if (preset.branch === "rise") {
+    return "Come Back To Yourself."
+  }
+
+  if (preset.branch === "land") {
+    return "Build. Grow. Stand Firm."
+  }
+
+  if (preset.branch === "rebuild") {
+    return "New Season. New Story. New You."
+  }
+
+  return "One System. Five Rooms. All For You."
+}
+
+function renderBranchCoverMark(preset: DesignPresetTokens) {
+  if (preset.branch === "rise") {
+    return `<svg viewBox="0 0 96 72" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M48 18c8 0 15 6 15 14 0 10-8 17-15 20-7-3-15-10-15-20 0-8 7-14 15-14Z" />
+      <path d="M39 27c6-8 17-8 22 1M37 36c9 1 19-2 25-9M43 49c1 8 1 13-1 17" />
+      <path d="M42 58c-10-2-18-8-21-17 9-1 17 4 21 17ZM46 59c10-2 17-9 20-18-9 0-17 6-20 18Z" />
+      <path d="M22 25c5-10 14-16 26-16s21 6 26 16" stroke="var(--mark-accent)" stroke-width="1.8" opacity=".78" />
+      <path d="M18 37c1 11 7 20 17 25M78 37c-1 11-7 20-17 25" stroke="var(--mark-accent)" stroke-width="1.8" opacity=".62" />
+    </svg>`
+  }
+
+  if (preset.branch === "land") {
+    return `<svg viewBox="0 0 96 72" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 57 33 31l10 13 15-26 24 39H14Z" />
+      <path d="m33 31 5 12m20-25 5 21M24 57c9-5 17-6 26-2 9 4 17 3 26-2" stroke="var(--mark-accent)" stroke-width="2.1" opacity=".82" />
+      <path d="M18 50v-8m0 0-5 5m5-5 5 5M78 51v-9m0 0-5 5m5-5 5 5" stroke-width="2.2" />
+    </svg>`
+  }
+
+  if (preset.branch === "meetatheal") {
+    return `<svg viewBox="0 0 96 72" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M45 55C29 43 21 33 23 24c2-9 14-12 22-2 8-10 20-7 22 2 2 9-6 19-22 31Z" />
+      <path d="M52 55C68 43 76 33 73 24c-2-9-14-12-22-2" stroke="var(--mark-accent)" />
+      <path d="M18 35c3-14 14-23 30-23s27 9 30 23" stroke="var(--mark-accent)" stroke-width="1.8" opacity=".52" />
+    </svg>`
+  }
+
+  if (preset.branch === "rebuild") {
+    return `<svg viewBox="0 0 96 72" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M31 61V16h24c9 0 16 7 16 16v29" />
+      <path d="M44 61V25h13M31 61h47M59 53c0-11 9-20 20-20M79 61V33" stroke="var(--mark-accent)" />
+      <path d="M18 61h22M22 52c6-2 11-1 16 2M22 43c6 0 11 3 15 8" stroke-width="2.1" opacity=".72" />
+      <path d="M61 61c3-8 10-13 18-13" stroke="var(--mark-accent)" stroke-width="2.1" opacity=".72" />
+    </svg>`
+  }
+
+  return `<svg viewBox="0 0 96 72" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 46h34V22H24v24Z" />
+    <path d="M18 53h47M35 46l-3 7m18-7 3 7" />
+    <path d="M67 54c8 0 13-5 13-13H64c0 8 4 13 11 13Z" />
+    <path d="M80 43h5c4 0 4 7-2 8" />
+    <path d="M65 27h17v12H65V27Z" stroke="var(--mark-accent)" />
+    <path d="M69 32h9M69 36h5" stroke="var(--mark-accent)" stroke-width="2" />
+    <path d="M60 18c8-7 17-7 25-1" stroke="var(--mark-accent)" stroke-width="1.8" opacity=".68" />
+  </svg>`
 }
 
 function renderClosingPage(
@@ -4102,14 +5313,14 @@ function renderPageBody(page: KitPage, kit: ParsedKit, preset: DesignPresetToken
   }
 
   if (page.type === "toc") {
-    return `<div class="content">${renderToc(page)}</div>`
+    return `<div class="content">${renderToc(page, kit)}</div>`
   }
 
   if (page.type === "case-study") {
     return `<div class="content">${renderContent(page.content)}${renderCaseStudy(page)}</div>`
   }
 
-  return `<div class="content">${renderContent(page.content)}${renderFillableArea(page)}</div>`
+  return `<div class="content">${renderContent(page.content)}${renderFillableArea(page, kit)}</div>`
 }
 
 function renderContent(blocks: ContentBlock[]) {
@@ -4154,7 +5365,7 @@ function renderContent(blocks: ContentBlock[]) {
     .join("")
 }
 
-function renderFillableArea(page: KitPage) {
+function renderFillableArea(page: KitPage, kit: ParsedKit) {
   if (page.type === "workbook") {
     return `<div class="prompt-stack">${page.prompts
       .map((prompt, index) =>
@@ -4189,7 +5400,7 @@ function renderFillableArea(page: KitPage) {
   }
 
   if (page.type === "tracker") {
-    return renderTracker(page)
+    return renderTracker(page, kit)
   }
 
   if (page.type === "action-plan") {
@@ -4257,9 +5468,9 @@ function renderPromptCard(
   }</div>`
 }
 
-function renderTracker(page: KitPage) {
+function renderTracker(page: KitPage, kit: ParsedKit) {
   const headers = page.tableHeaders.length > 0 ? page.tableHeaders : ["Category", "Goal", "Actual", "Notes"]
-  const rows = page.tableRows.length > 0 ? page.tableRows : ["Revenue", "Expenses", "Profit", "Notes"]
+  const rows = trackerRowsForPage(page, kit)
 
   return `<table class="tracker-table">
     <thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead>
@@ -4295,6 +5506,43 @@ function renderTracker(page: KitPage) {
   }`
 }
 
+function trackerRowsForPage(page: KitPage, kit: ParsedKit) {
+  const rows = page.tableRows.length > 0 ? [...page.tableRows] : ["Revenue", "Expenses", "Profit", "Notes"]
+  const chapterCount = Math.max(
+    kit.pages.filter((kitPage) => kitPage.type === "lesson").length,
+    kit.pages.filter((kitPage) => kitPage.type === "workbook").length
+  )
+
+  if (chapterCount <= rows.length || !looksLikeChapterTracker(page, rows)) {
+    return rows
+  }
+
+  const prefix = rows.find((row) => /\b(chapter|lesson|section)\s+\d+\b/i.test(row))?.match(
+    /\b(chapter|lesson|section)\b/i
+  )?.[1] ?? "Chapter"
+  const existingNumbers = new Set(
+    rows
+      .map((row) => row.match(/\b(?:chapter|lesson|section)\s+(\d+)\b/i)?.[1])
+      .filter((number): number is string => Boolean(number))
+      .map(Number)
+  )
+
+  for (let number = 1; number <= chapterCount; number += 1) {
+    if (!existingNumbers.has(number)) {
+      rows.push(`${titleFromType(prefix)} ${number}`)
+    }
+  }
+
+  return rows
+}
+
+function looksLikeChapterTracker(page: KitPage, rows: string[]) {
+  const pageText = `${page.title} ${page.subtitle} ${page.section}`.toLowerCase()
+  const chapterRows = rows.filter((row) => /\b(chapter|lesson|section)\s+\d+\b/i.test(row)).length
+
+  return chapterRows > 0 || /\b(chapter|lesson|section)\b/.test(pageText)
+}
+
 function fillableAttrs(options: {
   kind: "text" | "checkbox"
   suffix: string
@@ -4317,21 +5565,91 @@ function fillableAttrs(options: {
     .join(" ")
 }
 
-function renderToc(page: KitPage) {
+function renderToc(page: KitPage, kit: ParsedKit) {
+  const { mainRows, backMatterRows } = tableOfContentsRows(page, kit)
+
+  return `${renderTocRowGroup(mainRows, "toc-list")}${renderTocRowGroup(
+    backMatterRows,
+    "toc-list toc-backmatter"
+  )}`
+}
+
+function renderTocRowGroup(rows: TocRow[], className: string) {
+  if (rows.length === 0) {
+    return ""
+  }
+
+  return `<div class="${className}">${rows
+    .map(
+      (row) =>
+        `<div class="toc-row"><span class="toc-number">${escapeHtml(row.number)}</span><span class="toc-section-title">${escapeHtml(
+          row.title
+        )}</span><span class="toc-leader"></span><span class="toc-page-number">${escapeHtml(
+          row.pageNumber
+        )}</span></div>`
+    )
+    .join("")}</div>`
+}
+
+type TocRow = {
+  number: string
+  title: string
+  pageNumber: string
+  backMatter: boolean
+}
+
+function tableOfContentsRows(page: KitPage, kit: ParsedKit) {
   const items = page.content.flatMap((block) => (block.type === "list" ? block.items : []))
+  const pageNumbers = tableOfContentsPageNumbers(kit)
+  const rows = items.map((item) => parseTocRow(item, pageNumbers))
 
-  return `<table class="tracker-table">
-    <tbody>${items
-      .map((item) => {
-        const parts = item.split("|").map((part) => part.trim())
-        const number = parts.length === 3 ? parts[0] : ""
-        const title = parts.length === 3 ? parts[1] : parts[0] ?? item
-        const pageNumber = parts.length === 3 ? parts[2] : parts[1] ?? ""
+  return {
+    mainRows: rows.filter((row) => !row.backMatter),
+    backMatterRows: rows.filter((row) => row.backMatter),
+  }
+}
 
-        return `<tr><td>${escapeHtml(number)}</td><td>${escapeHtml(title)}</td><td>${escapeHtml(pageNumber)}</td></tr>`
-      })
-      .join("")}</tbody>
-  </table>`
+function parseTocRow(item: string, pageNumbers: Map<string, string>): TocRow {
+  const parts = item.split("|").map((part) => part.trim()).filter(Boolean)
+  const hasNumber = parts.length >= 3 || /^\d+\.?$/.test(parts[0] ?? "")
+  const number = hasNumber ? (parts[0] ?? "").replace(/\.$/, "") : ""
+  const title = hasNumber ? parts[1] ?? item : parts[0] ?? item
+  const explicitPage = hasNumber ? parts[2] : parts[1]
+  const pageNumber = explicitPage || pageNumbers.get(normaliseTocTitle(title)) || ""
+
+  return {
+    number,
+    title,
+    pageNumber,
+    backMatter: !number || /^(resources?|notes?|appendix|references?)$/i.test(title.trim()),
+  }
+}
+
+function tableOfContentsPageNumbers(kit: ParsedKit) {
+  const pageNumbers = new Map<string, string>()
+
+  kit.pages.forEach((page, index) => {
+    if (!page.title || page.type === "toc") {
+      return
+    }
+
+    const key = normaliseTocTitle(page.title)
+
+    if (!pageNumbers.has(key)) {
+      pageNumbers.set(key, String(index + 1))
+    }
+  })
+
+  return pageNumbers
+}
+
+function normaliseTocTitle(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(chapter|lesson|section)\s+\d+\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
 }
 
 function renderCaseStudy(page: KitPage) {
@@ -4418,105 +5736,15 @@ function cleanCoverKitTitle(title: string) {
   return title.replace(/\s+kit$/i, "").trim()
 }
 
-function isMeetAtHealText(value: string) {
-  return /two worlds|stronger we|heal|healing|together|relationship|choose us|repair|trust|couples/i.test(value)
-}
-
-function isGenericBusinessCoverText(value: string) {
-  return /business|brand|offer|system\. five rooms|your brand is your promise/i.test(value)
-}
-
-function landCoverCollectionTitle(preset: DesignPresetTokens) {
-  if (preset.slug === "meetatheal-land") {
-    return "Meet at the Heal"
+function productLabel(productType: string, outputMode: string | undefined, target: RenderTarget) {
+  if (target === "guide") {
+    return "Lesson Guide"
   }
 
-  return "Land"
-}
-
-function landCoverKitTitle(title: string, preset: DesignPresetTokens) {
-  if (preset.slug === "meetatheal-land") {
-    return "Land Individual Workbook"
+  if (target === "workbook") {
+    return "Workbook"
   }
 
-  return cleanCoverKitTitle(title)
-}
-
-function landCoverSubtitle(page: KitPage, kit: ParsedKit, preset: DesignPresetTokens) {
-  if (preset.slug === "meetatheal-land") {
-    const candidate = page.subtitle || kit.subtitle || ""
-
-    if (/build|grow|stand firm|land|individual|foundation/i.test(candidate) && !isGenericBusinessCoverText(candidate)) {
-      return candidate
-    }
-
-    return "Build. Grow. Stand Firm."
-  }
-
-  return "Build. Grow. Stand Firm."
-}
-
-function landCoverTagline(page: KitPage, kit: ParsedKit, preset: DesignPresetTokens) {
-  if (preset.slug === "meetatheal-land") {
-    const candidate = page.tagline || kit.tagline || ""
-
-    if (isMeetAtHealText(candidate)) {
-      return candidate
-    }
-
-    return "Two worlds. One choice. A stronger we."
-  }
-
-  return page.subtitle || kit.subtitle || page.tagline || kit.tagline
-}
-
-function riseCoverCollectionTitle(preset: DesignPresetTokens) {
-  if (preset.slug === "meetatheal-rise") {
-    return "Meet at the Heal"
-  }
-
-  return "Rise"
-}
-
-function riseCoverSubtitle(page: KitPage, kit: ParsedKit, preset: DesignPresetTokens) {
-  if (preset.slug === "meetatheal-rise") {
-    const candidate = page.subtitle || kit.subtitle || ""
-
-    if (/come back|yourself|rise|individual|peace|standards/i.test(candidate) && !isGenericBusinessCoverText(candidate)) {
-      return candidate
-    }
-
-    return "Come Back To Yourself."
-  }
-
-  return "Come Back To Yourself."
-}
-
-function riseCoverTagline(page: KitPage, kit: ParsedKit, preset: DesignPresetTokens) {
-  if (preset.slug === "meetatheal-rise") {
-    const candidate = page.tagline || kit.tagline || ""
-
-    if (isMeetAtHealText(candidate)) {
-      return candidate
-    }
-
-    return "Two worlds. One choice. A stronger we."
-  }
-
-  return page.subtitle || kit.subtitle || page.tagline || kit.tagline
-}
-
-function meetAtHealCoverSubtitle(page: KitPage, kit: ParsedKit) {
-  const candidate = page.subtitle || kit.subtitle || ""
-
-  if (/two worlds|stronger we|heal|healing|together|relationship/i.test(candidate)) {
-    return candidate
-  }
-
-  return "Two Worlds. One Choice. A Stronger We."
-}
-
-function productLabel(productType: string, outputMode?: string) {
   if (outputMode === "split") {
     return "Lesson Guide + Workbook"
   }
@@ -4527,7 +5755,27 @@ function productLabel(productType: string, outputMode?: string) {
     .join(" ")
 }
 
-function coverProductLabel(kit: ParsedKit, preset: DesignPresetTokens) {
+function coverProductLabel(kit: ParsedKit, preset: DesignPresetTokens, target: RenderTarget) {
+  if (target === "guide") {
+    return preset.slug === "meetatheal" ? "Lesson Book" : "Lesson Guide"
+  }
+
+  if (target === "workbook") {
+    if (preset.slug === "meetatheal") {
+      return /couples\s+workbook/i.test(kit.title) ? "Couples Workbook" : "Workbook"
+    }
+
+    if (preset.slug === "meetatheal-rise") {
+      return "Rise Individual Workbook"
+    }
+
+    if (preset.slug === "meetatheal-land") {
+      return "Land Individual Workbook"
+    }
+
+    return "Workbook"
+  }
+
   if (preset.styleFamily === "brand") {
     return "Lesson Guide + Workbook"
   }
@@ -4547,10 +5795,10 @@ function coverProductLabel(kit: ParsedKit, preset: DesignPresetTokens) {
   }
 
   if (preset.slug === "meetatheal-land") {
-    return "Workbook"
+    return "Land Individual Workbook"
   }
 
-  return productLabel(kit.productType, kit.outputMode)
+  return productLabel(kit.productType, kit.outputMode, target)
 }
 
 function transparent(hex: string, alpha: number) {
@@ -4611,12 +5859,27 @@ function coverAssetFileName(tokens: DesignPresetTokens) {
 }
 
 function escapeHtml(value: string) {
-  return value
+  return buyerFacingText(value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;")
+}
+
+function buyerFacingText(value: string) {
+  return value
+    .replace(/Testing Notes:\s*Verify checkbox spacing\.?/gi, "Notes")
+    .replace(/Review before exporting\.?/gi, "Review your notes before moving on.")
+    .replace(/Built for testing Kit Factory layouts\.?/gi, "")
+    .replace(/Verify checkbox spacing(?:\s+and\s+historical facts)?\s+before sale\.?/gi, "Use trusted sources and verify important facts before finalizing.")
+    .replace(/Verify historical facts[^\n.]*/gi, "Use trusted sources to check important facts")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 function buildFontFaces() {

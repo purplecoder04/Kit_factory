@@ -10,6 +10,13 @@ tagline: Your closing promise
 slug: your-kit-slug
 ---
 
+Use this template when creating a real kit. For layout QA, use `samples/all-page-types-layout-test.md`.
+
+Recommended test size:
+- 19 pages total: one page for every supported page type.
+- 15 chapter entries in the table of contents.
+- Use 20 chapters only for a long-kit stress test.
+
 <!-- PAGE: cover -->
 TITLE: Your Kit Title
 SUBTITLE: Your short promise or collection line

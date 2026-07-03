@@ -1,5 +1,6 @@
 import { parseKitMarkdown } from "@/lib/parser"
 import { validateKit } from "@/lib/parser/validation"
+import { syncParsedKitToSupabase } from "@/lib/supabase/kitFactoryData"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -13,9 +14,15 @@ export async function POST(request: Request) {
     outputMode: body.outputMode,
   })
   const issues = validateKit(kit)
+  const syncedKit = await syncParsedKitToSupabase({
+    existingKitId: typeof body.kitId === "string" ? body.kitId : null,
+    kit,
+    sourceMarkdown: markdown,
+  })
 
   return Response.json({
     kit,
     issues,
+    kitId: syncedKit.kitId,
   })
 }

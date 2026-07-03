@@ -55,6 +55,7 @@ import {
 type ParseResult = {
   kit: ParsedKit
   issues: ValidationIssue[]
+  kitId?: string | null
 }
 
 type BuildStatus =
@@ -101,6 +102,7 @@ export function KitFactoryDashboard() {
     createPackageMarkdowns()
   )
   const [result, setResult] = useState<ParseResult | null>(null)
+  const [kitId, setKitId] = useState<string | null>(null)
   const [status, setStatus] = useState<BuildStatus>("Draft")
   const [message, setMessage] = useState("Golden kit loaded.")
   const [isWorking, setIsWorking] = useState(false)
@@ -159,12 +161,15 @@ export function KitFactoryDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ markdown, branch, designPreset, outputMode }),
+        body: JSON.stringify({ markdown, branch, designPreset, outputMode, kitId }),
       })
       const payload = (await response.json()) as ParseResult
       const hasErrors = payload.issues.some((issue) => issue.level === "error")
 
       setResult(payload)
+      if (payload.kitId) {
+        setKitId(payload.kitId)
+      }
       setStatus(hasErrors ? "Error" : "Preview Ready")
       setMessage(hasErrors ? "Fix the validation errors before rendering." : "Markdown parsed successfully.")
     } catch {
@@ -195,7 +200,7 @@ export function KitFactoryDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ markdown, branch, designPreset, outputMode, target }),
+        body: JSON.stringify({ markdown, branch, designPreset, outputMode, target, kitId }),
       })
 
       if (!response.ok) {
@@ -236,7 +241,7 @@ export function KitFactoryDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ markdown, branch, designPreset, outputMode }),
+        body: JSON.stringify({ markdown, branch, designPreset, outputMode, kitId }),
       })
 
       if (!response.ok) {
@@ -278,6 +283,7 @@ export function KitFactoryDashboard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          kitId,
           lessonBookMarkdown: packageMarkdowns.lessonBook,
           couplesWorkbookMarkdown: packageMarkdowns.couplesWorkbook,
           riseWorkbookMarkdown: packageMarkdowns.riseWorkbook,
@@ -323,7 +329,7 @@ export function KitFactoryDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ markdown }),
+        body: JSON.stringify({ markdown, kitId }),
       })
 
       if (!response.ok) {
@@ -368,6 +374,7 @@ export function KitFactoryDashboard() {
     }
 
     setMarkdown(await file.text())
+    setKitId(null)
     setStatus("Draft")
     setMessage(`${file.name} loaded.`)
   }
@@ -947,22 +954,30 @@ function MiniPreviewDecorations({
 }) {
   const coverArtPath = pageType === "cover" ? getPreviewCoverArtPath(tokens) : ""
   const useCoverArt = Boolean(coverArtPath)
-  const coverArtStyle =
-    tokens.styleFamily === "land"
-      ? { backgroundImage: `url('${coverArtPath}')`, backgroundPosition: "center bottom", backgroundSize: "116% auto" }
-      : { backgroundImage: `url('${coverArtPath}')` }
+  const isWelcome = pageType === "welcome"
+  const isToc = pageType === "toc"
+  const isSectionDivider = pageType === "section-divider"
+  const isBrandLesson = pageType === "lesson" && tokens.styleFamily === "brand"
+  const coverArtStyle = {
+    backgroundImage: `url('${coverArtPath}')`,
+    backgroundPosition:
+      tokens.styleFamily === "brand" || tokens.styleFamily === "rebuild"
+        ? "center bottom"
+        : "center",
+    backgroundRepeat: "no-repeat",
+    backgroundSize:
+      tokens.styleFamily === "brand"
+        ? "112% auto"
+        : tokens.styleFamily === "rebuild"
+          ? "116% auto"
+          : "cover",
+  }
 
   return (
     <div aria-hidden="true" className="absolute inset-0 z-0 overflow-hidden">
       {useCoverArt ? (
         <>
-          <span
-            className={cn(
-              "absolute inset-0",
-              tokens.styleFamily === "land" ? "bg-no-repeat" : "bg-cover bg-center"
-            )}
-            style={coverArtStyle}
-          />
+          <span className="absolute inset-0 bg-cover bg-center" style={coverArtStyle} />
           <span className="absolute inset-0 bg-[var(--preview-paper)] opacity-[0.04]" />
         </>
       ) : (
@@ -993,7 +1008,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {!useCoverArt && tokens.styleFamily === "brand" && (
+      {!useCoverArt && !isWelcome && !isToc && !isSectionDivider && !isBrandLesson && tokens.styleFamily === "brand" && (
         <>
           <span
             className="absolute -left-20 -top-16 size-44 rounded-full opacity-18"
@@ -1045,7 +1060,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {!useCoverArt && tokens.styleFamily === "rise" && (
+      {!useCoverArt && !isWelcome && !isToc && tokens.styleFamily === "rise" && (
         <>
           <span
             className="absolute -right-16 top-12 h-32 w-44 rotate-[-28deg] rounded-[48%] opacity-35"
@@ -1090,7 +1105,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {!useCoverArt && tokens.styleFamily === "land" && (
+      {!useCoverArt && !isWelcome && !isToc && tokens.styleFamily === "land" && (
         <>
           <span
             className="absolute -left-6 -top-10 h-52 w-96 opacity-30"
@@ -1137,7 +1152,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {!useCoverArt && tokens.styleFamily === "rebuild" && (
+      {!useCoverArt && !isWelcome && !isToc && tokens.styleFamily === "rebuild" && (
         <>
           <span
             className="absolute -right-14 top-10 h-56 w-48 rounded-full opacity-50 blur-sm"
@@ -1179,7 +1194,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {!useCoverArt && tokens.styleFamily === "meetatheal" && (
+      {!useCoverArt && !isWelcome && !isToc && tokens.styleFamily === "meetatheal" && (
         <>
           <span
             className="absolute bottom-14 left-1/2 h-28 w-52 -translate-x-1/2 opacity-45"
@@ -1228,8 +1243,15 @@ function MiniPagePreview({
 }) {
   const section = page?.section || page?.rawType || kit?.branch || "brand"
   const footer = getBranchInfo(selectedBranch).footer
-  const showRibbon = page?.type !== "cover" && page?.type !== "closing"
+  const showRibbon =
+    page?.type !== "cover" &&
+    page?.type !== "welcome" &&
+    page?.type !== "toc" &&
+    page?.type !== "section-divider" &&
+    !(page?.type === "lesson" && tokens.styleFamily === "brand") &&
+    page?.type !== "closing"
   const isCover = page?.type === "cover"
+  const isBrandLesson = page?.type === "lesson" && tokens.styleFamily === "brand"
 
   return (
     <div
@@ -1253,7 +1275,17 @@ function MiniPagePreview({
         </div>
       )}
       <MiniPageBody kit={kit} page={page} tokens={tokens} />
-      {!isCover && (
+      {isBrandLesson && (
+        <>
+          <div className="absolute bottom-5 left-1/2 z-20 -translate-x-1/2 font-heading text-[18px] font-semibold tracking-[0.08em]" style={{ color: tokens.ink }}>
+            B<span style={{ color: tokens.accent }}>C</span>
+          </div>
+          <div className="absolute bottom-5 right-7 z-20 text-[8px] font-semibold" style={{ color: tokens.mutedInk }}>
+            {total > 0 ? pageNumber : 0} / {total}
+          </div>
+        </>
+      )}
+      {!isCover && !isBrandLesson && (
         <div className="absolute bottom-5 left-7 right-7 z-20 flex justify-between border-t border-[var(--preview-line)] pt-3 text-[8px] text-muted-foreground">
           <span>{footer}</span>
           <span>
@@ -1282,7 +1314,31 @@ function MiniPageBody({
     )
   }
 
-  if (page.type === "cover") {
+  if ((page.type as string) === "cover") {
+    return <MiniCoverPreview kit={kit} page={page} tokens={tokens} />
+  }
+
+  if (page.type === "welcome") {
+    return <MiniWelcomePreview page={page} tokens={tokens} />
+  }
+
+  if (page.type === "toc") {
+    return <MiniTocPreview kit={kit} page={page} tokens={tokens} />
+  }
+
+  if (page.type === "section-divider" && tokens.styleFamily === "brand") {
+    return <MiniBrandSectionDividerPreview page={page} tokens={tokens} />
+  }
+
+  if (page.type === "lesson" && tokens.styleFamily === "brand") {
+    return <MiniBrandLessonPreview page={page} tokens={tokens} />
+  }
+
+  if (page.type === "quote" && tokens.styleFamily === "brand") {
+    return <MiniBrandQuotePreview page={page} tokens={tokens} />
+  }
+
+  if ((page.type as string) === "cover") {
     const coverTitle = kit?.title || page.title
     const longCoverTitle = coverTitle.length > 24
 
@@ -1495,8 +1551,846 @@ function MiniPageBody({
   )
 }
 
+function MiniWelcomePreview({
+  page,
+  tokens,
+}: {
+  page: KitPage
+  tokens: DesignPresetTokens
+}) {
+  const intro = previewWelcomeIntro(page)
+  const benefits = previewWelcomeBenefits(page)
+
+  return (
+    <div className="relative z-10 h-[calc(100%-42px)] px-9 pt-12 text-left">
+      <div
+        className="font-heading text-[42px] font-semibold uppercase leading-none tracking-[0.12em]"
+        style={{ color: tokens.ink }}
+      >
+        WELCOME
+      </div>
+      {intro && (
+        <p className="mt-7 max-w-[280px] text-[11px] font-medium leading-6" style={{ color: tokens.background }}>
+          {intro}
+        </p>
+      )}
+      {benefits.length > 0 && (
+        <ul className="mt-8 grid max-w-[300px] gap-3.5 text-[10px] font-semibold leading-5" style={{ color: tokens.ink }}>
+          {benefits.map((benefit) => (
+            <li className="grid grid-cols-[26px_1fr] items-center gap-3" key={benefit}>
+              <span
+                className="flex size-[26px] items-center justify-center rounded-full border"
+                style={{
+                  background: tokens.accentSoft,
+                  borderColor: tokens.accent,
+                  color: tokens.accent,
+                }}
+              >
+                <PreviewWelcomeBenefitIcon tokens={tokens} />
+              </span>
+              <span>{benefit}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <span
+        aria-hidden="true"
+        className="absolute bottom-12 right-8 size-24 rounded-full border"
+        style={{
+          background: `radial-gradient(circle at 44% 42%, ${tokens.accent}55 0 12%, transparent 13%), radial-gradient(circle at 64% 62%, ${tokens.lilac}55 0 26%, transparent 27%), radial-gradient(circle at 28% 72%, ${tokens.sage}44 0 22%, transparent 23%)`,
+          borderColor: tokens.gold,
+        }}
+      >
+        <span
+          className="absolute inset-7 rounded-full border"
+          style={{ borderColor: tokens.accent }}
+        />
+      </span>
+    </div>
+  )
+}
+
+function PreviewWelcomeBenefitIcon({ tokens }: { tokens: DesignPresetTokens }) {
+  const accent = tokens.branch === "meetatheal" ? tokens.blue : tokens.gold
+  const shared = {
+    width: 16,
+    height: 16,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 2.1,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+  }
+
+  if (tokens.branch === "rise") {
+    return (
+      <svg {...shared}>
+        <path d="M12 5c3.2 0 5.8 2.4 5.8 5.4 0 3.9-3 6.5-5.8 7.8-2.8-1.3-5.8-3.9-5.8-7.8C6.2 7.4 8.8 5 12 5Z" />
+        <path d="M8.4 11.2c3.4.3 6.6-.8 9.1-3.2" stroke={accent} />
+      </svg>
+    )
+  }
+
+  if (tokens.branch === "land") {
+    return (
+      <svg {...shared}>
+        <path d="M3.5 18.5 8.8 9.7l3 4.2 4-7 4.7 11.6h-17Z" />
+        <path d="M8.8 9.7 10.5 14m5.3-7.1 1.1 5.4" stroke={accent} />
+      </svg>
+    )
+  }
+
+  if (tokens.branch === "meetatheal") {
+    return (
+      <svg {...shared}>
+        <path d="M11.5 18.5C6.8 15 4.7 12 5.2 9.4c.6-2.8 4.1-3.5 6.3-.8 2.2-2.7 5.7-2 6.3.8.5 2.6-1.6 5.6-6.3 9.1Z" />
+        <path d="M13.2 18.5c4.7-3.5 6.8-6.5 6.3-9.1-.6-2.8-4.1-3.5-6.3-.8" stroke={accent} />
+      </svg>
+    )
+  }
+
+  if (tokens.branch === "rebuild") {
+    return (
+      <svg {...shared}>
+        <path d="M7 19V5h7.2A4.8 4.8 0 0 1 19 9.8V19" />
+        <path d="M11 19V8.4h4M4.5 19h15" stroke={accent} />
+      </svg>
+    )
+  }
+
+  return (
+    <svg {...shared}>
+      <path d="M5.5 15.5h8.7v-7H5.5v7Z" />
+      <path d="M4 18h12M9 15.5 8.2 18m4.2-2.5.8 2.5" />
+      <path d="M16.2 18c2.1 0 3.6-1.4 3.6-3.8h-5c0 2.4 1.2 3.8 3.4 3.8Z" stroke={accent} />
+    </svg>
+  )
+}
+
+function previewWelcomeIntro(page: KitPage) {
+  const paragraph = page.content.find((block) => block.type === "paragraph")
+
+  if (paragraph?.type === "paragraph") {
+    return paragraph.text
+  }
+
+  return page.subtitle
+}
+
+function previewWelcomeBenefits(page: KitPage) {
+  const checks = page.content.find((block) => block.type === "check-list")
+
+  if (checks?.type === "check-list") {
+    return checks.items.slice(0, 5)
+  }
+
+  const list = page.content.find((block) => block.type === "list")
+
+  if (list?.type === "list") {
+    return list.items.slice(0, 5)
+  }
+
+  return page.checks.slice(0, 5)
+}
+
+function MiniTocPreview({
+  kit,
+  page,
+  tokens,
+}: {
+  kit: ParsedKit | null
+  page: KitPage
+  tokens: DesignPresetTokens
+}) {
+  const { mainRows, backMatterRows } = previewTocRows(page, kit)
+
+  return (
+    <div className="relative z-10 h-[calc(100%-42px)] px-9 pt-[74px] text-left">
+      <div
+        className="whitespace-nowrap text-center font-heading text-[28px] font-semibold uppercase leading-none tracking-[0.035em]"
+        style={{ color: tokens.ink }}
+      >
+        TABLE OF CONTENTS
+      </div>
+      <div className="mx-auto mt-5 flex items-center justify-center gap-2" style={{ color: tokens.accent }}>
+        <span className="h-px w-14 bg-current" />
+        <span className="size-2 rounded-full bg-current" />
+        <span className="h-px w-14 bg-current" />
+      </div>
+      <div className="mx-auto mt-8 grid max-w-[305px] gap-3.5">
+        <PreviewTocRows rows={mainRows} tokens={tokens} />
+      </div>
+      {backMatterRows.length > 0 && (
+        <div className="mx-auto mt-6 grid max-w-[305px] gap-4">
+          <PreviewTocRows rows={backMatterRows} tokens={tokens} />
+        </div>
+      )}
+      <span
+        aria-hidden="true"
+        className="absolute bottom-10 right-6 size-28 rounded-full border"
+        style={{ borderColor: tokens.gold }}
+      >
+        <span className="absolute inset-6 rounded-full border" style={{ borderColor: tokens.accent }} />
+        <span
+          className="absolute bottom-7 right-5 size-10 rounded-full"
+          style={{ background: tokens.lilac, opacity: 0.45 }}
+        />
+      </span>
+    </div>
+  )
+}
+
+function PreviewTocRows({
+  rows,
+  tokens,
+}: {
+  rows: PreviewTocRow[]
+  tokens: DesignPresetTokens
+}) {
+  return (
+    <>
+      {rows.map((row) => (
+        <div
+          className="grid grid-cols-[28px_auto_minmax(44px,1fr)_22px] items-baseline gap-2 text-[10px] leading-none"
+          key={`${row.number}-${row.title}-${row.pageNumber}`}
+          style={{ color: tokens.background }}
+        >
+          <span className="font-extrabold tracking-[0.08em]" style={{ color: row.number ? tokens.ink : "transparent" }}>
+            {row.number}
+          </span>
+          <span className="truncate font-medium">{row.title}</span>
+          <span
+            className="min-w-8 translate-y-[-3px] border-b border-dotted"
+            style={{ borderColor: tokens.background, opacity: 0.78 }}
+          />
+          <span className="text-right font-bold" style={{ color: tokens.ink }}>
+            {row.pageNumber}
+          </span>
+        </div>
+      ))}
+    </>
+  )
+}
+
+type PreviewTocRow = {
+  number: string
+  title: string
+  pageNumber: string
+  backMatter: boolean
+}
+
+function previewTocRows(page: KitPage, kit: ParsedKit | null) {
+  const items = page.content.flatMap((block) => (block.type === "list" ? block.items : []))
+  const pageNumbers = previewTocPageNumbers(kit)
+  const rows = items.map((item) => previewParseTocRow(item, pageNumbers))
+
+  return {
+    mainRows: rows.filter((row) => !row.backMatter),
+    backMatterRows: rows.filter((row) => row.backMatter),
+  }
+}
+
+function previewParseTocRow(item: string, pageNumbers: Map<string, string>): PreviewTocRow {
+  const parts = item.split("|").map((part) => part.trim()).filter(Boolean)
+  const hasNumber = parts.length >= 3 || /^\d+\.?$/.test(parts[0] ?? "")
+  const number = hasNumber ? (parts[0] ?? "").replace(/\.$/, "") : ""
+  const title = hasNumber ? parts[1] ?? item : parts[0] ?? item
+  const explicitPage = hasNumber ? parts[2] : parts[1]
+  const pageNumber = explicitPage || pageNumbers.get(normalisePreviewTocTitle(title)) || ""
+
+  return {
+    number,
+    title,
+    pageNumber,
+    backMatter: !number || /^(resources?|notes?|appendix|references?)$/i.test(title.trim()),
+  }
+}
+
+function previewTocPageNumbers(kit: ParsedKit | null) {
+  const pageNumbers = new Map<string, string>()
+
+  kit?.pages.forEach((kitPage, index) => {
+    if (!kitPage.title || kitPage.type === "toc") {
+      return
+    }
+
+    const key = normalisePreviewTocTitle(kitPage.title)
+
+    if (!pageNumbers.has(key)) {
+      pageNumbers.set(key, String(index + 1))
+    }
+  })
+
+  return pageNumbers
+}
+
+function normalisePreviewTocTitle(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(chapter|lesson|section)\s+\d+\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
+function MiniBrandLessonPreview({
+  page,
+  tokens,
+}: {
+  page: KitPage
+  tokens: DesignPresetTokens
+}) {
+  const intro = previewLessonIntro(page)
+  const bullets = previewLessonSidebarBullets(page)
+  const sections = previewLessonSections(page)
+  const takeaway = previewLessonTakeaway(page)
+
+  return (
+    <div className="relative z-10 grid h-[calc(100%-42px)] grid-cols-[118px_1fr] grid-rows-[1fr_auto] gap-x-5 gap-y-4 px-8 pb-12 pt-9">
+      <aside
+        className="rounded border-l-[5px] p-3 shadow-sm"
+        style={{
+          borderColor: tokens.accent,
+          background: `linear-gradient(135deg, ${tokens.lilac}22, transparent 58%), ${tokens.paper}dd`,
+          color: tokens.background,
+        }}
+      >
+        <div className="text-[7px] font-extrabold uppercase leading-none tracking-[0.28em]" style={{ color: tokens.accent }}>
+          {page.section || "Lesson"}
+        </div>
+        <div className="mt-4 font-heading text-[21px] font-bold leading-[0.95]" style={{ color: tokens.ink }}>
+          {page.title}
+        </div>
+        {intro && <p className="mt-4 line-clamp-7 text-[8px] font-medium leading-[1.55]">{intro}</p>}
+        {bullets.length > 0 && (
+          <>
+            <div className="mt-4 text-[6px] font-extrabold uppercase tracking-[0.22em]" style={{ color: tokens.accent }}>
+              In this lesson
+            </div>
+            <ul className="mt-2 grid gap-1.5 text-[7px] font-semibold leading-tight">
+              {bullets.map((bullet) => (
+                <li className="grid grid-cols-[8px_1fr] gap-1.5" key={bullet}>
+                  <span className="mt-1 size-1.5 rounded-full" style={{ background: tokens.accent }} />
+                  <span className="line-clamp-2">{bullet}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+        <div className="mt-6 font-heading text-[18px] font-semibold tracking-[0.08em]" style={{ color: tokens.ink }}>
+          B<span style={{ color: tokens.accent }}>C</span>
+        </div>
+      </aside>
+      <div className="pt-1">
+        {sections.map((section, index) => (
+          <div
+            className="grid grid-cols-[25px_1fr] gap-3 py-3 first:pt-0"
+            style={{ borderTop: index === 0 ? undefined : `1px solid ${tokens.line}` }}
+            key={`${section.title}-${index}`}
+          >
+            <span
+              className="flex size-6 items-center justify-center rounded-full text-[8px] font-extrabold"
+              style={{
+                background: tokens.ink,
+                border: `1px solid ${tokens.accent}`,
+                color: tokens.paper,
+              }}
+            >
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <div>
+              <div className="font-heading text-[15px] font-bold leading-tight" style={{ color: tokens.ink }}>
+                {section.title}
+              </div>
+              <p className="mt-1 line-clamp-3 text-[8px] font-medium leading-[1.45]" style={{ color: tokens.background }}>
+                {section.text}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div
+        className="col-span-2 rounded border-l-[5px] p-3 shadow-sm"
+        style={{
+          borderColor: tokens.accent,
+          background: `linear-gradient(90deg, ${tokens.lilac}22, transparent 72%), ${tokens.paperAlt}cc`,
+        }}
+      >
+        <div className="text-[7px] font-extrabold uppercase tracking-[0.26em]" style={{ color: tokens.accent }}>
+          Key Takeaway
+        </div>
+        <div className="mt-1 line-clamp-2 font-heading text-[14px] italic leading-tight" style={{ color: tokens.ink }}>
+          {takeaway}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+type PreviewLessonSection = {
+  title: string
+  text: string
+}
+
+function previewLessonIntro(page: KitPage) {
+  const paragraphs = previewLessonTeachingParagraphs(page)
+
+  return paragraphs[0] || page.subtitle
+}
+
+function previewLessonSections(page: KitPage): PreviewLessonSection[] {
+  const paragraphs = previewLessonTeachingParagraphs(page)
+  const structured = paragraphs
+    .slice(1)
+    .map(splitPreviewLessonSection)
+    .filter((section): section is PreviewLessonSection => Boolean(section))
+  const bodySources = [
+    ...paragraphs.slice(1).filter((paragraph) => !splitPreviewLessonSection(paragraph)),
+    page.bottomNote,
+    paragraphs[0],
+  ].filter((value) => value.trim())
+
+  return Array.from({ length: 3 }).map((_, index) => {
+    const section = structured[index]
+
+    return {
+      title:
+        section?.title ||
+        ["Why This Matters", "What To Decide", "How To Use It"][index],
+      text:
+        section?.text ||
+        bodySources[index] ||
+        bodySources[0] ||
+        page.subtitle ||
+        page.title,
+    }
+  })
+}
+
+function previewLessonTakeaway(page: KitPage) {
+  const paragraphs = previewLessonParagraphs(page)
+
+  return page.bottomNote || paragraphs.at(-1) || page.subtitle || page.title
+}
+
+function previewLessonParagraphs(page: KitPage) {
+  return page.content
+    .filter((block) => block.type === "paragraph")
+    .map((block) => block.text.trim())
+    .filter(Boolean)
+}
+
+function previewLessonTeachingParagraphs(page: KitPage) {
+  return previewLessonParagraphs(page).filter((paragraph) => !/^in this lesson\b/i.test(paragraph))
+}
+
+function previewLessonSidebarBullets(page: KitPage) {
+  return page.content
+    .flatMap((block) => (block.type === "check-list" ? block.items : []))
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 4)
+}
+
+function splitPreviewLessonSection(text: string): PreviewLessonSection | null {
+  const match = text.match(/^(.{3,70}):\s+(.{12,})$/)
+
+  if (!match) {
+    return null
+  }
+
+  return {
+    title: cleanPreviewLessonTitle(match[1]),
+    text: match[2].trim().replace(/\s+/g, " "),
+  }
+}
+
+function cleanPreviewLessonTitle(value = "") {
+  return value.trim().replace(/[.:;]+$/g, "")
+}
+
+function MiniBrandSectionDividerPreview({
+  page,
+  tokens,
+}: {
+  page: KitPage
+  tokens: DesignPresetTokens
+}) {
+  return (
+    <div className="relative z-10 flex h-[calc(100%-42px)] items-start justify-center px-9 pt-[104px] text-center">
+      <span
+        aria-hidden="true"
+        className="absolute right-14 top-0 h-20 w-px opacity-70"
+        style={{ background: tokens.background }}
+      >
+        <span
+          className="absolute -bottom-8 left-1/2 size-8 -translate-x-1/2 rounded-full border shadow-sm"
+          style={{
+            borderColor: tokens.accent,
+            background: `radial-gradient(circle at 50% 58%, ${tokens.gold}55 0 28%, transparent 29%), ${tokens.paper}`,
+          }}
+        />
+      </span>
+      <span
+        aria-hidden="true"
+        className="absolute bottom-5 right-[-18px] z-0 h-12 w-[86px] rotate-[-6deg] rounded border opacity-75 shadow-sm"
+        style={{ borderColor: tokens.line, background: tokens.paper }}
+      >
+        <span className="absolute left-5 right-5 top-5 h-px" style={{ background: tokens.accent }} />
+        <span className="absolute left-5 right-5 top-7 h-px opacity-45" style={{ background: tokens.ink }} />
+      </span>
+      <span
+        aria-hidden="true"
+        className="absolute bottom-[58px] right-4 z-0 h-1.5 w-20 rotate-[-21deg] rounded-full border opacity-75"
+        style={{
+          background: `linear-gradient(90deg, ${tokens.ink} 0 14%, ${tokens.gold} 15% 28%, ${tokens.paper} 29% 85%, ${tokens.ink} 86%)`,
+          borderColor: tokens.line,
+        }}
+      />
+      <div className="relative z-10 max-w-[320px]">
+        <div
+          className="text-[9px] font-bold uppercase leading-none tracking-[0.36em]"
+          style={{ color: tokens.accent }}
+        >
+          {page.section || "Section"}
+        </div>
+        <div className="mx-auto mt-5 flex items-center justify-center gap-2" style={{ color: tokens.accent }}>
+          <span className="h-px w-12 bg-current" />
+          <span className="size-2 rounded-full bg-current" />
+          <span className="h-px w-12 bg-current" />
+        </div>
+        <div
+          className="mt-8 font-heading text-[34px] font-semibold uppercase leading-[0.98] tracking-[0.035em]"
+          style={{ color: tokens.ink }}
+        >
+          {page.title}
+        </div>
+        {page.subtitle && (
+          <div className="mx-auto mt-6 max-w-[250px] font-heading text-[17px] italic leading-6" style={{ color: tokens.background }}>
+            {page.subtitle}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function MiniBrandQuotePreview({
+  page,
+  tokens,
+}: {
+  page: KitPage
+  tokens: DesignPresetTokens
+}) {
+  const quote = previewQuoteBlock(page)
+
+  return (
+    <div className="relative z-10 flex h-[calc(100%-42px)] items-start justify-center px-10 pb-8 pt-[96px] text-center">
+      <span
+        aria-hidden="true"
+        className="absolute right-[-14px] top-4 h-14 w-20 rotate-[4deg] rounded-sm shadow-sm"
+        style={{ background: tokens.ink }}
+      >
+        <span className="absolute -bottom-3 -left-1 -right-1 h-2 rounded-sm" style={{ background: tokens.ink, opacity: 0.78 }} />
+      </span>
+      <span
+        aria-hidden="true"
+        className="absolute bottom-[52px] right-4 h-12 w-[72px] rotate-[-11deg] rounded border shadow-sm"
+        style={{ background: tokens.paper, borderColor: tokens.line }}
+      >
+        <span className="absolute left-4 right-4 top-6 h-px" style={{ background: tokens.accent }} />
+      </span>
+      <span
+        aria-hidden="true"
+        className="absolute bottom-[88px] right-9 h-1.5 w-20 rotate-[-24deg] rounded-full border"
+        style={{
+          background: `linear-gradient(90deg, ${tokens.ink} 0 14%, ${tokens.gold} 15% 28%, ${tokens.paper} 29% 85%, ${tokens.ink} 86%)`,
+          borderColor: tokens.line,
+        }}
+      />
+      <span
+        aria-hidden="true"
+        className="absolute bottom-[118px] right-7 size-14 rounded-full border-[7px] shadow-sm"
+        style={{ background: tokens.paper, borderColor: tokens.ink }}
+      >
+        <span
+          className="absolute right-[-15px] top-4 h-6 w-4 rounded-r-full border-4 border-l-0"
+          style={{ borderColor: tokens.ink }}
+        />
+      </span>
+      <div className="max-w-[255px]">
+        <div className="font-heading text-[50px] font-bold leading-[0.65]" style={{ color: tokens.plum }}>
+          &ldquo;
+        </div>
+        <div className="mx-auto mt-3 flex items-center justify-center gap-2" style={{ color: tokens.accent }}>
+          <span className="h-px w-10 bg-current" />
+          <span className="size-2 rounded-full bg-current" />
+          <span className="h-px w-10 bg-current" />
+        </div>
+        <blockquote
+          className="mt-5 font-heading text-[26px] font-semibold leading-[1.06]"
+          style={{ color: tokens.ink }}
+        >
+          {quote.text}
+        </blockquote>
+        <div className="mt-8 font-heading text-[23px] font-semibold leading-none" style={{ color: tokens.ink }}>
+          B<span style={{ color: tokens.accent }}>C</span>
+        </div>
+        <div className="mt-3 text-[7px] font-bold uppercase tracking-[0.34em]" style={{ color: tokens.background }}>
+          {quote.attribution || "Best Collective"}
+        </div>
+        <div className="mx-auto mt-3 flex items-center justify-center gap-2" style={{ color: tokens.accent }}>
+          <span className="h-px w-8 bg-current" />
+          <span className="size-1.5 rounded-full bg-current" />
+          <span className="h-px w-8 bg-current" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function previewQuoteBlock(page: KitPage) {
+  const quote = page.content.find((block) => block.type === "quote")
+
+  if (quote?.type === "quote") {
+    return quote
+  }
+
+  return {
+    type: "quote" as const,
+    text: page.title || "Clarity is the foundation. Strategy is the plan. Systems create freedom.",
+    attribution: "Best Collective",
+  }
+}
+
+function MiniCoverPreview({
+  kit,
+  page,
+  tokens,
+}: {
+  kit: ParsedKit | null
+  page: KitPage
+  tokens: DesignPresetTokens
+}) {
+  const cover = previewCoverData(page, kit, tokens)
+  const labelColor = tokens.styleFamily === "brand" ? tokens.ink : tokens.background
+  const markColor =
+    tokens.branch === "rise" || tokens.branch === "meetatheal"
+      ? tokens.rose
+      : tokens.branch === "land"
+        ? tokens.gold
+        : tokens.ink
+  const taglineColor = tokens.branch === "land" || tokens.branch === "meetatheal" ? tokens.paper : labelColor
+
+  return (
+    <div className="relative z-10 flex h-[calc(100%-42px)] flex-col items-center px-8 pt-9 text-center">
+      <div className="font-heading text-[13px] font-semibold uppercase leading-none tracking-[0.3em]" style={{ color: labelColor }}>
+        Best Collective
+      </div>
+      <PreviewBranchCoverMark tokens={tokens} color={markColor} />
+      <div
+        className={cn(
+          "max-w-[318px] whitespace-pre-line break-words font-heading font-semibold uppercase leading-[0.84] tracking-[0.16em]",
+          cover.branchTitle.length > 8 ? "text-[39px] leading-[0.92] tracking-[0.045em]" : "text-[60px]"
+        )}
+        style={{ color: tokens.ink }}
+      >
+        {cover.branchTitle}
+      </div>
+      <div className="mt-3 flex items-center gap-2 text-[var(--preview-accent)]">
+        <span className="h-px w-9 bg-current" />
+        <span className="size-1.5 rotate-45 bg-current" />
+        <span className="h-px w-9 bg-current" />
+      </div>
+      <div
+        className={cn(
+          "mt-5 max-w-[300px] break-words font-heading text-[27px] font-semibold uppercase leading-[0.98]",
+          cover.kitTitle.length > 28 && "text-[23px]"
+        )}
+        style={{ color: labelColor }}
+      >
+        {cover.kitTitle}
+      </div>
+      {cover.subtitle && (
+        <div className="mt-4 max-w-[260px] text-[8px] font-bold uppercase leading-4 tracking-[0.28em]" style={{ color: labelColor }}>
+          {cover.subtitle}
+        </div>
+      )}
+      <div className="mt-4 max-w-[260px] text-[9px] font-bold uppercase tracking-[0.28em]" style={{ color: labelColor }}>
+        {cover.productLabel}
+      </div>
+      <div
+        className="absolute bottom-5 left-8 right-8 text-[7px] font-bold uppercase tracking-[0.22em]"
+        style={{
+          color: taglineColor,
+          textShadow:
+            tokens.branch === "land" || tokens.branch === "meetatheal"
+              ? `0 1px 5px ${tokens.background}`
+              : undefined,
+        }}
+      >
+        {cover.tagline}
+      </div>
+    </div>
+  )
+}
+
+function PreviewBranchCoverMark({
+  tokens,
+  color,
+}: {
+  tokens: DesignPresetTokens
+  color: string
+}) {
+  const accent = tokens.branch === "meetatheal" ? tokens.blue : tokens.gold
+  const shared = {
+    width: 58,
+    height: 42,
+    viewBox: "0 0 96 72",
+    fill: "none",
+    stroke: color,
+    strokeWidth: 3.2,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    "aria-hidden": true,
+    className: "my-3",
+  }
+
+  if (tokens.branch === "rise") {
+    return (
+      <svg {...shared}>
+        <path d="M48 18c8 0 15 6 15 14 0 10-8 17-15 20-7-3-15-10-15-20 0-8 7-14 15-14Z" />
+        <path d="M39 27c6-8 17-8 22 1M37 36c9 1 19-2 25-9M43 49c1 8 1 13-1 17" />
+        <path d="M42 58c-10-2-18-8-21-17 9-1 17 4 21 17ZM46 59c10-2 17-9 20-18-9 0-17 6-20 18Z" />
+        <path d="M22 25c5-10 14-16 26-16s21 6 26 16" stroke={accent} strokeWidth="1.8" opacity=".78" />
+      </svg>
+    )
+  }
+
+  if (tokens.branch === "land") {
+    return (
+      <svg {...shared} strokeWidth={3.4}>
+        <path d="M14 57 33 31l10 13 15-26 24 39H14Z" />
+        <path d="m33 31 5 12m20-25 5 21M24 57c9-5 17-6 26-2 9 4 17 3 26-2" stroke={accent} strokeWidth="2.1" opacity=".82" />
+        <path d="M18 50v-8m0 0-5 5m5-5 5 5M78 51v-9m0 0-5 5m5-5 5 5" strokeWidth="2.2" />
+      </svg>
+    )
+  }
+
+  if (tokens.branch === "meetatheal") {
+    return (
+      <svg {...shared} strokeWidth={3.6}>
+        <path d="M45 55C29 43 21 33 23 24c2-9 14-12 22-2 8-10 20-7 22 2 2 9-6 19-22 31Z" />
+        <path d="M52 55C68 43 76 33 73 24c-2-9-14-12-22-2" stroke={accent} />
+        <path d="M18 35c3-14 14-23 30-23s27 9 30 23" stroke={accent} strokeWidth="1.8" opacity=".52" />
+      </svg>
+    )
+  }
+
+  if (tokens.branch === "rebuild") {
+    return (
+      <svg {...shared} strokeWidth={3.1}>
+        <path d="M31 61V16h24c9 0 16 7 16 16v29" />
+        <path d="M44 61V25h13M31 61h47M59 53c0-11 9-20 20-20M79 61V33" stroke={accent} />
+        <path d="M18 61h22M22 52c6-2 11-1 16 2M22 43c6 0 11 3 15 8" strokeWidth="2.1" opacity=".72" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg {...shared} strokeWidth={3}>
+      <path d="M24 46h34V22H24v24Z" />
+      <path d="M18 53h47M35 46l-3 7m18-7 3 7" />
+      <path d="M67 54c8 0 13-5 13-13H64c0 8 4 13 11 13Z" />
+      <path d="M80 43h5c4 0 4 7-2 8" />
+      <path d="M65 27h17v12H65V27Z" stroke={accent} />
+      <path d="M69 32h9M69 36h5" stroke={accent} strokeWidth="2" />
+    </svg>
+  )
+}
+
+function previewCoverData(page: KitPage, kit: ParsedKit | null, tokens: DesignPresetTokens) {
+  const branchTitle = previewCoverBranchTitle(tokens)
+  const productLabel = previewProductLabel(kit, tokens)
+  const kitTitle = previewCoverKitTitle(page.title || kit?.title || productLabel, branchTitle, productLabel)
+  const subtitle = previewCoverSubtitle(page, kit, kitTitle)
+  const tagline = page.tagline || kit?.tagline || previewDefaultCoverTagline(tokens)
+
+  return { branchTitle, kitTitle, subtitle, productLabel, tagline }
+}
+
+function previewCoverBranchTitle(tokens: DesignPresetTokens) {
+  if (tokens.branch === "meetatheal") {
+    return "Meet at\nthe Heal"
+  }
+
+  if (tokens.branch === "brand") {
+    return "Brand"
+  }
+
+  if (tokens.branch === "rise") {
+    return "Rise"
+  }
+
+  if (tokens.branch === "land") {
+    return "Land"
+  }
+
+  if (tokens.branch === "rebuild") {
+    return "Rebuild"
+  }
+
+  return "Best Collective"
+}
+
+function previewCoverKitTitle(title: string, branchTitle: string, productLabel: string) {
+  const branchPlain = branchTitle.replace(/\s+/g, " ").trim()
+  const cleaned = cleanCoverKitTitle(title)
+    .replace(new RegExp(`^${escapeRegExp(branchPlain)}\\s*[:|-]?\\s*`, "i"), "")
+    .replace(/^(lesson guide|workbook|lesson book|couples workbook)\s*[:|-]?\s*/i, "")
+    .trim()
+
+  return cleaned || productLabel
+}
+
+function previewCoverSubtitle(page: KitPage, kit: ParsedKit | null, kitTitle: string) {
+  const subtitle = (page.subtitle || kit?.subtitle || "").trim()
+
+  if (!subtitle || subtitle.toLowerCase() === kitTitle.toLowerCase()) {
+    return ""
+  }
+
+  return subtitle
+}
+
+function previewDefaultCoverTagline(tokens: DesignPresetTokens) {
+  if (tokens.branch === "meetatheal") {
+    return "Two Worlds. One Choice. A Stronger We."
+  }
+
+  if (tokens.branch === "rise") {
+    return "Come Back To Yourself."
+  }
+
+  if (tokens.branch === "land") {
+    return "Build. Grow. Stand Firm."
+  }
+
+  if (tokens.branch === "rebuild") {
+    return "New Season. New Story. New You."
+  }
+
+  return "One System. Five Rooms. All For You."
+}
+
 function cleanCoverKitTitle(title: string) {
   return title.replace(/\s+kit$/i, "").trim()
+}
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
 }
 
 function isMeetAtHealText(value: string) {
@@ -1563,7 +2457,7 @@ function previewProductLabel(kit: ParsedKit | null, tokens?: DesignPresetTokens)
   }
 
   if (tokens?.slug === "meetatheal-land") {
-    return "Workbook"
+    return "Land Individual Workbook"
   }
 
   if (kit?.outputMode === "split") {

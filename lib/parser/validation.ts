@@ -98,6 +98,8 @@ export function validateKit(kit: ParsedKit): ValidationIssue[] {
     issues.push(...validatePage(page, index, kit.branch))
   })
 
+  issues.push(...validatePackageQuality(kit))
+
   return issues
 }
 
@@ -362,6 +364,154 @@ function measureBlock(block: ContentBlock) {
   }
 
   return block.items.join(" ").length
+}
+
+function validatePackageQuality(kit: ParsedKit): ValidationIssue[] {
+  const issues: ValidationIssue[] = []
+  const fullText = kitPlainText(kit)
+  const internalPhrases = findInternalProductionPhrases(fullText)
+
+  if (internalPhrases.length > 0) {
+    issues.push(
+      warning(
+        "internal-production-language",
+        "This kit still contains internal testing or production language.",
+        `Remove before sale: ${internalPhrases.join(", ")}.`
+      )
+    )
+  }
+
+  const tocHasManualPageNumbers = kit.pages.some(
+    (page) =>
+      page.type === "toc" &&
+      page.content.some(
+        (block) =>
+          block.type === "list" &&
+          block.items.some((item) => item.split("|").map((part) => part.trim()).length >= 3)
+      )
+  )
+
+  if (tocHasManualPageNumbers) {
+    issues.push(
+      warning(
+        "toc-page-numbers-recalculated",
+        "TOC page numbers in the markdown will be recalculated from the final exported PDF page order.",
+        "This prevents stale numbers like 1, 5, 9 from shipping in shorter exports."
+      )
+    )
+  }
+
+  issues.push(...validateChapterTrackers(kit))
+  issues.push(...validateMeetAtHealContentFit(kit, fullText))
+
+  return issues
+}
+
+function validateChapterTrackers(kit: ParsedKit): ValidationIssue[] {
+  const issues: ValidationIssue[] = []
+  const chapterCount = Math.max(
+    kit.pages.filter((page) => page.type === "lesson").length,
+    kit.pages.filter((page) => page.type === "workbook").length
+  )
+
+  if (chapterCount <= 0) {
+    return issues
+  }
+
+  kit.pages.forEach((page, index) => {
+    if (page.type !== "tracker" || !looksLikeChapterTracker(page)) {
+      return
+    }
+
+    const rowCount = page.tableRows.length
+
+    if (rowCount > 0 && rowCount < chapterCount) {
+      issues.push(
+        warning(
+          "chapter-tracker-incomplete",
+          `Tracker page ${index + 1} has ${rowCount} chapter rows, but the kit has ${chapterCount} chapters/workbook pages.`,
+          "Missing chapter rows will be added during render, but update the markdown before final sale.",
+          index
+        )
+      )
+    }
+  })
+
+  return issues
+}
+
+function validateMeetAtHealContentFit(kit: ParsedKit, fullText: string): ValidationIssue[] {
+  const preset = kit.designPreset.toLowerCase()
+  const branch = kit.branch.toLowerCase()
+
+  if (!preset.includes("meetatheal") && branch !== "meetatheal") {
+    return []
+  }
+
+  const relationshipMatches = fullText.match(
+    /\b(couple|couples|relationship|marriage|partner|partners|trust|repair|heal|healing|together|communication|forgiveness|intimacy|choose us|shared future)\b/gi
+  )
+  const offTopicEducationalSignals = /\b(history of television|television|broadcast|broadcasting|media history)\b/i.test(fullText)
+
+  if ((relationshipMatches?.length ?? 0) >= 3 || !offTopicEducationalSignals) {
+    return []
+  }
+
+  return [
+    warning(
+      "meetatheal-content-mismatch",
+      "This kit is using Meet at the Heal styling, but the content appears to be about another topic.",
+      "Rebrand the product topic or replace the body with true relationship/healing content before sale."
+    ),
+  ]
+}
+
+function findInternalProductionPhrases(text: string) {
+  const phrases = [
+    "Review before exporting",
+    "Testing Notes",
+    "Verify checkbox spacing",
+    "Built for testing Kit Factory layouts",
+  ]
+
+  return phrases.filter((phrase) => text.toLowerCase().includes(phrase.toLowerCase()))
+}
+
+function kitPlainText(kit: ParsedKit) {
+  return [
+    kit.title,
+    kit.subtitle,
+    kit.tagline,
+    kit.slug,
+    ...kit.pages.flatMap((page) => [
+      page.section,
+      page.title,
+      page.subtitle,
+      page.tagline,
+      page.raw,
+      page.bottomNote,
+      page.noteLabel,
+      page.storyLabel,
+      page.story,
+      page.takeaway,
+      ...page.prompts,
+      ...page.checks,
+      ...page.tableHeaders,
+      ...page.tableRows,
+      ...page.actions,
+      ...page.questions,
+      ...page.reflects,
+    ]),
+  ]
+    .join(" ")
+    .replace(/\s+/g, " ")
+}
+
+function looksLikeChapterTracker(page: KitPage) {
+  const pageText = `${page.title} ${page.subtitle} ${page.section}`.toLowerCase()
+  const chapterRows = page.tableRows.filter((row) => /\b(chapter|lesson|section)\s+\d+\b/i.test(row)).length
+
+  return chapterRows > 0 || /\b(chapter|lesson|section)\b/.test(pageText)
 }
 
 function error(

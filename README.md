@@ -27,6 +27,12 @@ npm run build
 
 `npm run proofs` writes review files to `output/visual-proof-pack/latest/`, including cover overviews, website mockups, full PDF contact sheets, and the Meet at the Heal package proof.
 
+## Source Of Truth Docs
+
+- `docs/best-collective-branch-system.md` explains the Best Collective branch ecosystem, branch/product-flow rules, and how Brand, Rise, Land, Rebuild, and Meet at the Heal relate.
+- `docs/kit-factory-markdown-format.md` explains the markdown page types and fields the app accepts.
+- `docs/approved-color-palettes.md` lists the locked color palettes for each design family.
+
 ## Notes
 
 Generated proof files live under `output/`, which is ignored by git.
