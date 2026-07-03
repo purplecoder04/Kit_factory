@@ -1,3 +1,8 @@
+import {
+  exportFailedResponse,
+  isHostedExportRuntime,
+  localExportUnavailableResponse,
+} from "@/lib/exportRuntime"
 import { parseKitMarkdown } from "@/lib/parser"
 import { hasBlockingErrors, validateKit } from "@/lib/parser/validation"
 import { type ValidationIssue } from "@/lib/parser/pageTypes"
@@ -36,6 +41,10 @@ const packageDocuments = [
 ] as const
 
 export async function POST(request: Request) {
+  if (isHostedExportRuntime()) {
+    return localExportUnavailableResponse("Meet at the Heal ZIP")
+  }
+
   const body = await request.json()
   const kitId = typeof body.kitId === "string" ? body.kitId : null
   const files: { filename: string; data: Buffer }[] = []
@@ -65,10 +74,14 @@ export async function POST(request: Request) {
       continue
     }
 
-    files.push({
-      filename: document.filename,
-      data: await renderKitPdf(kit, "complete"),
-    })
+    try {
+      files.push({
+        filename: document.filename,
+        data: await renderKitPdf(kit, "complete"),
+      })
+    } catch (error) {
+      return exportFailedResponse(error, "Meet at the Heal package export failed.")
+    }
   }
 
   if (allIssues.some((issue) => issue.level === "error")) {
@@ -86,7 +99,7 @@ export async function POST(request: Request) {
         error instanceof Error ? error.message : "Meet at the Heal package export failed.",
       jobId,
     })
-    throw error
+    return exportFailedResponse(error, "Meet at the Heal package export failed.")
   }
 
   const filename = "meet-at-the-heal-kit-package.zip"

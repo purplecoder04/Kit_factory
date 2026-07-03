@@ -58,6 +58,12 @@ type ParseResult = {
   kitId?: string | null
 }
 
+type ApiErrorPayload = {
+  detail?: string
+  error?: string
+  issues?: ValidationIssue[]
+}
+
 type BuildStatus =
   | "Draft"
   | "Parsed"
@@ -223,12 +229,12 @@ export function KitFactoryDashboard() {
       })
 
       if (!response.ok) {
-        const payload = (await response.json()) as { issues?: ValidationIssue[] }
+        const payload = await readApiErrorPayload(response)
         setResult((current) =>
           current && payload.issues ? { ...current, issues: payload.issues } : current
         )
         setStatus("Error")
-        setMessage("Fix the validation errors before rendering.")
+        setMessage(errorMessageFromPayload(payload, "Fix the validation errors before rendering."))
         return
       }
 
@@ -264,12 +270,12 @@ export function KitFactoryDashboard() {
       })
 
       if (!response.ok) {
-        const payload = (await response.json()) as { issues?: ValidationIssue[] }
+        const payload = await readApiErrorPayload(response)
         setResult((current) =>
           current && payload.issues ? { ...current, issues: payload.issues } : current
         )
         setStatus("Error")
-        setMessage("Fix the validation errors before rendering the mockup.")
+        setMessage(errorMessageFromPayload(payload, "Fix the validation errors before rendering the mockup."))
         return
       }
 
@@ -311,12 +317,12 @@ export function KitFactoryDashboard() {
       })
 
       if (!response.ok) {
-        const payload = (await response.json()) as { issues?: ValidationIssue[] }
+        const payload = await readApiErrorPayload(response)
         setResult((current) =>
           current && payload.issues ? { ...current, issues: payload.issues } : current
         )
         setStatus("Error")
-        setMessage("Fix the package markdown before exporting.")
+        setMessage(errorMessageFromPayload(payload, "Fix the package markdown before exporting."))
         return
       }
 
@@ -352,12 +358,12 @@ export function KitFactoryDashboard() {
       })
 
       if (!response.ok) {
-        const payload = (await response.json()) as { issues?: ValidationIssue[] }
+        const payload = await readApiErrorPayload(response)
         setResult((current) =>
           current && payload.issues ? { ...current, issues: payload.issues } : current
         )
         setStatus("Error")
-        setMessage("Fix the Brand markdown before exporting the package.")
+        setMessage(errorMessageFromPayload(payload, "Fix the Brand markdown before exporting the package."))
         return
       }
 
@@ -2918,6 +2924,22 @@ function filenameFromResponse(response: Response, fallback: string) {
   const match = disposition?.match(/filename="([^"]+)"/)
 
   return match?.[1] ?? fallback
+}
+
+async function readApiErrorPayload(response: Response): Promise<ApiErrorPayload> {
+  try {
+    return (await response.json()) as ApiErrorPayload
+  } catch {
+    return {}
+  }
+}
+
+function errorMessageFromPayload(payload: ApiErrorPayload, validationFallback: string) {
+  if (payload.issues?.length) {
+    return validationFallback
+  }
+
+  return payload.error || payload.detail || "The file could not be generated."
 }
 
 function updateMarkdownFrontmatter(source: string, fields: Record<string, string>) {

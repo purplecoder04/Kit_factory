@@ -1,3 +1,8 @@
+import {
+  exportFailedResponse,
+  isHostedExportRuntime,
+  localExportUnavailableResponse,
+} from "@/lib/exportRuntime"
 import { parseKitMarkdown } from "@/lib/parser"
 import { hasBlockingErrors, validateKit } from "@/lib/parser/validation"
 import { type DesignPresetSlug, type ValidationIssue } from "@/lib/parser/pageTypes"
@@ -27,6 +32,10 @@ const packageDocuments: {
 ]
 
 export async function POST(request: Request) {
+  if (isHostedExportRuntime()) {
+    return localExportUnavailableResponse("Brand ZIP")
+  }
+
   const body = await request.json()
   const markdown = typeof body.markdown === "string" ? body.markdown : ""
   const kitId = typeof body.kitId === "string" ? body.kitId : null
@@ -58,10 +67,14 @@ export async function POST(request: Request) {
       continue
     }
 
-    files.push({
-      filename: `${kit.slug}-${document.filenameSuffix}`,
-      data: await renderKitPdf(kit, "complete"),
-    })
+    try {
+      files.push({
+        filename: `${kit.slug}-${document.filenameSuffix}`,
+        data: await renderKitPdf(kit, "complete"),
+      })
+    } catch (error) {
+      return exportFailedResponse(error, "Brand package export failed.")
+    }
   }
 
   if (allIssues.some((issue) => issue.level === "error")) {
@@ -78,7 +91,7 @@ export async function POST(request: Request) {
       errorMessage: error instanceof Error ? error.message : "Brand package export failed.",
       jobId,
     })
-    throw error
+    return exportFailedResponse(error, "Brand package export failed.")
   }
 
   const filename = `${packageSlug}-brand-style-package.zip`

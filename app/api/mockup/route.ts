@@ -1,3 +1,8 @@
+import {
+  exportFailedResponse,
+  isHostedExportRuntime,
+  localExportUnavailableResponse,
+} from "@/lib/exportRuntime"
 import { renderKitMockupPng } from "@/lib/mockup"
 import { parseKitMarkdown } from "@/lib/parser"
 import { hasBlockingErrors, validateKit } from "@/lib/parser/validation"
@@ -11,6 +16,10 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export async function POST(request: Request) {
+  if (isHostedExportRuntime()) {
+    return localExportUnavailableResponse("Mockup")
+  }
+
   const body = await request.json()
   const markdown = typeof body.markdown === "string" ? body.markdown : ""
   const kit = parseKitMarkdown(markdown, {
@@ -35,7 +44,7 @@ export async function POST(request: Request) {
       errorMessage: error instanceof Error ? error.message : "Mockup export failed.",
       jobId,
     })
-    throw error
+    return exportFailedResponse(error, "Mockup export failed.")
   }
 
   const filename = `${kit.slug}-${kit.designPreset || kit.branch || "brand"}-website-mockup.png`

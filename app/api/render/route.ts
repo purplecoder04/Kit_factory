@@ -1,3 +1,8 @@
+import {
+  exportFailedResponse,
+  isHostedExportRuntime,
+  localExportUnavailableResponse,
+} from "@/lib/exportRuntime"
 import { parseKitMarkdown } from "@/lib/parser"
 import { hasBlockingErrors, validateKit } from "@/lib/parser/validation"
 import { renderKitPdf, type RenderTarget } from "@/lib/renderer"
@@ -11,6 +16,10 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 export async function POST(request: Request) {
+  if (isHostedExportRuntime()) {
+    return localExportUnavailableResponse("PDF")
+  }
+
   const body = await request.json()
   const markdown = typeof body.markdown === "string" ? body.markdown : ""
   const target = normaliseTarget(body.target)
@@ -37,7 +46,7 @@ export async function POST(request: Request) {
       errorMessage: error instanceof Error ? error.message : "PDF export failed.",
       jobId,
     })
-    throw error
+    return exportFailedResponse(error, "PDF export failed.")
   }
 
   const stem = `${kit.slug}-${kit.designPreset || kit.branch || "brand"}`
