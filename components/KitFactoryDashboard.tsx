@@ -66,6 +66,7 @@ type BuildStatus =
   | "Fillable Generated"
   | "Mockup Generated"
   | "Package Generated"
+  | "Ready to Sell"
   | "Error"
 
 type PackageKey =
@@ -143,7 +144,7 @@ export function KitFactoryDashboard() {
     if (status === "Preview Ready") return 54
     if (status === "PDF Generated") return 76
     if (status === "Mockup Generated") return 88
-    if (status === "Fillable Generated" || status === "Package Generated") return 100
+    if (status === "Fillable Generated" || status === "Package Generated" || status === "Ready to Sell") return 100
     return 18
   }, [status])
 
@@ -373,6 +374,38 @@ export function KitFactoryDashboard() {
     } catch {
       setStatus("Error")
       setMessage("The Brand package could not be generated.")
+    } finally {
+      setIsWorking(false)
+    }
+  }
+
+  async function markReadyToSell() {
+    if (!kitId) {
+      setStatus("Error")
+      setMessage("Parse the kit before marking it ready to sell.")
+      return
+    }
+
+    setIsWorking(true)
+    setMessage("Marking kit ready to sell.")
+
+    try {
+      const response = await fetch(`/api/kits/${kitId}/ready`, {
+        method: "POST",
+      })
+
+      if (!response.ok) {
+        setStatus("Error")
+        setMessage("The product record could not be created.")
+        return
+      }
+
+      await loadSavedKits()
+      setStatus("Ready to Sell")
+      setMessage("Kit marked ready to sell and linked to Products.")
+    } catch {
+      setStatus("Error")
+      setMessage("The kit could not be marked ready to sell.")
     } finally {
       setIsWorking(false)
     }
@@ -655,8 +688,10 @@ export function KitFactoryDashboard() {
                 onDownloadMockup={downloadMockup}
                 onDownloadPdf={() => downloadOutput("render")}
                 onDownloadWorkbookPdf={() => downloadOutput("render", "workbook")}
+                onMarkReadyToSell={markReadyToSell}
                 progressValue={progressValue}
                 status={status}
+                canMarkReady={Boolean(kitId)}
               />
             </section>
           </div>
@@ -2727,22 +2762,26 @@ function MiniFillablePreview({ page }: { page: KitPage }) {
 
 function OutputPanel({
   branchLabel,
+  canMarkReady,
   designLabel,
   isWorking,
   onDownloadFillable,
   onDownloadMockup,
   onDownloadPdf,
   onDownloadWorkbookPdf,
+  onMarkReadyToSell,
   progressValue,
   status,
 }: {
   branchLabel: string
+  canMarkReady: boolean
   designLabel: string
   isWorking: boolean
   onDownloadFillable: () => void
   onDownloadMockup: () => void
   onDownloadPdf: () => void
   onDownloadWorkbookPdf: () => void
+  onMarkReadyToSell: () => void
   progressValue: number
   status: BuildStatus
 }) {
@@ -2845,6 +2884,27 @@ function OutputPanel({
                 <DownloadIcon data-icon="inline-start" />
               )}
               Generate Mockup
+            </Button>
+          </div>
+
+          <Separator />
+
+          <div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="font-medium">Ready to sell</div>
+              <div className="text-xs text-muted-foreground">Creates the linked Products record</div>
+            </div>
+            <Button
+              disabled={isWorking || !canMarkReady}
+              onClick={onMarkReadyToSell}
+              variant="outline"
+            >
+              {isWorking ? (
+                <LoaderCircleIcon data-icon="inline-start" />
+              ) : (
+                <CheckCircle2Icon data-icon="inline-start" />
+              )}
+              Mark Ready
             </Button>
           </div>
         </div>
