@@ -3291,6 +3291,120 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-rise.type-resource .alert-box {
         border-left-color: ${tokens.rose};
       }
+      .style-rise.type-how-to-use .content,
+      .style-rise.type-important-to-know .content,
+      .style-rise.type-lesson .content,
+      .style-rise.type-lesson-continue .content,
+      .style-rise.type-reflection .content,
+      .style-rise.type-progress-check .content,
+      .style-rise.type-resource .content,
+      .style-rise.type-case-study .content {
+        border: 1px solid ${transparent(tokens.accent, 0.42)};
+        border-left: 0.05in solid ${tokens.rose};
+        border-radius: 0.08in;
+        background:
+          radial-gradient(ellipse at 86% 10%, ${transparent(tokens.accentSoft, 0.34)}, transparent 1.08in),
+          linear-gradient(118deg, ${transparent(tokens.paper, 0.84)}, ${transparent(tokens.paperAlt, 0.22)} 100%),
+          ${transparent(tokens.paper, 0.88)};
+        box-shadow: 0 0.14in 0.34in ${transparent(tokens.rose, 0.1)};
+        padding: 0.24in 0.3in 0.25in;
+      }
+      .style-rise.type-how-to-use .content,
+      .style-rise.type-important-to-know .content,
+      .style-rise.type-lesson-continue .content,
+      .style-rise.type-reflection .content,
+      .style-rise.type-progress-check .content,
+      .style-rise.type-resource .content,
+      .style-rise.type-case-study .content {
+        max-width: 5.9in;
+      }
+      .style-rise.type-lesson .content {
+        max-width: 6.24in;
+      }
+      .style-rise.type-lesson .content > p:first-child {
+        color: ${tokens.background};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 21px;
+        font-style: italic;
+        font-weight: 600;
+        line-height: 1.2;
+      }
+      .style-rise.type-lesson .check-list,
+      .style-rise.type-how-to-use .check-list,
+      .style-rise.type-progress-check .check-list {
+        display: grid;
+        gap: 0.09in;
+      }
+      .style-rise.type-lesson .check-list li,
+      .style-rise.type-how-to-use .check-list li,
+      .style-rise.type-progress-check .check-list li {
+        background: ${transparent(tokens.paper, 0.64)};
+        border: 1px solid ${transparent(tokens.accent, 0.28)};
+        border-radius: 0.05in;
+        padding: 0.08in 0.12in;
+      }
+      .style-rise.type-lesson .check-list li::before,
+      .style-rise.type-how-to-use .check-list li::before,
+      .style-rise.type-progress-check .check-list li::before {
+        background: ${tokens.accent};
+      }
+      .style-rise.type-lesson .key-term-box,
+      .style-rise.type-resource .key-term-box {
+        background:
+          linear-gradient(110deg, ${transparent(tokens.accentSoft, 0.78)}, transparent 66%),
+          ${transparent(tokens.paper, 0.88)};
+        border-left-color: ${tokens.rose};
+        box-shadow: 0 0.08in 0.22in ${transparent(tokens.rose, 0.08)};
+      }
+      .style-rise.type-important-to-know .alert-box,
+      .style-rise.type-resource .alert-box {
+        background:
+          linear-gradient(90deg, ${transparent(tokens.accent, 0.14)}, transparent 52%),
+          ${transparent(tokens.paperAlt, 0.72)};
+        box-shadow: 0 0.08in 0.22in ${transparent(tokens.rose, 0.08)};
+      }
+      .style-rise.type-reflection .reflect-box {
+        background:
+          linear-gradient(115deg, ${transparent(tokens.accentSoft, 0.44)}, transparent 62%),
+          ${transparent(tokens.paper, 0.84)};
+        border-left-color: ${tokens.rose};
+      }
+      .style-rise.type-case-study .story-box {
+        background:
+          linear-gradient(115deg, ${transparent(tokens.accentSoft, 0.6)}, transparent 62%),
+          ${transparent(tokens.paper, 0.88)};
+        border-left: 0.04in solid ${tokens.rose};
+      }
+      .style-rise.type-case-study .takeaway-box {
+        background: ${tokens.rose};
+        color: ${tokens.paper};
+      }
+      .style-rise.type-lesson .floral-right,
+      .style-rise.type-how-to-use .floral-right,
+      .style-rise.type-important-to-know .floral-right,
+      .style-rise.type-lesson-continue .floral-right,
+      .style-rise.type-case-study .floral-right {
+        display: block;
+        right: 0.54in;
+        bottom: 1.22in;
+        opacity: 0.56;
+      }
+      .style-rise.type-important-to-know .rise-crown,
+      .style-rise.type-case-study .rise-cake {
+        display: block;
+      }
+      .style-rise.type-important-to-know .rise-crown {
+        right: 0.86in;
+        bottom: 1.18in;
+        transform: scale(0.72);
+        opacity: 0.78;
+      }
+      .style-rise.type-case-study .rise-cake {
+        left: 0.7in;
+        bottom: 1.08in;
+        transform: scale(0.74);
+        opacity: 0.82;
+      }
       .style-rise.type-notes .rise-glass,
       .style-rise.type-notes .rise-cake,
       .style-rise.type-notes .floral-right {

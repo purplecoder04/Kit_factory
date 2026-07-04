@@ -54,6 +54,9 @@ This kit is educational. It helps you understand the foundation. It does not rep
 
 Even within the U.S., state rules vary. Always verify state-specific filing, tax, and licensing requirements through your state's official website or a qualified professional in your area.`
 
+export const pendingAlertFallback =
+  "Alert copy is pending. Replace this note with the branch-specific warning, reminder, or disclaimer before publishing."
+
 export function parseKitMarkdown(
   markdown: string,
   options: ParseOptions = {}
@@ -428,15 +431,13 @@ function parseContentBlocks(lines: string[]): ContentBlock[] {
 }
 
 function applyBranchFallbacks(pages: KitPage[], branch: string) {
-  if (branch !== "brand") {
-    return pages
-  }
+  const alertFallback = branch === "brand" ? brandAlertFallback : pendingAlertFallback
 
   return pages.map((page) => ({
     ...page,
     content: page.content.map((block) =>
       block.type === "alert" && !block.text.trim()
-        ? { ...block, text: brandAlertFallback }
+        ? { ...block, text: alertFallback }
         : block
     ),
   }))
