@@ -1,7 +1,10 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js"
 
 import { parseKitMarkdown } from "@/lib/parser"
-import { getSupabaseServerClient } from "@/lib/supabase/serverClient"
+import {
+  getSupabaseServerClient,
+  isSupabaseServiceRoleConfigured,
+} from "@/lib/supabase/serverClient"
 import type { KitPage, ParsedKit } from "@/lib/parser/pageTypes"
 
 type UnknownRow = Record<string, unknown>
@@ -298,6 +301,7 @@ async function uploadExportFile({
   }
 
   const bucket = exportStorageBucketName()
+  await ensureExportStorageBucket({ bucket, supabase })
   const path = [
     kitId ? safeStorageSegment(kitId) : "unsaved",
     `${Date.now()}-${safeStorageSegment(filename)}`,
@@ -324,6 +328,49 @@ async function uploadExportFile({
     bucket,
     path: data.path,
     url: publicUrl,
+  }
+}
+
+async function ensureExportStorageBucket({
+  bucket,
+  supabase,
+}: {
+  bucket: string
+  supabase: SupabaseClient
+}) {
+  if (!isSupabaseServiceRoleConfigured()) {
+    return
+  }
+
+  const { data: buckets, error: listError } = await supabase.storage.listBuckets()
+
+  if (listError) {
+    logSupabaseDataWarning("ensureExportStorageBucket.listBuckets", listError)
+    return
+  }
+
+  const existingBucket = buckets.find((item) => item.name === bucket)
+
+  if (!existingBucket) {
+    const { error } = await supabase.storage.createBucket(bucket, {
+      public: true,
+    })
+
+    if (error) {
+      logSupabaseDataWarning("ensureExportStorageBucket.createBucket", error)
+    }
+
+    return
+  }
+
+  if ((existingBucket as { public?: boolean }).public === false) {
+    const { error } = await supabase.storage.updateBucket(bucket, {
+      public: true,
+    })
+
+    if (error) {
+      logSupabaseDataWarning("ensureExportStorageBucket.updateBucket", error)
+    }
   }
 }
 

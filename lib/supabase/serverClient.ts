@@ -10,8 +10,20 @@ function supabaseAnonKey() {
   return process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ""
 }
 
+function supabaseServiceRoleKey() {
+  return process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+}
+
+function supabaseServerKey() {
+  return supabaseServiceRoleKey() || supabaseAnonKey()
+}
+
 export function isSupabaseConfigured() {
-  return Boolean(supabaseUrl() && supabaseAnonKey())
+  return Boolean(supabaseUrl() && supabaseServerKey())
+}
+
+export function isSupabaseServiceRoleConfigured() {
+  return Boolean(supabaseUrl() && supabaseServiceRoleKey())
 }
 
 export function getSupabaseServerClient() {
@@ -22,7 +34,7 @@ export function getSupabaseServerClient() {
   if (!cachedClient) {
     cachedClient = createClient(
       supabaseUrl(),
-      supabaseAnonKey(),
+      supabaseServerKey(),
       {
         auth: {
           persistSession: false,
