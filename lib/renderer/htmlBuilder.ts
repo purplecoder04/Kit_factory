@@ -4442,19 +4442,141 @@ function buildCss(tokens: DesignPresetTokens) {
         font-size: 38px;
         line-height: 0.96;
       }
+      .style-meetatheal.motif-roads-hearts:not(.cover) {
+        background:
+          linear-gradient(116deg, ${transparent(tokens.sage, 0.22)} 0 25%, transparent 48%),
+          linear-gradient(64deg, transparent 0 57%, ${transparent(tokens.rose, 0.11)} 78%, transparent 100%),
+          radial-gradient(ellipse at 15% 78%, ${transparent(tokens.blue, 0.18)}, transparent 42%),
+          radial-gradient(ellipse at 84% 76%, ${transparent(tokens.rose, 0.11)}, transparent 42%),
+          radial-gradient(ellipse at 50% 96%, ${transparent(tokens.gold, 0.12)}, transparent 36%),
+          ${tokens.paper};
+      }
+      .style-meetatheal p,
+      .style-meetatheal li,
+      .style-meetatheal .tracker-table,
+      .style-meetatheal .check-row .prompt-text {
+        color: ${tokens.background};
+      }
       .style-meetatheal.type-welcome .content,
+      .style-meetatheal.type-how-to-use .content,
+      .style-meetatheal.type-important-to-know .content,
       .style-meetatheal.type-lesson .content,
-      .style-meetatheal.type-lesson-continue .content {
-        max-width: 4.85in;
+      .style-meetatheal.type-lesson-continue .content,
+      .style-meetatheal.type-reflection .content,
+      .style-meetatheal.type-progress-check .content,
+      .style-meetatheal.type-resource .content,
+      .style-meetatheal.type-case-study .content {
         border: 1px solid ${transparent(tokens.line, 0.64)};
-        border-left: 0.05in solid ${tokens.gold};
+        border-left: 0.055in solid ${tokens.ink};
+        border-top: 0.018in solid ${transparent(tokens.rose, 0.45)};
         border-radius: 0.08in;
         padding: 0.22in 0.26in;
         background:
-          linear-gradient(112deg, ${transparent(tokens.sage, 0.1)} 0 34%, transparent 62%),
-          linear-gradient(70deg, transparent 0 58%, ${transparent(tokens.rose, 0.08)} 86%, transparent 100%),
-          ${transparent(tokens.paper, 0.78)};
+          linear-gradient(118deg, ${transparent(tokens.sage, 0.16)} 0 31%, transparent 58%),
+          linear-gradient(68deg, transparent 0 59%, ${transparent(tokens.rose, 0.1)} 86%, transparent 100%),
+          radial-gradient(ellipse at 93% 12%, ${transparent(tokens.blue, 0.1)}, transparent 36%),
+          ${transparent(tokens.paper, 0.84)};
+        box-shadow: 0 0.12in 0.28in ${transparent(tokens.background, 0.065)};
+      }
+      .style-meetatheal.type-welcome .content,
+      .style-meetatheal.type-how-to-use .content,
+      .style-meetatheal.type-important-to-know .content,
+      .style-meetatheal.type-lesson-continue .content,
+      .style-meetatheal.type-reflection .content,
+      .style-meetatheal.type-progress-check .content,
+      .style-meetatheal.type-resource .content,
+      .style-meetatheal.type-case-study .content {
+        max-width: 5.86in;
+      }
+      .style-meetatheal.type-lesson .content {
+        max-width: 6.04in;
+      }
+      .style-meetatheal.type-lesson .content > p:first-child {
+        color: ${tokens.background};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 21px;
+        font-weight: 700;
+        line-height: 1.18;
+      }
+      .style-meetatheal.type-how-to-use .check-list,
+      .style-meetatheal.type-lesson .check-list,
+      .style-meetatheal.type-progress-check .check-list {
+        display: grid;
+        gap: 0.09in;
+      }
+      .style-meetatheal.type-how-to-use .check-list li,
+      .style-meetatheal.type-lesson .check-list li,
+      .style-meetatheal.type-progress-check .check-list li {
+        background: ${transparent(tokens.paper, 0.68)};
+        border: 1px solid ${transparent(tokens.line, 0.62)};
+        border-radius: 0.055in;
+        padding: 0.08in 0.12in;
+      }
+      .style-meetatheal.type-how-to-use .check-list li::before,
+      .style-meetatheal.type-lesson .check-list li::before,
+      .style-meetatheal.type-progress-check .check-list li::before {
+        background: ${tokens.rose};
+        box-shadow: 0 0 0 3px ${transparent(tokens.ink, 0.12)};
+      }
+      .style-meetatheal.type-important-to-know .alert-box,
+      .style-meetatheal.type-resource .alert-box {
+        background:
+          linear-gradient(92deg, ${transparent(tokens.rose, 0.18)}, transparent 54%),
+          linear-gradient(118deg, ${transparent(tokens.sage, 0.14)}, transparent 68%),
+          ${transparent(tokens.paperAlt, 0.56)};
+        border-left-color: ${tokens.rose};
+      }
+      .style-meetatheal .alert-text {
+        color: ${tokens.background};
+      }
+      .style-meetatheal.type-lesson .key-term-box,
+      .style-meetatheal.type-resource .key-term-box {
+        background:
+          linear-gradient(118deg, ${transparent(tokens.sage, 0.16)}, transparent 62%),
+          linear-gradient(72deg, transparent 0 62%, ${transparent(tokens.rose, 0.12)} 100%),
+          ${transparent(tokens.paper, 0.88)};
+        border-left-color: ${tokens.plum};
+        box-shadow: 0 0.08in 0.2in ${transparent(tokens.background, 0.055)};
+      }
+      .style-meetatheal.type-reflection .reflect-box {
+        background:
+          linear-gradient(132deg, ${transparent(tokens.sage, 0.12)}, transparent 62%),
+          ${transparent(tokens.paper, 0.84)};
+        border-left-color: ${tokens.rose};
+      }
+      .style-meetatheal.type-case-study .story-box {
+        background:
+          linear-gradient(116deg, ${transparent(tokens.sage, 0.14)}, transparent 68%),
+          ${transparent(tokens.paper, 0.88)};
+        border-left: 0.04in solid ${tokens.ink};
+      }
+      .style-meetatheal.type-case-study .takeaway-box {
+        background:
+          linear-gradient(90deg, ${tokens.rose}, ${transparent(tokens.plum, 0.88)});
+        color: ${tokens.paper};
+      }
+      .style-meetatheal.type-checklist .prompt-stack,
+      .style-meetatheal.type-action-plan .action-grid,
+      .style-meetatheal.type-tracker .tracker-table,
+      .style-meetatheal.type-notes .notes-field {
         box-shadow: 0 0.1in 0.24in ${transparent(tokens.background, 0.055)};
+      }
+      .style-meetatheal.type-checklist .prompt-stack {
+        border-left: 0.05in solid ${tokens.ink};
+        border-top: 0.018in solid ${transparent(tokens.rose, 0.45)};
+        border-radius: 0.055in;
+        background: ${transparent(tokens.paper, 0.76)};
+        padding: 0.12in 0.18in 0.1in;
+      }
+      .style-meetatheal.type-tracker .tracker-table {
+        border-radius: 0.045in;
+        overflow: hidden;
+      }
+      .style-meetatheal.type-action-plan .prompt-card,
+      .style-meetatheal.type-workbook .prompt-card {
+        border-left: 0.035in solid ${tokens.ink};
+        border-top-color: ${tokens.rose};
+        box-shadow: 0 0.08in 0.2in ${transparent(tokens.background, 0.05)};
       }
       .style-meetatheal.type-welcome .heal-heart,
       .style-meetatheal.type-welcome .floral-right,
@@ -4572,17 +4694,17 @@ function buildCss(tokens: DesignPresetTokens) {
         opacity: 0.22;
       }
       .style-meetatheal.type-progress-check .content {
-        border-left-color: ${tokens.gold};
+        border-left-color: ${tokens.ink};
         background:
-          linear-gradient(112deg, ${transparent(tokens.sage, 0.14)} 0 36%, transparent 62%),
-          linear-gradient(68deg, transparent 0 54%, ${transparent(tokens.rose, 0.12)} 86%, transparent 100%),
-          ${transparent(tokens.paper, 0.8)};
+          linear-gradient(112deg, ${transparent(tokens.sage, 0.18)} 0 36%, transparent 62%),
+          linear-gradient(68deg, transparent 0 54%, ${transparent(tokens.rose, 0.1)} 86%, transparent 100%),
+          ${transparent(tokens.paper, 0.84)};
       }
       .style-meetatheal.type-resource .mountain-mark {
         width: 2.9in;
         left: -0.18in;
         bottom: 0.78in;
-        opacity: 0.24;
+        opacity: 0.32;
       }
       .style-meetatheal.type-resource .floral-left {
         left: 0.38in;
