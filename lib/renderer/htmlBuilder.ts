@@ -2678,15 +2678,15 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-brand.type-action-plan .brand-cup {
         display: block;
         left: 0.66in;
-        bottom: 1.08in;
-        transform: scale(0.84);
+        bottom: 2.28in;
+        transform: scale(0.7);
       }
       .style-brand.type-action-plan .brand-laptop {
         display: block;
         left: 0.46in;
-        bottom: 0.92in;
-        transform: rotate(-3deg) scale(0.94);
-        opacity: 0.88;
+        bottom: 2.04in;
+        transform: rotate(-3deg) scale(0.76);
+        opacity: 0.72;
       }
       .style-brand.type-action-plan .prompt-card {
         border-left-color: ${tokens.accent};
@@ -2813,6 +2813,130 @@ function buildCss(tokens: DesignPresetTokens) {
         right: 0.86in;
         top: 0;
         transform: scale(0.88);
+      }
+      .style-brand.type-how-to-use .content,
+      .style-brand.type-important-to-know .content,
+      .style-brand.type-lesson-continue .content,
+      .style-brand.type-reflection .content,
+      .style-brand.type-progress-check .content,
+      .style-brand.type-resource .content,
+      .style-brand.type-case-study .content {
+        border: 1px solid ${transparent(tokens.line, 0.72)};
+        border-left: 0.055in solid ${tokens.accent};
+        border-radius: 0.08in;
+        background:
+          radial-gradient(ellipse at 92% 8%, ${transparent(tokens.lilac, 0.14)}, transparent 1.14in),
+          linear-gradient(116deg, ${transparent(tokens.paperAlt, 0.18)}, transparent 54%),
+          ${transparent(tokens.paper, 0.9)};
+        box-shadow: 0 0.13in 0.34in ${transparent(tokens.ink, 0.07)};
+        padding: 0.26in 0.3in 0.25in;
+      }
+      .style-brand.type-how-to-use .content,
+      .style-brand.type-important-to-know .content,
+      .style-brand.type-lesson-continue .content,
+      .style-brand.type-reflection .content,
+      .style-brand.type-progress-check .content,
+      .style-brand.type-resource .content {
+        max-width: 5.72in;
+      }
+      .style-brand.type-how-to-use .content > p:first-child,
+      .style-brand.type-important-to-know .content > p:first-child,
+      .style-brand.type-resource .content > p:first-child {
+        color: ${tokens.ink};
+        font-size: 12.8px;
+        font-weight: 500;
+        max-width: 5.02in;
+      }
+      .style-brand.type-how-to-use .check-list {
+        display: grid;
+        gap: 0.1in;
+        margin-top: 0.22in;
+      }
+      .style-brand.type-how-to-use .check-list li,
+      .style-brand.type-progress-check .check-list li {
+        align-items: start;
+        background: ${transparent(tokens.paper, 0.62)};
+        border: 1px solid ${transparent(tokens.line, 0.52)};
+        border-radius: 0.05in;
+        padding: 0.09in 0.12in;
+      }
+      .style-brand.type-how-to-use .check-list li::before,
+      .style-brand.type-progress-check .check-list li::before {
+        background: ${tokens.accent};
+        margin-top: 0.045in;
+      }
+      .style-brand.type-important-to-know .alert-box,
+      .style-brand.type-resource .alert-box,
+      .style-brand.type-resource .key-term-box {
+        box-shadow: 0 0.08in 0.22in ${transparent(tokens.ink, 0.055)};
+      }
+      .style-brand.type-important-to-know .alert-box {
+        background:
+          linear-gradient(90deg, ${transparent(tokens.accent, 0.12)}, transparent 48%),
+          ${transparent(tokens.paperAlt, 0.84)};
+      }
+      .style-brand.type-reflection .reflect-box {
+        min-height: 1.08in;
+        background:
+          linear-gradient(115deg, ${transparent(tokens.accentSoft, 0.44)}, transparent 66%),
+          ${transparent(tokens.paper, 0.82)};
+        box-shadow: 0 0.08in 0.2in ${transparent(tokens.ink, 0.055)};
+      }
+      .style-brand.type-progress-check .quote-box {
+        background: ${transparent(tokens.paperAlt, 0.82)};
+        border-left-color: ${tokens.plum};
+        margin-top: 0.22in;
+      }
+      .style-brand.type-resource .key-term-box {
+        background:
+          linear-gradient(108deg, ${transparent(tokens.lilac, 0.18)}, transparent 64%),
+          ${transparent(tokens.paper, 0.88)};
+      }
+      .style-brand.type-case-study .content {
+        max-width: 5.82in;
+      }
+      .style-brand.type-case-study .story-box {
+        margin-top: 0.18in;
+      }
+      .style-brand.type-how-to-use .brand-cup,
+      .style-brand.type-how-to-use .brand-card,
+      .style-brand.type-how-to-use .brand-plant,
+      .style-brand.type-important-to-know .brand-light,
+      .style-brand.type-important-to-know .brand-book,
+      .style-brand.type-important-to-know .brand-pen {
+        display: block;
+      }
+      .style-brand.type-how-to-use .brand-cup {
+        left: 0.62in;
+        bottom: 0.92in;
+        transform: scale(0.78);
+        opacity: 0.86;
+      }
+      .style-brand.type-how-to-use .brand-card {
+        right: 0.72in;
+        bottom: 1.02in;
+        transform: rotate(7deg) scale(0.9);
+      }
+      .style-brand.type-how-to-use .brand-plant {
+        right: 1.22in;
+        bottom: 1.55in;
+        transform: scale(0.76);
+        opacity: 0.78;
+      }
+      .style-brand.type-important-to-know .brand-light {
+        right: 0.72in;
+        top: 0;
+        transform: scale(0.9);
+      }
+      .style-brand.type-important-to-know .brand-book {
+        right: 0.78in;
+        bottom: 0.9in;
+        transform: rotate(-4deg) scale(1.06);
+      }
+      .style-brand.type-important-to-know .brand-pen {
+        right: 1.38in;
+        bottom: 1.36in;
+        transform: rotate(-22deg) scale(0.86);
       }
       .style-brand.type-closing {
         text-align: center;
