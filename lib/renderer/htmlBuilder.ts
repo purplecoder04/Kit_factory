@@ -3705,6 +3705,135 @@ function buildCss(tokens: DesignPresetTokens) {
         border-left-color: ${tokens.gold};
         border-radius: 0.04in;
       }
+      .style-land.type-how-to-use .content,
+      .style-land.type-important-to-know .content,
+      .style-land.type-lesson .content,
+      .style-land.type-lesson-continue .content,
+      .style-land.type-reflection .content,
+      .style-land.type-progress-check .content,
+      .style-land.type-resource .content,
+      .style-land.type-case-study .content {
+        border: 1px solid ${transparent(tokens.line, 0.78)};
+        border-left: 0.06in solid ${tokens.plum};
+        border-radius: 0.045in;
+        background:
+          linear-gradient(138deg, transparent 0 76%, ${transparent(tokens.sage, 0.12)} 76.5% 100%),
+          linear-gradient(90deg, ${transparent(tokens.paperAlt, 0.22)}, transparent 56%),
+          ${transparent(tokens.paper, 0.88)};
+        box-shadow: 0 0.12in 0.3in ${transparent(tokens.background, 0.08)};
+        padding: 0.24in 0.3in 0.25in;
+      }
+      .style-land.type-how-to-use .content,
+      .style-land.type-important-to-know .content,
+      .style-land.type-lesson-continue .content,
+      .style-land.type-reflection .content,
+      .style-land.type-progress-check .content,
+      .style-land.type-resource .content,
+      .style-land.type-case-study .content {
+        max-width: 5.82in;
+      }
+      .style-land.type-lesson .content {
+        max-width: 6.08in;
+      }
+      .style-land.type-lesson .content > p:first-child {
+        color: ${tokens.ink};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 21px;
+        font-weight: 700;
+        line-height: 1.18;
+      }
+      .style-land.type-how-to-use .check-list,
+      .style-land.type-lesson .check-list,
+      .style-land.type-progress-check .check-list {
+        display: grid;
+        gap: 0.09in;
+      }
+      .style-land.type-how-to-use .check-list li,
+      .style-land.type-lesson .check-list li,
+      .style-land.type-progress-check .check-list li {
+        background: ${transparent(tokens.paper, 0.62)};
+        border: 1px solid ${transparent(tokens.line, 0.62)};
+        border-radius: 0.035in;
+        padding: 0.08in 0.12in;
+      }
+      .style-land.type-how-to-use .check-list li::before,
+      .style-land.type-lesson .check-list li::before,
+      .style-land.type-progress-check .check-list li::before {
+        background: ${tokens.accent};
+      }
+      .style-land.type-important-to-know .alert-box,
+      .style-land.type-resource .alert-box {
+        background:
+          linear-gradient(90deg, ${transparent(tokens.gold, 0.18)}, transparent 52%),
+          ${transparent(tokens.paperAlt, 0.72)};
+        border-left-color: ${tokens.gold};
+        box-shadow: 0 0.08in 0.2in ${transparent(tokens.background, 0.06)};
+      }
+      .style-land.type-lesson .key-term-box,
+      .style-land.type-resource .key-term-box {
+        background:
+          linear-gradient(120deg, ${transparent(tokens.paperAlt, 0.76)}, transparent 68%),
+          ${transparent(tokens.paper, 0.88)};
+        border-left-color: ${tokens.plum};
+        box-shadow: 0 0.08in 0.2in ${transparent(tokens.background, 0.06)};
+      }
+      .style-land.type-reflection .reflect-box {
+        background:
+          linear-gradient(132deg, ${transparent(tokens.sage, 0.12)}, transparent 62%),
+          ${transparent(tokens.paper, 0.84)};
+        border-left-color: ${tokens.gold};
+      }
+      .style-land.type-case-study .story-box {
+        background:
+          linear-gradient(116deg, ${transparent(tokens.paperAlt, 0.58)}, transparent 68%),
+          ${transparent(tokens.paper, 0.88)};
+        border-left: 0.04in solid ${tokens.plum};
+      }
+      .style-land.type-case-study .takeaway-box {
+        background: ${tokens.plum};
+        color: ${tokens.paper};
+      }
+      .style-land.type-checklist .prompt-stack,
+      .style-land.type-action-plan .action-grid,
+      .style-land.type-tracker .tracker-table {
+        box-shadow: 0 0.1in 0.24in ${transparent(tokens.background, 0.055)};
+      }
+      .style-land.type-checklist .prompt-stack {
+        border-left: 0.05in solid ${tokens.gold};
+        border-radius: 0.04in;
+        background: ${transparent(tokens.paper, 0.76)};
+        padding: 0.12in 0.18in 0.1in;
+      }
+      .style-land.type-tracker .tracker-table {
+        border-radius: 0.035in;
+        overflow: hidden;
+      }
+      .style-land.type-action-plan .prompt-card {
+        box-shadow: 0 0.08in 0.2in ${transparent(tokens.background, 0.05)};
+      }
+      .style-land.type-how-to-use .mountain-mark,
+      .style-land.type-important-to-know .land-leaf,
+      .style-land.type-case-study .land-compass {
+        display: block;
+      }
+      .style-land.type-how-to-use .mountain-mark {
+        width: 2.72in;
+        right: -0.18in;
+        bottom: 0.88in;
+        opacity: 0.18;
+      }
+      .style-land.type-important-to-know .land-leaf {
+        right: 0.62in;
+        bottom: 1.04in;
+        transform: scale(0.82);
+        opacity: 0.76;
+      }
+      .style-land.type-case-study .land-compass {
+        right: 0.72in;
+        bottom: 1.08in;
+        transform: scale(0.74);
+        opacity: 0.8;
+      }
       .style-land.type-resource .mountain-mark {
         width: 2.95in;
         right: -0.2in;
