@@ -4132,6 +4132,128 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-rebuild.type-progress-check .content {
         border-left-color: ${tokens.blue};
       }
+      .style-rebuild.type-how-to-use .content,
+      .style-rebuild.type-important-to-know .content,
+      .style-rebuild.type-lesson .content,
+      .style-rebuild.type-lesson-continue .content,
+      .style-rebuild.type-reflection .content,
+      .style-rebuild.type-progress-check .content,
+      .style-rebuild.type-resource .content,
+      .style-rebuild.type-case-study .content {
+        border: 1px solid ${transparent(tokens.line, 0.72)};
+        border-left: 0.055in solid ${tokens.blue};
+        border-radius: 0.065in;
+        background:
+          radial-gradient(ellipse at 92% 18%, ${transparent(tokens.accentSoft, 0.3)}, transparent 36%),
+          linear-gradient(140deg, ${transparent(tokens.paper, 0.74)} 0 58%, ${transparent(tokens.sage, 0.12)} 58.5% 100%),
+          linear-gradient(90deg, ${transparent(tokens.blue, 0.08)}, transparent 42%),
+          ${transparent(tokens.paper, 0.9)};
+        box-shadow: 0 0.12in 0.32in ${transparent(tokens.background, 0.07)};
+        padding: 0.24in 0.31in 0.26in;
+      }
+      .style-rebuild.type-how-to-use .content,
+      .style-rebuild.type-important-to-know .content,
+      .style-rebuild.type-lesson-continue .content,
+      .style-rebuild.type-reflection .content,
+      .style-rebuild.type-progress-check .content,
+      .style-rebuild.type-resource .content,
+      .style-rebuild.type-case-study .content {
+        max-width: 5.86in;
+      }
+      .style-rebuild.type-lesson .content {
+        max-width: 6.12in;
+      }
+      .style-rebuild.type-lesson .content > p:first-child {
+        color: ${tokens.background};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 21px;
+        font-weight: 700;
+        line-height: 1.18;
+      }
+      .style-rebuild.type-how-to-use .check-list,
+      .style-rebuild.type-lesson .check-list,
+      .style-rebuild.type-progress-check .check-list {
+        display: grid;
+        gap: 0.09in;
+      }
+      .style-rebuild.type-how-to-use .check-list li,
+      .style-rebuild.type-lesson .check-list li,
+      .style-rebuild.type-progress-check .check-list li {
+        background: ${transparent(tokens.paper, 0.68)};
+        border: 1px solid ${transparent(tokens.line, 0.62)};
+        border-radius: 0.045in;
+        padding: 0.08in 0.12in;
+      }
+      .style-rebuild.type-how-to-use .check-list li::before,
+      .style-rebuild.type-lesson .check-list li::before,
+      .style-rebuild.type-progress-check .check-list li::before {
+        background: ${tokens.blue};
+      }
+      .style-rebuild.type-important-to-know .alert-box,
+      .style-rebuild.type-resource .alert-box {
+        background:
+          linear-gradient(90deg, ${transparent(tokens.accentSoft, 0.54)}, transparent 58%),
+          ${transparent(tokens.paperAlt, 0.5)};
+        border-left-color: ${tokens.rose};
+        box-shadow: 0 0.08in 0.2in ${transparent(tokens.background, 0.05)};
+      }
+      .style-rebuild .alert-text {
+        color: ${tokens.background};
+      }
+      .style-rebuild.type-lesson .key-term-box,
+      .style-rebuild.type-resource .key-term-box {
+        background:
+          linear-gradient(120deg, ${transparent(tokens.accentSoft, 0.48)}, transparent 64%),
+          ${transparent(tokens.paper, 0.88)};
+        border-left-color: ${tokens.blue};
+        box-shadow: 0 0.08in 0.2in ${transparent(tokens.background, 0.055)};
+      }
+      .style-rebuild.type-reflection .reflect-box {
+        background:
+          linear-gradient(132deg, ${transparent(tokens.blue, 0.1)}, transparent 62%),
+          ${transparent(tokens.paper, 0.84)};
+        border-left-color: ${tokens.rose};
+      }
+      .style-rebuild.type-case-study .story-box {
+        background:
+          linear-gradient(116deg, ${transparent(tokens.accentSoft, 0.4)}, transparent 68%),
+          ${transparent(tokens.paper, 0.88)};
+        border-left: 0.04in solid ${tokens.blue};
+      }
+      .style-rebuild.type-case-study .takeaway-box {
+        background: ${tokens.rose};
+        color: ${tokens.paper};
+      }
+      .style-rebuild.type-checklist .prompt-stack,
+      .style-rebuild.type-action-plan .action-grid,
+      .style-rebuild.type-tracker .tracker-table,
+      .style-rebuild.type-notes .notes-field {
+        box-shadow: 0 0.1in 0.26in ${transparent(tokens.background, 0.052)};
+      }
+      .style-rebuild.type-checklist .prompt-stack {
+        border-left: 0.05in solid ${tokens.rose};
+        border-radius: 0.05in;
+        background: ${transparent(tokens.paper, 0.76)};
+        padding: 0.12in 0.18in 0.1in;
+      }
+      .style-rebuild.type-tracker .tracker-table {
+        border-radius: 0.04in;
+        overflow: hidden;
+      }
+      .style-rebuild.type-action-plan .prompt-card {
+        box-shadow: 0 0.08in 0.22in ${transparent(tokens.background, 0.05)};
+      }
+      .style-rebuild.type-resource .content > p:first-child {
+        color: ${tokens.background};
+      }
+      .style-rebuild.type-notes .notes-field {
+        border-color: ${transparent(tokens.line, 0.86)};
+        background-color: ${transparent(tokens.paper, 0.74)};
+        background-image:
+          linear-gradient(180deg, transparent, ${transparent(tokens.accentSoft, 0.08)}),
+          radial-gradient(ellipse at 95% 16%, ${transparent(tokens.blue, 0.12)}, transparent 1.2in),
+          repeating-linear-gradient(to bottom, transparent 0 0.34in, ${tokens.line} 0.35in 0.36in);
+      }
       .style-rebuild.type-resource .key-term-box {
         border-left-color: ${tokens.blue};
       }
