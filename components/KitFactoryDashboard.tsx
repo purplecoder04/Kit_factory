@@ -73,7 +73,16 @@ type SavedKitLoadResult = ParseResult & {
   designPreset: string
   markdown: string
   outputMode: OutputMode
+  productExportUrl: string
+  productId: string
+  productStatus: string
   status: string
+}
+
+type ReadyProductSummary = {
+  exportUrl: string
+  productId: string
+  productStatus: string
 }
 
 type BuildStatus =
@@ -140,6 +149,7 @@ export function KitFactoryDashboard() {
   const [exportFiles, setExportFiles] = useState<ExportFileSummary[]>([])
   const [copyFallbackText, setCopyFallbackText] = useState("")
   const [isLoadingExports, setIsLoadingExports] = useState(false)
+  const [readyProduct, setReadyProduct] = useState<ReadyProductSummary | null>(null)
   const [status, setStatus] = useState<BuildStatus>("Draft")
   const [message, setMessage] = useState("Golden kit loaded.")
   const [isWorking, setIsWorking] = useState(false)
@@ -305,6 +315,7 @@ export function KitFactoryDashboard() {
         issues: payload.issues,
         kitId: payload.kitId ?? savedKitId,
       })
+      setReadyProduct(productSummaryFromPayload(payload))
       void loadExportFiles(payload.kitId ?? savedKitId)
       setStatus(hasErrors ? "Error" : "Preview Ready")
       setMessage(hasErrors ? "Saved kit opened with validation errors." : "Saved kit opened.")
@@ -333,6 +344,7 @@ export function KitFactoryDashboard() {
     setKitId(null)
     setExportFiles([])
     setCopyFallbackText("")
+    setReadyProduct(null)
     setActiveView("dashboard")
     setStatus("Draft")
     setMessage("New kit started.")
@@ -359,6 +371,7 @@ export function KitFactoryDashboard() {
         void loadExportFiles(payload.kitId)
       } else {
         setExportFiles([])
+        setReadyProduct(null)
       }
       void loadSavedKits()
       setStatus(hasErrors ? "Error" : "Preview Ready")
@@ -584,7 +597,9 @@ export function KitFactoryDashboard() {
         return
       }
 
+      const payload = (await response.json()) as ReadyProductSummary
       await loadSavedKits()
+      setReadyProduct(productSummaryFromPayload(payload))
       setStatus("Ready to Sell")
       setMessage("Kit marked ready to sell and linked to Products.")
     } catch {
@@ -649,6 +664,7 @@ export function KitFactoryDashboard() {
     setKitId(null)
     setExportFiles([])
     setCopyFallbackText("")
+    setReadyProduct(null)
     setActiveView("dashboard")
     setStatus("Draft")
     setMessage(`${file.name} loaded.`)
@@ -979,6 +995,7 @@ export function KitFactoryDashboard() {
                 onDownloadWorkbookPdf={() => downloadOutput("render", "workbook")}
                 onMarkReadyToSell={markReadyToSell}
                 onRefreshExports={() => void loadExportFiles()}
+                product={readyProduct}
                 progressValue={progressValue}
                 status={status}
                 canMarkReady={Boolean(kitId)}
@@ -3173,6 +3190,7 @@ function OutputPanel({
   onDownloadWorkbookPdf,
   onMarkReadyToSell,
   onRefreshExports,
+  product,
   progressValue,
   status,
 }: {
@@ -3192,9 +3210,12 @@ function OutputPanel({
   onDownloadWorkbookPdf: () => void
   onMarkReadyToSell: () => void
   onRefreshExports: () => void
+  product: ReadyProductSummary | null
   progressValue: number
   status: BuildStatus
 }) {
+  const productIsLive = product?.productStatus === "live"
+
   return (
     <Card>
       <CardHeader>
@@ -3302,7 +3323,11 @@ function OutputPanel({
           <div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 md:flex-row md:items-center md:justify-between">
             <div>
               <div className="font-medium">Ready to sell</div>
-              <div className="text-xs text-muted-foreground">Creates the linked Products record</div>
+              <div className="text-xs text-muted-foreground">
+                {productIsLive
+                  ? `Product live - ${friendlyExportName(product.exportUrl) || "export pending"}`
+                  : "Creates or updates the linked Products record"}
+              </div>
             </div>
             <Button
               disabled={isWorking || !canMarkReady}
@@ -3314,7 +3339,7 @@ function OutputPanel({
               ) : (
                 <CheckCircle2Icon data-icon="inline-start" />
               )}
-              Mark Ready
+              {productIsLive ? "Update Product" : "Mark Ready"}
             </Button>
           </div>
 
@@ -3456,6 +3481,41 @@ function formatExportDate(value: string) {
     dateStyle: "short",
     timeStyle: "short",
   }).format(date)
+}
+
+function productSummaryFromPayload(payload: {
+  exportUrl?: string
+  productExportUrl?: string
+  productId?: string
+  productStatus?: string
+}) {
+  if (!payload.productId) {
+    return null
+  }
+
+  return {
+    exportUrl: payload.exportUrl || payload.productExportUrl || "",
+    productId: payload.productId,
+    productStatus: payload.productStatus || "",
+  }
+}
+
+function friendlyExportName(value: string) {
+  if (!value) {
+    return ""
+  }
+
+  if (value.startsWith("kit-factory-download://")) {
+    return value.replace("kit-factory-download://", "")
+  }
+
+  try {
+    const filename = new URL(value).pathname.split("/").filter(Boolean).at(-1)
+
+    return filename ? decodeURIComponent(filename) : value
+  } catch {
+    return value
+  }
 }
 
 async function writeClipboardText(value: string) {

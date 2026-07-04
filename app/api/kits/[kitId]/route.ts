@@ -36,6 +36,9 @@ export async function GET(
     kitId: savedKit.id,
     markdown: savedKit.sourceMarkdown,
     outputMode: kit.outputMode || "split",
+    productExportUrl: savedKit.productExportUrl,
+    productId: savedKit.productId,
+    productStatus: savedKit.productStatus,
     status: savedKit.status,
   })
 }

@@ -1,5 +1,6 @@
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js"
 
+import { parseKitMarkdown } from "@/lib/parser"
 import { getSupabaseServerClient } from "@/lib/supabase/serverClient"
 import type { KitPage, ParsedKit } from "@/lib/parser/pageTypes"
 
@@ -33,6 +34,9 @@ export type SavedKitDetail = SavedKitSummary & {
   branch: string
   designPreset: string
   outputMode: string
+  productExportUrl: string
+  productId: string
+  productStatus: string
   sourceMarkdown: string
 }
 
@@ -44,6 +48,13 @@ export type SavedExportFileSummary = {
   filename: string
   status: string
   createdAt: string
+}
+
+type ProductSummary = {
+  id: string
+  exportUrl: string
+  name: string
+  status: string
 }
 
 type ExportKind = "pdf" | "fillable" | "mockup" | "zip"
@@ -418,6 +429,7 @@ export async function getSavedKit(kitId: string): Promise<SavedKitDetail | null>
 
   const sourceMarkdown =
     stringValue(kit.source_markdown) || (await findLatestSourceMarkdown(supabase, kitId))
+  const product = await findProductById(supabase, stringValue(kit.product_id))
 
   return {
     id: stringValue(kit.id),
@@ -428,6 +440,9 @@ export async function getSavedKit(kitId: string): Promise<SavedKitDetail | null>
       stringValue(kit.design_preset) ||
       (await resolveReferenceSlug(supabase, "design_presets", stringValue(kit.design_preset_id))),
     outputMode: stringValue(kit.output_mode),
+    productExportUrl: product?.exportUrl ?? "",
+    productId: product?.id ?? "",
+    productStatus: product?.status ?? "",
     sourceMarkdown,
   }
 }
@@ -526,17 +541,59 @@ async function markKitReadyToSellNow(kitId: string) {
   }
 
   const exportUrl = await findLatestExportUrl(supabase, kitId)
-  const branch = await resolveReferenceSlug(supabase, "branches", stringValue(kit.branch_id))
+  const sourceMarkdown =
+    stringValue(kit.source_markdown) || (await findLatestSourceMarkdown(supabase, kitId))
+  const parsedKit = sourceMarkdown ? parseKitMarkdown(sourceMarkdown) : null
+  const branch =
+    (await resolveReferenceSlug(supabase, "branches", stringValue(kit.branch_id))) ||
+    parsedKit?.branch ||
+    stringValue(kit.branch) ||
+    stringValue(kit.branch_id)
+  const productName =
+    stringValue(kit.name) || stringValue(kit.title) || parsedKit?.title || "Untitled Kit"
+  const productType = stringValue(kit.product_type) || parsedKit?.productType || "workbook"
+  const linkedProduct =
+    (await findProductById(supabase, stringValue(kit.product_id))) ||
+    (await findExistingKitFactoryProduct(supabase, {
+      branch,
+      name: productName,
+    }))
+
+  if (linkedProduct) {
+    await updateRow(
+      supabase,
+      "products",
+      {
+        branch,
+        created_from: "kit_factory",
+        export_url: exportUrl || linkedProduct.exportUrl,
+        name: productName,
+        status: "live",
+        type: productType,
+      },
+      "id",
+      linkedProduct.id
+    )
+    await updateKitProductLink(supabase, kitId, linkedProduct.id)
+
+    return {
+      exportUrl: exportUrl || linkedProduct.exportUrl,
+      productId: linkedProduct.id,
+      productStatus: "live",
+      reusedProduct: true,
+    }
+  }
+
   const { data: product, error: productError } = await insertRow<{ id?: string }>(
     supabase,
     "products",
     {
-      name: stringValue(kit.name) || stringValue(kit.title) || "Untitled Kit",
-      branch: branch || stringValue(kit.branch) || stringValue(kit.branch_id),
-      type: stringValue(kit.product_type) || "workbook",
-      status: "live",
+      branch,
       created_from: "kit_factory",
       export_url: exportUrl,
+      name: productName,
+      status: "live",
+      type: productType,
     },
     "id"
   )
@@ -549,22 +606,98 @@ async function markKitReadyToSellNow(kitId: string) {
     return { productId: null }
   }
 
-  const { error: updateError } = await updateRow(
+  const updateError = await updateKitProductLink(supabase, kitId, product.id)
+
+  if (updateError) {
+    logSupabaseDataWarning("markKitReadyToSell.kits", updateError)
+  }
+
+  return {
+    exportUrl,
+    productId: product.id,
+    productStatus: "live",
+    reusedProduct: false,
+  }
+}
+
+async function findProductById(supabase: SupabaseClient, productId: string) {
+  if (!productId) {
+    return null
+  }
+
+  const { data, error } = await supabase
+    .from("products")
+    .select("id,name,status,export_url")
+    .eq("id", productId)
+    .maybeSingle()
+
+  if (error || !data) {
+    if (error) {
+      logSupabaseDataWarning("findProductById", error)
+    }
+
+    return null
+  }
+
+  return productSummaryFromRow(data)
+}
+
+async function findExistingKitFactoryProduct(
+  supabase: SupabaseClient,
+  {
+    branch,
+    name,
+  }: {
+    branch: string
+    name: string
+  }
+) {
+  if (!name) {
+    return null
+  }
+
+  let query = supabase
+    .from("products")
+    .select("id,name,status,export_url")
+    .eq("name", name)
+    .eq("created_from", "kit_factory")
+    .order("created_at", { ascending: false })
+    .limit(1)
+
+  if (branch) {
+    query = query.eq("branch", branch)
+  }
+
+  const { data, error } = await query
+
+  if (error || !data?.length) {
+    if (error) {
+      logSupabaseDataWarning("findExistingKitFactoryProduct", error)
+    }
+
+    return null
+  }
+
+  return productSummaryFromRow(data[0])
+}
+
+async function updateKitProductLink(
+  supabase: SupabaseClient,
+  kitId: string,
+  productId: string
+) {
+  const { error } = await updateRow(
     supabase,
     "kits",
     {
-      product_id: product.id,
+      product_id: productId,
       status: "ready_to_sell",
     },
     "id",
     kitId
   )
 
-  if (updateError) {
-    logSupabaseDataWarning("markKitReadyToSell.kits", updateError)
-  }
-
-  return { productId: product.id }
+  return error
 }
 
 async function createOrUpdateKit({
@@ -593,7 +726,7 @@ async function createOrUpdateKit({
     product_type: kit.productType,
     output_mode: kit.outputMode,
     source_markdown: sourceMarkdown,
-    status: "draft",
+    status: existingKitId ? undefined : "draft",
   }
 
   if (existingKitId) {
@@ -1074,6 +1207,15 @@ function pruneEmptyValues(row: UnknownRow) {
 
 function stringValue(value: unknown) {
   return typeof value === "string" ? value : ""
+}
+
+function productSummaryFromRow(row: UnknownRow): ProductSummary {
+  return {
+    exportUrl: stringValue(row.export_url),
+    id: stringValue(row.id),
+    name: stringValue(row.name),
+    status: stringValue(row.status),
+  }
 }
 
 function exportStorageBucketName() {
