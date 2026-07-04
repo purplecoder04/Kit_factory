@@ -119,6 +119,7 @@ async function testParserDefaults(baseUrl, markdown) {
     markdown: withoutDesignPreset,
     branch: "land",
     outputMode: "split",
+    persist: false,
   })
 
   assert(payload.kit.branch === "land", `Expected branch land, got ${payload.kit.branch}.`)

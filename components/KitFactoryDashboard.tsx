@@ -11,6 +11,7 @@ import {
   LoaderCircleIcon,
   PackageIcon,
   PlayIcon,
+  SearchIcon,
   UploadIcon,
   WavesIcon,
 } from "lucide-react"
@@ -97,6 +98,8 @@ type SavedKitSummary = {
   status: string
 }
 
+type DashboardView = "dashboard" | "all-kits"
+
 const packageDocuments: {
   key: PackageKey
   title: string
@@ -113,12 +116,14 @@ export function KitFactoryDashboard() {
   const [branch, setBranch] = useState("brand")
   const [designPreset, setDesignPreset] = useState("brand")
   const [outputMode, setOutputMode] = useState<OutputMode>("split")
+  const [activeView, setActiveView] = useState<DashboardView>("dashboard")
   const [packageMarkdowns, setPackageMarkdowns] = useState<PackageMarkdowns>(() =>
     createPackageMarkdowns()
   )
   const [result, setResult] = useState<ParseResult | null>(null)
   const [kitId, setKitId] = useState<string | null>(null)
   const [savedKits, setSavedKits] = useState<SavedKitSummary[]>([])
+  const [savedKitSearch, setSavedKitSearch] = useState("")
   const [status, setStatus] = useState<BuildStatus>("Draft")
   const [message, setMessage] = useState("Golden kit loaded.")
   const [isWorking, setIsWorking] = useState(false)
@@ -152,6 +157,17 @@ export function KitFactoryDashboard() {
     () => result?.issues.filter((issue) => issue.level === "warning") ?? [],
     [result]
   )
+  const filteredSavedKits = useMemo(() => {
+    const query = savedKitSearch.trim().toLowerCase()
+
+    if (!query) {
+      return savedKits
+    }
+
+    return savedKits.filter((kit) =>
+      [kit.name, kit.status].some((value) => value.toLowerCase().includes(query))
+    )
+  }, [savedKitSearch, savedKits])
   const progressValue = useMemo(() => {
     if (status === "Draft") return 12
     if (status === "Parsed") return 34
@@ -203,6 +219,7 @@ export function KitFactoryDashboard() {
       setBranch(payload.branch)
       setDesignPreset(payload.designPreset)
       setOutputMode(payload.outputMode)
+      setActiveView("dashboard")
       setKitId(payload.kitId ?? savedKitId)
       setResult({
         kit: payload.kit,
@@ -217,6 +234,26 @@ export function KitFactoryDashboard() {
     } finally {
       setIsWorking(false)
     }
+  }
+
+  function startNewKit() {
+    const nextBranch = "brand"
+    const nextPreset = defaultDesignPresetForBranch(nextBranch)
+
+    setMarkdown(createNewKitMarkdown({
+      branch: nextBranch,
+      designPreset: nextPreset,
+      outputMode: "split",
+    }))
+    setBranch(nextBranch)
+    setDesignPreset(nextPreset)
+    setOutputMode("split")
+    setPackageMarkdowns(createPackageMarkdowns())
+    setResult(null)
+    setKitId(null)
+    setActiveView("dashboard")
+    setStatus("Draft")
+    setMessage("New kit started.")
   }
 
   async function parseMarkdown({ persist = true }: { persist?: boolean } = {}) {
@@ -513,6 +550,7 @@ export function KitFactoryDashboard() {
 
     setMarkdown(await file.text())
     setKitId(null)
+    setActiveView("dashboard")
     setStatus("Draft")
     setMessage(`${file.name} loaded.`)
   }
@@ -533,22 +571,43 @@ export function KitFactoryDashboard() {
 
           <nav className="mt-8 flex flex-col gap-1 text-sm">
             {[
-              ["Dashboard", Layers3Icon],
-              ["New Kit", FileTextIcon],
-              ["All Kits", FolderOpenIcon],
-            ].map(([label, Icon]) => (
+              {
+                label: "Dashboard",
+                icon: Layers3Icon,
+                active: activeView === "dashboard",
+                onClick: () => setActiveView("dashboard"),
+              },
+              {
+                label: "New Kit",
+                icon: FileTextIcon,
+                active: false,
+                onClick: startNewKit,
+              },
+              {
+                label: "All Kits",
+                icon: FolderOpenIcon,
+                active: activeView === "all-kits",
+                onClick: () => {
+                  setActiveView("all-kits")
+                  void loadSavedKits()
+                  setMessage("Saved kit library opened.")
+                },
+              },
+            ].map(({ active, icon: Icon, label, onClick }) => (
               <button
-                key={label as string}
+                key={label}
                 className={cn(
                   "flex h-9 items-center gap-2 rounded-lg px-3 text-left transition-colors",
-                  label === "Dashboard"
+                  active
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60"
                 )}
+                data-testid={`sidebar-${label.toLowerCase().replace(/\s+/g, "-")}`}
+                onClick={onClick}
                 type="button"
               >
                 <Icon />
-                {label as string}
+                {label}
               </button>
             ))}
           </nav>
@@ -557,11 +616,25 @@ export function KitFactoryDashboard() {
             <div className="text-xs font-medium uppercase tracking-[0.12em] text-sidebar-foreground/60">
               Saved Kits
             </div>
+            <div className="relative">
+              <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-sidebar-foreground/45" />
+              <Input
+                aria-label="Search saved kits"
+                className="h-8 border-sidebar-border bg-sidebar-accent/30 pl-8 text-sidebar-foreground placeholder:text-sidebar-foreground/45"
+                onChange={(event) => setSavedKitSearch(event.target.value)}
+                placeholder="Search kits"
+                value={savedKitSearch}
+              />
+            </div>
             {savedKits.length === 0 ? (
               <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3 text-sm text-sidebar-foreground/65">
                 No saved kits yet.
               </div>
-            ) : savedKits.map((kit) => (
+            ) : filteredSavedKits.length === 0 ? (
+              <div className="rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3 text-sm text-sidebar-foreground/65">
+                No kits match that search.
+              </div>
+            ) : filteredSavedKits.slice(0, 6).map((kit) => (
               <button
                 className={cn(
                   "rounded-lg border border-sidebar-border bg-sidebar-accent/30 p-3 text-left text-sm transition-colors hover:bg-sidebar-accent/70 disabled:cursor-wait disabled:opacity-70",
@@ -600,7 +673,7 @@ export function KitFactoryDashboard() {
             <div>
               <div className="text-xs text-muted-foreground">Current Kit</div>
               <h1 className="font-heading text-2xl font-semibold">
-                {result?.kit.title || "Get Your Business Straight Kit"}
+                {result?.kit.title || "Untitled Kit"}
               </h1>
             </div>
 
@@ -711,57 +784,73 @@ export function KitFactoryDashboard() {
 
           <div className="grid flex-1 gap-4 p-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)]">
             <section className="flex min-w-0 flex-col gap-4">
-              <Card>
-                <CardHeader>
-                  <div>
-                    <CardTitle>Markdown Source</CardTitle>
-                    <CardDescription>
-                      {result?.kit.slug ? `${result.kit.slug}.md` : "kit-factory-markdown.md"}
-                    </CardDescription>
-                  </div>
-                  <CardAction>
-                    <Field>
-                      <FieldLabel className="sr-only" htmlFor="markdown-upload">
-                        Upload markdown
-                      </FieldLabel>
-                      <Input
-                        accept=".md,.markdown,text/markdown,text/plain"
-                        className="max-w-56"
-                        id="markdown-upload"
-                        onChange={(event) => handleFileUpload(event.target.files?.[0])}
-                        type="file"
+              {activeView === "all-kits" ? (
+                <SavedKitLibraryPanel
+                  activeKitId={kitId}
+                  isWorking={isWorking}
+                  kits={filteredSavedKits}
+                  onNewKit={startNewKit}
+                  onOpenKit={openSavedKit}
+                  onRefresh={() => void loadSavedKits()}
+                  onSearchChange={setSavedKitSearch}
+                  search={savedKitSearch}
+                  totalCount={savedKits.length}
+                />
+              ) : (
+                <>
+                  <Card>
+                    <CardHeader>
+                      <div>
+                        <CardTitle>Markdown Source</CardTitle>
+                        <CardDescription>
+                          {result?.kit.slug ? `${result.kit.slug}.md` : "kit-factory-markdown.md"}
+                        </CardDescription>
+                      </div>
+                      <CardAction>
+                        <Field>
+                          <FieldLabel className="sr-only" htmlFor="markdown-upload">
+                            Upload markdown
+                          </FieldLabel>
+                          <Input
+                            accept=".md,.markdown,text/markdown,text/plain"
+                            className="max-w-56"
+                            id="markdown-upload"
+                            onChange={(event) => handleFileUpload(event.target.files?.[0])}
+                            type="file"
+                          />
+                        </Field>
+                      </CardAction>
+                    </CardHeader>
+                    <CardContent>
+                      <Textarea
+                        aria-label="Markdown source"
+                        className="h-[360px] resize-none font-mono text-xs leading-6 xl:h-[330px]"
+                        onChange={(event) => {
+                          setMarkdown(event.target.value)
+                          setStatus("Draft")
+                        }}
+                        value={markdown}
                       />
-                    </Field>
-                  </CardAction>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    aria-label="Markdown source"
-                    className="h-[360px] resize-none font-mono text-xs leading-6 xl:h-[330px]"
-                    onChange={(event) => {
-                      setMarkdown(event.target.value)
-                      setStatus("Draft")
-                    }}
-                    value={markdown}
-                  />
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
 
-              {branch === "brand" && (
-                <BrandPackagePanel
-                  isWorking={isWorking}
-                  onDownloadPackage={downloadBrandPackage}
-                />
-              )}
+                  {branch === "brand" && (
+                    <BrandPackagePanel
+                      isWorking={isWorking}
+                      onDownloadPackage={downloadBrandPackage}
+                    />
+                  )}
 
-              {branch === "meetatheal" && (
-                <MeetPackagePanel
-                  isWorking={isWorking}
-                  markdowns={packageMarkdowns}
-                  onDownloadPackage={downloadMeetPackage}
-                  onUploadFiles={handlePackageFileUpload}
-                  onUpdateMarkdown={updatePackageMarkdown}
-                />
+                  {branch === "meetatheal" && (
+                    <MeetPackagePanel
+                      isWorking={isWorking}
+                      markdowns={packageMarkdowns}
+                      onDownloadPackage={downloadMeetPackage}
+                      onUploadFiles={handlePackageFileUpload}
+                      onUpdateMarkdown={updatePackageMarkdown}
+                    />
+                  )}
+                </>
               )}
 
               <ValidationPanel
@@ -913,6 +1002,96 @@ function BrandPackagePanel({
             </div>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function SavedKitLibraryPanel({
+  activeKitId,
+  isWorking,
+  kits,
+  onNewKit,
+  onOpenKit,
+  onRefresh,
+  onSearchChange,
+  search,
+  totalCount,
+}: {
+  activeKitId: string | null
+  isWorking: boolean
+  kits: SavedKitSummary[]
+  onNewKit: () => void
+  onOpenKit: (kitId: string) => void
+  onRefresh: () => void
+  onSearchChange: (value: string) => void
+  search: string
+  totalCount: number
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <div>
+          <CardTitle>All Kits</CardTitle>
+          <CardDescription>
+            {totalCount} saved kit{totalCount === 1 ? "" : "s"} in Supabase
+          </CardDescription>
+        </div>
+        <CardAction className="flex gap-2">
+          <Button disabled={isWorking} onClick={onRefresh} type="button" variant="outline">
+            Refresh
+          </Button>
+          <Button disabled={isWorking} onClick={onNewKit} type="button">
+            <FileTextIcon data-icon="inline-start" />
+            New Kit
+          </Button>
+        </CardAction>
+      </CardHeader>
+      <CardContent className="grid gap-4">
+        <Field>
+          <FieldLabel htmlFor="all-kits-search">Search saved kits</FieldLabel>
+          <div className="relative">
+            <SearchIcon className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              data-testid="all-kits-search"
+              id="all-kits-search"
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder="Search by kit name or status"
+              value={search}
+              className="pl-8"
+            />
+          </div>
+        </Field>
+
+        {kits.length === 0 ? (
+          <div className="rounded-lg border bg-muted/30 p-4 text-sm text-muted-foreground">
+            {search.trim() ? "No saved kits match that search." : "No saved kits yet."}
+          </div>
+        ) : (
+          <div className="grid gap-2">
+            {kits.map((kit) => (
+              <button
+                className={cn(
+                  "flex flex-col gap-2 rounded-lg border bg-card p-4 text-left transition-colors hover:bg-muted/50 disabled:cursor-wait disabled:opacity-70 md:flex-row md:items-center md:justify-between",
+                  kit.id === activeKitId && "border-primary bg-primary/5"
+                )}
+                data-testid={`all-kits-open-${kit.id}`}
+                disabled={isWorking}
+                key={kit.id}
+                onClick={() => onOpenKit(kit.id)}
+                type="button"
+              >
+                <span>
+                  <span className="block font-medium">{kit.name}</span>
+                  <span className="mt-1 block text-xs text-muted-foreground">{kit.id}</span>
+                </span>
+                <Badge variant={kit.status === "ready_to_sell" ? "default" : "secondary"}>
+                  {kit.status}
+                </Badge>
+              </button>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   )
@@ -3029,6 +3208,48 @@ function filenameFromResponse(response: Response, fallback: string) {
   const match = disposition?.match(/filename="([^"]+)"/)
 
   return match?.[1] ?? fallback
+}
+
+function createNewKitMarkdown({
+  branch,
+  designPreset,
+  outputMode,
+}: {
+  branch: string
+  designPreset: string
+  outputMode: OutputMode
+}) {
+  return `---
+title: Untitled Kit
+subtitle: Add your kit promise here.
+branch: ${branch}
+design_preset: ${designPreset}
+product_type: workbook
+output_mode: ${outputMode}
+author: Best Collective
+tagline: Add your closing promise here.
+slug: untitled-kit
+---
+
+<!-- PAGE: cover -->
+TITLE: Untitled Kit
+SUBTITLE: Add your kit promise here.
+TAGLINE: Add your closing promise here.
+ICON: branch-default
+
+<!-- PAGE: welcome -->
+TITLE: Welcome
+Add a short welcome paragraph for this kit.
+
+CHECK: Add the first outcome.
+CHECK: Add the second outcome.
+CHECK: Add the third outcome.
+
+<!-- PAGE: closing -->
+TITLE: You did the work
+SUBTITLE: Add a closing note here.
+TAGLINE: Add your final reminder here.
+`
 }
 
 async function readApiErrorPayload(response: Response): Promise<ApiErrorPayload> {

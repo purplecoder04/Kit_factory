@@ -323,7 +323,7 @@ export async function listSavedKits() {
     .from("kits")
     .select("id,name,status")
     .order("id", { ascending: false })
-    .limit(6)
+    .limit(50)
 
   if (error) {
     logSupabaseDataWarning("listSavedKits", error)
