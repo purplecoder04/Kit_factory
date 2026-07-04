@@ -50,9 +50,9 @@ export async function POST(request: Request) {
   const filename = `${kit.slug}-${kit.designPreset || kit.branch || "brand"}-website-mockup.png`
 
   await finishExportJob({
-    byteSize: mockup.byteLength,
     contentType: "image/png",
     exportKind: "mockup",
+    fileData: mockup,
     filename,
     jobId,
     kitId,

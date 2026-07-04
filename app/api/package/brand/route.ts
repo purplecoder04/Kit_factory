@@ -97,9 +97,9 @@ export async function POST(request: Request) {
   const filename = `${packageSlug}-brand-style-package.zip`
 
   await finishExportJob({
-    byteSize: zip.byteLength,
     contentType: "application/zip",
     exportKind: "zip",
+    fileData: zip,
     filename,
     jobId,
     kitId,

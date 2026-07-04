@@ -15,6 +15,14 @@ type SyncedKit = {
   documentId: string | null
 }
 
+type ExportFileData = Buffer | Uint8Array
+
+type UploadedExportFile = {
+  bucket: string
+  path: string
+  url: string
+}
+
 export type SavedKitSummary = {
   id: string
   name: string
@@ -26,6 +34,16 @@ export type SavedKitDetail = SavedKitSummary & {
   designPreset: string
   outputMode: string
   sourceMarkdown: string
+}
+
+export type SavedExportFileSummary = {
+  id: string
+  exportJobId: string
+  fileUrl: string
+  fileType: string
+  filename: string
+  status: string
+  createdAt: string
 }
 
 type ExportKind = "pdf" | "fillable" | "mockup" | "zip"
@@ -157,17 +175,17 @@ async function startExportJobNow({
 }
 
 export async function finishExportJob({
-  byteSize,
   contentType,
   exportKind,
+  fileData,
   filename,
   jobId,
   kitId,
   target,
 }: {
-  byteSize: number
   contentType: string
   exportKind: ExportKind
+  fileData?: ExportFileData
   filename: string
   jobId?: string | null
   kitId?: string | null
@@ -175,32 +193,32 @@ export async function finishExportJob({
 }) {
   return withSupabaseTimeout(
     finishExportJobNow({
-      byteSize,
       contentType,
       exportKind,
+      fileData,
       filename,
       jobId,
       kitId,
       target,
     }),
-    2_000,
+    15_000,
     null,
     "finishExportJob"
   )
 }
 
 async function finishExportJobNow({
-  byteSize,
   contentType,
   exportKind,
+  fileData,
   filename,
   jobId,
   kitId,
   target,
 }: {
-  byteSize: number
   contentType: string
   exportKind: ExportKind
+  fileData?: ExportFileData
   filename: string
   jobId?: string | null
   kitId?: string | null
@@ -212,40 +230,33 @@ async function finishExportJobNow({
     return null
   }
 
+  const uploadedFile = await uploadExportFile({
+    contentType,
+    fileData,
+    filename,
+    kitId,
+    supabase,
+  })
+  const exportUrl = uploadedFile?.url ?? `kit-factory-download://${filename}`
+
   await updateRow(
     supabase,
     "export_jobs",
     {
       completed_at: new Date().toISOString(),
-      file_name: filename,
-      filename,
       status: "completed",
-      byte_size: byteSize,
-      file_size: byteSize,
     },
     "id",
     jobId
   )
 
-  const exportUrl = `kit-factory-download://${filename}`
   const { data, error } = await insertRow<{ id?: string }>(
     supabase,
     "export_files",
     {
-      kit_id: kitId,
       export_job_id: jobId,
-      job_id: jobId,
-      export_type: exportKind,
-      type: exportKind,
-      target,
-      filename,
-      file_name: filename,
-      content_type: contentType,
-      byte_size: byteSize,
-      file_size: byteSize,
-      export_url: exportUrl,
-      url: exportUrl,
-      status: "ready",
+      file_type: exportFileType(exportKind, target),
+      file_url: exportUrl,
     },
     "id"
   )
@@ -256,6 +267,53 @@ async function finishExportJobNow({
   }
 
   return data?.id ?? null
+}
+
+async function uploadExportFile({
+  contentType,
+  fileData,
+  filename,
+  kitId,
+  supabase,
+}: {
+  contentType: string
+  fileData?: ExportFileData
+  filename: string
+  kitId?: string | null
+  supabase: SupabaseClient
+}): Promise<UploadedExportFile | null> {
+  if (!fileData) {
+    return null
+  }
+
+  const bucket = exportStorageBucketName()
+  const path = [
+    kitId ? safeStorageSegment(kitId) : "unsaved",
+    `${Date.now()}-${safeStorageSegment(filename)}`,
+  ].join("/")
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(path, fileData, {
+      contentType,
+      upsert: true,
+    })
+
+  if (error) {
+    logSupabaseDataWarning("uploadExportFile", error)
+    return null
+  }
+
+  const publicUrl = supabase.storage.from(bucket).getPublicUrl(data.path).data.publicUrl
+
+  if (!publicUrl) {
+    return null
+  }
+
+  return {
+    bucket,
+    path: data.path,
+    url: publicUrl,
+  }
 }
 
 export async function failExportJob({
@@ -372,6 +430,78 @@ export async function getSavedKit(kitId: string): Promise<SavedKitDetail | null>
     outputMode: stringValue(kit.output_mode),
     sourceMarkdown,
   }
+}
+
+export async function listKitExportFiles(kitId: string): Promise<SavedExportFileSummary[]> {
+  const supabase = getSupabaseServerClient()
+
+  if (!supabase || !kitId) {
+    return []
+  }
+
+  const { data: jobs, error: jobsError } = await supabase
+    .from("export_jobs")
+    .select("id,export_type,status,created_at,completed_at")
+    .eq("kit_id", kitId)
+    .order("created_at", { ascending: false })
+    .limit(40)
+
+  if (jobsError || !jobs?.length) {
+    if (jobsError) {
+      logSupabaseDataWarning("listKitExportFiles.jobs", jobsError)
+    }
+
+    return []
+  }
+
+  const jobsById = new Map(
+    jobs.map((job) => [
+      stringValue(job.id),
+      {
+        createdAt: stringValue(job.completed_at) || stringValue(job.created_at),
+        exportType: stringValue(job.export_type),
+        status: stringValue(job.status) || "unknown",
+      },
+    ])
+  )
+  const jobIds = Array.from(jobsById.keys()).filter(Boolean)
+
+  if (!jobIds.length) {
+    return []
+  }
+
+  const { data: files, error: filesError } = await supabase
+    .from("export_files")
+    .select("id,export_job_id,file_url,file_type,created_at")
+    .in("export_job_id", jobIds)
+    .order("created_at", { ascending: false })
+    .limit(80)
+
+  if (filesError || !files?.length) {
+    if (filesError) {
+      logSupabaseDataWarning("listKitExportFiles.files", filesError)
+    }
+
+    return []
+  }
+
+  return files
+    .map((file): SavedExportFileSummary => {
+      const exportJobId = stringValue(file.export_job_id)
+      const job = jobsById.get(exportJobId)
+      const fileUrl = stringValue(file.file_url)
+
+      return {
+        id: stringValue(file.id),
+        exportJobId,
+        fileUrl,
+        fileType: stringValue(file.file_type) || job?.exportType || "export",
+        filename: filenameFromExportUrl(fileUrl),
+        status: job?.status || "ready",
+        createdAt: stringValue(file.created_at) || job?.createdAt || "",
+      }
+    })
+    .filter((file) => file.id && file.fileUrl)
 }
 
 async function markKitReadyToSellNow(kitId: string) {
@@ -730,19 +860,37 @@ async function findLatestSourceMarkdown(supabase: SupabaseClient, kitId: string)
 }
 
 async function findLatestExportUrl(supabase: SupabaseClient, kitId: string) {
-  const { data, error } = await supabase
-    .from("export_files")
-    .select("export_url,url")
+  const { data: jobs, error: jobsError } = await supabase
+    .from("export_jobs")
+    .select("id")
     .eq("kit_id", kitId)
+    .eq("status", "completed")
+    .order("created_at", { ascending: false })
+    .limit(10)
+
+  if (jobsError || !jobs?.length) {
+    return ""
+  }
+
+  const jobIds = jobs.map((job) => stringValue(job.id)).filter(Boolean)
+
+  if (!jobIds.length) {
+    return ""
+  }
+
+  const { data: files, error: filesError } = await supabase
+    .from("export_files")
+    .select("file_url")
+    .in("export_job_id", jobIds)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle()
 
-  if (error || !data) {
+  if (filesError || !files) {
     return ""
   }
 
-  return stringValue(data.export_url) || stringValue(data.url)
+  return stringValue(files.file_url)
 }
 
 async function resolveReferenceId(
@@ -926,6 +1074,44 @@ function pruneEmptyValues(row: UnknownRow) {
 
 function stringValue(value: unknown) {
   return typeof value === "string" ? value : ""
+}
+
+function exportStorageBucketName() {
+  return process.env.SUPABASE_EXPORT_BUCKET || process.env.VITE_SUPABASE_EXPORT_BUCKET || "kit-exports"
+}
+
+function exportFileType(exportKind: ExportKind, target?: string) {
+  return target ? `${exportKind}:${target}` : exportKind
+}
+
+function filenameFromExportUrl(fileUrl: string) {
+  if (!fileUrl) {
+    return "Export file"
+  }
+
+  if (fileUrl.startsWith("kit-factory-download://")) {
+    return decodeURIComponent(fileUrl.replace("kit-factory-download://", ""))
+  }
+
+  try {
+    const pathname = new URL(fileUrl).pathname
+    const filename = pathname.split("/").filter(Boolean).at(-1)
+
+    return filename ? decodeURIComponent(filename) : "Export file"
+  } catch {
+    const filename = fileUrl.split("/").filter(Boolean).at(-1)
+
+    return filename ? decodeURIComponent(filename) : "Export file"
+  }
+}
+
+function safeStorageSegment(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 160) || "export"
 }
 
 async function withSupabaseTimeout<T>(

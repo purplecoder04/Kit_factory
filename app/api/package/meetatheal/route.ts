@@ -105,9 +105,9 @@ export async function POST(request: Request) {
   const filename = "meet-at-the-heal-kit-package.zip"
 
   await finishExportJob({
-    byteSize: zip.byteLength,
     contentType: "application/zip",
     exportKind: "zip",
+    fileData: zip,
     filename,
     jobId,
     kitId,

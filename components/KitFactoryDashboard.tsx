@@ -4,13 +4,16 @@ import { type CSSProperties, useEffect, useMemo, useState } from "react"
 import {
   AlertCircleIcon,
   CheckCircle2Icon,
+  CopyIcon,
   DownloadIcon,
   FileTextIcon,
   FolderOpenIcon,
+  HistoryIcon,
   Layers3Icon,
   LoaderCircleIcon,
   PackageIcon,
   PlayIcon,
+  RefreshCwIcon,
   SearchIcon,
   UploadIcon,
   WavesIcon,
@@ -98,6 +101,16 @@ type SavedKitSummary = {
   status: string
 }
 
+type ExportFileSummary = {
+  id: string
+  exportJobId: string
+  fileUrl: string
+  fileType: string
+  filename: string
+  status: string
+  createdAt: string
+}
+
 type DashboardView = "dashboard" | "all-kits"
 
 const packageDocuments: {
@@ -124,6 +137,9 @@ export function KitFactoryDashboard() {
   const [kitId, setKitId] = useState<string | null>(null)
   const [savedKits, setSavedKits] = useState<SavedKitSummary[]>([])
   const [savedKitSearch, setSavedKitSearch] = useState("")
+  const [exportFiles, setExportFiles] = useState<ExportFileSummary[]>([])
+  const [copyFallbackText, setCopyFallbackText] = useState("")
+  const [isLoadingExports, setIsLoadingExports] = useState(false)
   const [status, setStatus] = useState<BuildStatus>("Draft")
   const [message, setMessage] = useState("Golden kit loaded.")
   const [isWorking, setIsWorking] = useState(false)
@@ -199,6 +215,69 @@ export function KitFactoryDashboard() {
     }
   }
 
+  async function loadExportFiles(nextKitId = kitId) {
+    if (!nextKitId) {
+      setExportFiles([])
+      setCopyFallbackText("")
+      return
+    }
+
+    setIsLoadingExports(true)
+
+    try {
+      const response = await fetch(`/api/kits/${nextKitId}/exports`)
+
+      if (!response.ok) {
+        setExportFiles([])
+        setCopyFallbackText("")
+        return
+      }
+
+      const payload = (await response.json()) as { exports?: ExportFileSummary[] }
+      setExportFiles(payload.exports ?? [])
+      setCopyFallbackText("")
+    } catch {
+      setExportFiles([])
+      setCopyFallbackText("")
+    } finally {
+      setIsLoadingExports(false)
+    }
+  }
+
+  async function copyExportText(value: string, successMessage: string) {
+    if (!value) {
+      setMessage("No export link is available yet.")
+      return
+    }
+
+    try {
+      await writeClipboardText(value)
+      setCopyFallbackText("")
+      setMessage(successMessage)
+    } catch {
+      setCopyFallbackText(value)
+      setMessage("Links are ready below.")
+    }
+  }
+
+  function copyLatestExportLink() {
+    const latestExport = exportFiles[0]
+
+    void copyExportText(latestExport?.fileUrl ?? "", "Latest export link copied.")
+  }
+
+  function copyAllExportLinks() {
+    const exportList = exportFiles
+      .map((file) => `${file.fileType}\t${file.filename}\t${file.fileUrl}`)
+      .join("\n")
+
+    void copyExportText(exportList, "All export links copied.")
+  }
+
+  function copySingleExportLink(file: ExportFileSummary) {
+    void copyExportText(file.fileUrl, `${file.filename} link copied.`)
+  }
+
   async function openSavedKit(savedKitId: string) {
     setIsWorking(true)
     setMessage("Opening saved kit.")
@@ -226,6 +305,7 @@ export function KitFactoryDashboard() {
         issues: payload.issues,
         kitId: payload.kitId ?? savedKitId,
       })
+      void loadExportFiles(payload.kitId ?? savedKitId)
       setStatus(hasErrors ? "Error" : "Preview Ready")
       setMessage(hasErrors ? "Saved kit opened with validation errors." : "Saved kit opened.")
     } catch {
@@ -251,6 +331,8 @@ export function KitFactoryDashboard() {
     setPackageMarkdowns(createPackageMarkdowns())
     setResult(null)
     setKitId(null)
+    setExportFiles([])
+    setCopyFallbackText("")
     setActiveView("dashboard")
     setStatus("Draft")
     setMessage("New kit started.")
@@ -274,6 +356,9 @@ export function KitFactoryDashboard() {
       setResult(payload)
       if (payload.kitId) {
         setKitId(payload.kitId)
+        void loadExportFiles(payload.kitId)
+      } else {
+        setExportFiles([])
       }
       void loadSavedKits()
       setStatus(hasErrors ? "Error" : "Preview Ready")
@@ -327,6 +412,9 @@ export function KitFactoryDashboard() {
       link.download = filename
       link.click()
       URL.revokeObjectURL(url)
+      if (kitId) {
+        void loadExportFiles(kitId)
+      }
       setStatus(kind === "render" ? "PDF Generated" : "Fillable Generated")
       setMessage(`${filename} downloaded.`)
     } catch {
@@ -368,6 +456,9 @@ export function KitFactoryDashboard() {
       link.download = filename
       link.click()
       URL.revokeObjectURL(url)
+      if (kitId) {
+        void loadExportFiles(kitId)
+      }
       setStatus("Mockup Generated")
       setMessage(`${filename} downloaded.`)
     } catch {
@@ -415,6 +506,9 @@ export function KitFactoryDashboard() {
       link.download = filename
       link.click()
       URL.revokeObjectURL(url)
+      if (kitId) {
+        void loadExportFiles(kitId)
+      }
       setStatus("Package Generated")
       setMessage(`${filename} downloaded.`)
     } catch {
@@ -456,6 +550,9 @@ export function KitFactoryDashboard() {
       link.download = filename
       link.click()
       URL.revokeObjectURL(url)
+      if (kitId) {
+        void loadExportFiles(kitId)
+      }
       setStatus("Package Generated")
       setMessage(`${filename} downloaded.`)
     } catch {
@@ -550,6 +647,8 @@ export function KitFactoryDashboard() {
 
     setMarkdown(await file.text())
     setKitId(null)
+    setExportFiles([])
+    setCopyFallbackText("")
     setActiveView("dashboard")
     setStatus("Draft")
     setMessage(`${file.name} loaded.`)
@@ -866,13 +965,20 @@ export function KitFactoryDashboard() {
               <PagePreview branch={branch} designPreset={designPreset} kit={result?.kit ?? null} />
               <OutputPanel
                 branchLabel={getBranchInfo(branch).shortName}
+                copyFallbackText={copyFallbackText}
                 designLabel={selectedTokens.name}
+                exportFiles={exportFiles}
+                isLoadingExports={isLoadingExports}
                 isWorking={isWorking}
+                onCopyAllExports={copyAllExportLinks}
+                onCopyExport={copySingleExportLink}
+                onCopyLatestExport={copyLatestExportLink}
                 onDownloadFillable={() => downloadOutput("fillable")}
                 onDownloadMockup={downloadMockup}
                 onDownloadPdf={() => downloadOutput("render")}
                 onDownloadWorkbookPdf={() => downloadOutput("render", "workbook")}
                 onMarkReadyToSell={markReadyToSell}
+                onRefreshExports={() => void loadExportFiles()}
                 progressValue={progressValue}
                 status={status}
                 canMarkReady={Boolean(kitId)}
@@ -3053,25 +3159,39 @@ function MiniFillablePreview({ page }: { page: KitPage }) {
 function OutputPanel({
   branchLabel,
   canMarkReady,
+  copyFallbackText,
   designLabel,
+  exportFiles,
+  isLoadingExports,
   isWorking,
+  onCopyAllExports,
+  onCopyExport,
+  onCopyLatestExport,
   onDownloadFillable,
   onDownloadMockup,
   onDownloadPdf,
   onDownloadWorkbookPdf,
   onMarkReadyToSell,
+  onRefreshExports,
   progressValue,
   status,
 }: {
   branchLabel: string
   canMarkReady: boolean
+  copyFallbackText: string
   designLabel: string
+  exportFiles: ExportFileSummary[]
+  isLoadingExports: boolean
   isWorking: boolean
+  onCopyAllExports: () => void
+  onCopyExport: (file: ExportFileSummary) => void
+  onCopyLatestExport: () => void
   onDownloadFillable: () => void
   onDownloadMockup: () => void
   onDownloadPdf: () => void
   onDownloadWorkbookPdf: () => void
   onMarkReadyToSell: () => void
+  onRefreshExports: () => void
   progressValue: number
   status: BuildStatus
 }) {
@@ -3197,10 +3317,173 @@ function OutputPanel({
               Mark Ready
             </Button>
           </div>
+
+          <Separator />
+
+          <ExportHistoryPanel
+            files={exportFiles}
+            copyFallbackText={copyFallbackText}
+            isLoading={isLoadingExports}
+            onCopyAll={onCopyAllExports}
+            onCopyFile={onCopyExport}
+            onCopyLatest={onCopyLatestExport}
+            onRefresh={onRefreshExports}
+          />
         </div>
       </CardContent>
     </Card>
   )
+}
+
+function ExportHistoryPanel({
+  copyFallbackText,
+  files,
+  isLoading,
+  onCopyAll,
+  onCopyFile,
+  onCopyLatest,
+  onRefresh,
+}: {
+  copyFallbackText: string
+  files: ExportFileSummary[]
+  isLoading: boolean
+  onCopyAll: () => void
+  onCopyFile: (file: ExportFileSummary) => void
+  onCopyLatest: () => void
+  onRefresh: () => void
+}) {
+  const hasExports = files.length > 0
+
+  return (
+    <div className="grid gap-3 rounded-lg border p-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-2">
+          <HistoryIcon className="size-4 text-primary" />
+          <div>
+            <div className="font-medium">Export History</div>
+            <div className="text-xs text-muted-foreground">
+              {hasExports ? `${files.length} saved file${files.length === 1 ? "" : "s"}` : "No saved files yet"}
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button disabled={isLoading} onClick={onRefresh} size="sm" variant="outline">
+            {isLoading ? (
+              <LoaderCircleIcon data-icon="inline-start" />
+            ) : (
+              <RefreshCwIcon data-icon="inline-start" />
+            )}
+            Refresh
+          </Button>
+          <Button disabled={!hasExports} onClick={onCopyLatest} size="sm" variant="outline">
+            <CopyIcon data-icon="inline-start" />
+            Copy Latest
+          </Button>
+          <Button disabled={!hasExports} onClick={onCopyAll} size="sm" variant="outline">
+            <CopyIcon data-icon="inline-start" />
+            Copy All
+          </Button>
+        </div>
+      </div>
+
+      {hasExports ? (
+        <div className="grid gap-2">
+          {files.slice(0, 8).map((file) => (
+            <div
+              className="grid gap-2 rounded-md border bg-card/50 p-2 text-sm md:grid-cols-[minmax(0,1fr)_auto]"
+              key={file.id}
+            >
+              <div className="min-w-0">
+                <div className="truncate font-medium">{file.filename}</div>
+                <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <span>{prettyExportType(file.fileType)}</span>
+                  <span>{file.status}</span>
+                  <span>{formatExportDate(file.createdAt)}</span>
+                </div>
+              </div>
+              <Button
+                onClick={() => onCopyFile(file)}
+                size="sm"
+                variant="ghost"
+              >
+                <CopyIcon data-icon="inline-start" />
+                Copy
+              </Button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+          Generate a PDF, workbook, fillable file, mockup, or ZIP to save its link here.
+        </div>
+      )}
+
+      {copyFallbackText && (
+        <div className="grid gap-2">
+          <div className="text-xs font-medium text-muted-foreground">Copy-ready links</div>
+          <Textarea
+            aria-label="Copy-ready export links"
+            className="h-20 resize-none font-mono text-xs"
+            onFocus={(event) => event.currentTarget.select()}
+            readOnly
+            value={copyFallbackText}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function prettyExportType(value: string) {
+  return value
+    .split(":")
+    .map((part) => part.replace(/-/g, " "))
+    .join(" / ")
+}
+
+function formatExportDate(value: string) {
+  if (!value) {
+    return "No date"
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(date)
+}
+
+async function writeClipboardText(value: string) {
+  if (globalThis.navigator?.clipboard?.writeText) {
+    await globalThis.navigator.clipboard.writeText(value)
+    return
+  }
+
+  const textarea = document.createElement("textarea")
+  textarea.value = value
+  textarea.setAttribute("readonly", "true")
+  textarea.style.position = "fixed"
+  textarea.style.left = "0"
+  textarea.style.top = "0"
+  textarea.style.width = "1px"
+  textarea.style.height = "1px"
+  textarea.style.opacity = "0"
+  document.body.appendChild(textarea)
+  textarea.focus()
+  textarea.select()
+  textarea.setSelectionRange(0, value.length)
+
+  const copied = document.execCommand("copy")
+  textarea.remove()
+
+  if (!copied) {
+    throw new Error("Copy command failed.")
+  }
 }
 
 function filenameFromResponse(response: Response, fallback: string) {

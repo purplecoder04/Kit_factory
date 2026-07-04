@@ -58,9 +58,9 @@ export async function POST(request: Request) {
         : `${stem}-lesson-guide.pdf`
 
   await finishExportJob({
-    byteSize: pdf.byteLength,
     contentType: "application/pdf",
     exportKind: "pdf",
+    fileData: pdf,
     filename,
     jobId,
     kitId,

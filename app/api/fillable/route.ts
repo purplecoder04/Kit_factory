@@ -55,9 +55,9 @@ export async function POST(request: Request) {
     target === "complete" ? `${stem}-fillable.pdf` : `${stem}-workbook-fillable.pdf`
 
   await finishExportJob({
-    byteSize: fillablePdf.byteLength,
     contentType: "application/pdf",
     exportKind: "fillable",
+    fileData: fillablePdf,
     filename,
     jobId,
     kitId,
