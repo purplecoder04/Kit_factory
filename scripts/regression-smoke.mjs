@@ -101,6 +101,7 @@ async function testDashboardSelectors(baseUrl) {
     await expectVisible(page.getByText("Export History", { exact: true }), "Export History panel")
     await expectVisible(page.getByRole("button", { name: /Copy Latest/i }), "Copy Latest Link action")
     await expectVisible(page.getByRole("button", { name: /Copy All/i }), "Copy All Links action")
+    await expectVisible(page.getByRole("button", { name: /Check Storage/i }), "Storage readiness action")
     await expectVisible(page.getByText("No linked Product yet."), "Ready-to-sell product status")
 
     const selectTriggers = page.locator("button").filter({

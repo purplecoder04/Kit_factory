@@ -121,6 +121,18 @@ type ExportFileSummary = {
   createdAt: string
 }
 
+type StorageHealthSummary = {
+  bucket: string
+  cleanupIssue?: string | null
+  cleanupOk?: boolean
+  issue?: string
+  ok: boolean
+  publicFetchStatus?: number | string
+  publicUrlWorks?: boolean
+  serviceRoleConfigured?: boolean
+  step: string
+}
+
 type DashboardView = "dashboard" | "all-kits"
 
 const packageDocuments: {
@@ -150,7 +162,9 @@ export function KitFactoryDashboard() {
   const [exportFiles, setExportFiles] = useState<ExportFileSummary[]>([])
   const [copyFallbackText, setCopyFallbackText] = useState("")
   const [isLoadingExports, setIsLoadingExports] = useState(false)
+  const [isCheckingStorage, setIsCheckingStorage] = useState(false)
   const [readyProduct, setReadyProduct] = useState<ReadyProductSummary | null>(null)
+  const [storageHealth, setStorageHealth] = useState<StorageHealthSummary | null>(null)
   const [status, setStatus] = useState<BuildStatus>("Draft")
   const [message, setMessage] = useState("Golden kit loaded.")
   const [isWorking, setIsWorking] = useState(false)
@@ -252,6 +266,35 @@ export function KitFactoryDashboard() {
       setCopyFallbackText("")
     } finally {
       setIsLoadingExports(false)
+    }
+  }
+
+  async function checkStorageReadiness() {
+    setIsCheckingStorage(true)
+    setMessage("Checking export storage.")
+
+    try {
+      const response = await fetch("/api/storage/check", {
+        method: "POST",
+      })
+      const payload = (await response.json()) as StorageHealthSummary
+
+      setStorageHealth(payload)
+      setMessage(
+        payload.ok
+          ? "Supabase Storage is ready for public export links."
+          : payload.issue || "Supabase Storage is not ready yet."
+      )
+    } catch {
+      setStorageHealth({
+        bucket: "kit-exports",
+        issue: "The storage check could not run.",
+        ok: false,
+        step: "unexpected",
+      })
+      setMessage("The storage check could not run.")
+    } finally {
+      setIsCheckingStorage(false)
     }
   }
 
@@ -1007,8 +1050,10 @@ export function KitFactoryDashboard() {
                 copyFallbackText={copyFallbackText}
                 designLabel={selectedTokens.name}
                 exportFiles={exportFiles}
+                isCheckingStorage={isCheckingStorage}
                 isLoadingExports={isLoadingExports}
                 isWorking={isWorking}
+                onCheckStorage={checkStorageReadiness}
                 onCopyAllExports={copyAllExportLinks}
                 onCopyExport={copySingleExportLink}
                 onCopyLatestExport={copyLatestExportLink}
@@ -1021,6 +1066,7 @@ export function KitFactoryDashboard() {
                 product={readyProduct}
                 progressValue={progressValue}
                 status={status}
+                storageHealth={storageHealth}
                 canMarkReady={Boolean(kitId)}
               />
             </section>
@@ -3202,8 +3248,10 @@ function OutputPanel({
   copyFallbackText,
   designLabel,
   exportFiles,
+  isCheckingStorage,
   isLoadingExports,
   isWorking,
+  onCheckStorage,
   onCopyAllExports,
   onCopyExport,
   onCopyLatestExport,
@@ -3216,14 +3264,17 @@ function OutputPanel({
   product,
   progressValue,
   status,
+  storageHealth,
 }: {
   branchLabel: string
   canMarkReady: boolean
   copyFallbackText: string
   designLabel: string
   exportFiles: ExportFileSummary[]
+  isCheckingStorage: boolean
   isLoadingExports: boolean
   isWorking: boolean
+  onCheckStorage: () => void
   onCopyAllExports: () => void
   onCopyExport: (file: ExportFileSummary) => void
   onCopyLatestExport: () => void
@@ -3236,6 +3287,7 @@ function OutputPanel({
   product: ReadyProductSummary | null
   progressValue: number
   status: BuildStatus
+  storageHealth: StorageHealthSummary | null
 }) {
   const productIsLive = product?.productStatus === "live"
   const productExportName = friendlyExportName(product?.exportUrl ?? "")
@@ -3271,6 +3323,37 @@ function OutputPanel({
               PDF, fillable, mockup, and ZIP exports are local-only for now. Use the local app for final files.
             </AlertDescription>
           </Alert>
+
+          <div className="flex flex-col gap-3 rounded-lg border p-3 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="font-medium">Supabase Storage</div>
+                <Badge variant={storageHealth?.ok ? "secondary" : "outline"}>
+                  {storageHealth ? storageHealthStatusLabel(storageHealth) : "Not checked"}
+                </Badge>
+              </div>
+              <div className="mt-1 text-xs text-muted-foreground">
+                {storageHealth
+                  ? storageHealthMessage(storageHealth)
+                  : "Check whether exported files can become real public links."}
+              </div>
+            </div>
+            <Button
+              disabled={isCheckingStorage}
+              onClick={onCheckStorage}
+              size="sm"
+              variant="outline"
+            >
+              {isCheckingStorage ? (
+                <LoaderCircleIcon data-icon="inline-start" />
+              ) : storageHealth?.ok ? (
+                <CheckCircle2Icon data-icon="inline-start" />
+              ) : (
+                <RefreshCwIcon data-icon="inline-start" />
+              )}
+              Check Storage
+            </Button>
+          </div>
 
           <div className="flex flex-col gap-3 rounded-lg border p-3 md:flex-row md:items-center md:justify-between">
             <div>
@@ -3577,6 +3660,42 @@ function shortProductId(value: string) {
   }
 
   return value.length > 12 ? `${value.slice(0, 8)}...${value.slice(-4)}` : value
+}
+
+function storageHealthStatusLabel(value: StorageHealthSummary) {
+  if (value.ok) {
+    return "Public links ready"
+  }
+
+  if (value.step === "bucket") {
+    return "Bucket missing"
+  }
+
+  if (value.step === "public-read" || value.step === "public-bucket") {
+    return "Public link blocked"
+  }
+
+  if (value.step === "upload") {
+    return "Upload blocked"
+  }
+
+  return "Needs setup"
+}
+
+function storageHealthMessage(value: StorageHealthSummary) {
+  if (value.ok) {
+    return `Bucket ${value.bucket} can upload files and open public links.`
+  }
+
+  if (value.issue) {
+    return value.issue
+  }
+
+  if (value.step === "public-read") {
+    return "The test file uploaded, but its public link did not open outside the app."
+  }
+
+  return `Storage check stopped at ${value.step}.`
 }
 
 function isLocalFallbackExportUrl(value: string) {
