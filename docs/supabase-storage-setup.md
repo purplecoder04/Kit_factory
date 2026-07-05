@@ -52,6 +52,8 @@ Minimum policy intent:
 
 Once that is in place, PDF, fillable, mockup, Brand ZIP, and Meet at the Heal ZIP exports will upload automatically and save the public URL into `export_files.file_url`.
 
+Before saving a public URL, the app opens the exported file link from the server. If that public read check fails, the export still downloads locally, but the database keeps a `kit-factory-download://` fallback instead of a broken sale link.
+
 ## Current Fallback
 
 If the bucket or policies are missing, exports still download locally. The database keeps a local fallback URL like:

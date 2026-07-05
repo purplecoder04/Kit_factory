@@ -466,4 +466,7 @@ main()
     console.error(error)
     process.exitCode = 1
   })
-  .finally(stopServer)
+  .finally(async () => {
+    await stopServer()
+    process.exit(process.exitCode ?? 0)
+  })

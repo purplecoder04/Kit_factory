@@ -333,6 +333,22 @@ async function uploadExportFile({
     return null
   }
 
+  const publicLink = await checkPublicExportUrl(publicUrl)
+
+  if (!publicLink.ok) {
+    logSupabaseDataWarning(
+      "uploadExportFile.publicUrl",
+      new Error(`Public export URL check failed: ${publicLink.status}`)
+    )
+    const cleanup = await supabase.storage.from(bucket).remove([data.path])
+
+    if (cleanup.error) {
+      logSupabaseDataWarning("uploadExportFile.cleanup", cleanup.error)
+    }
+
+    return null
+  }
+
   return {
     bucket,
     path: data.path,
@@ -1340,6 +1356,30 @@ function publicExportUrlFrom(fileUrl: string) {
     return url.protocol === "http:" || url.protocol === "https:" ? fileUrl : ""
   } catch {
     return ""
+  }
+}
+
+async function checkPublicExportUrl(publicUrl: string) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 5_000)
+
+  try {
+    const response = await fetch(publicUrl, {
+      method: "GET",
+      signal: controller.signal,
+    })
+
+    return {
+      ok: response.ok,
+      status: response.status,
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      status: error instanceof Error ? error.message : "fetch failed",
+    }
+  } finally {
+    clearTimeout(timeout)
   }
 }
 
