@@ -101,7 +101,7 @@ async function ensureBucket(supabase) {
       fail({
         bucket,
         issue:
-          "Bucket not found. Create it in Supabase or add SUPABASE_SERVICE_ROLE_KEY locally so this check can create it.",
+          "Bucket not found. Run docs/supabase-storage-policies.sql in Supabase SQL Editor or add SUPABASE_SERVICE_ROLE_KEY locally so this check can create it.",
         ok: false,
         step: "bucket",
       })

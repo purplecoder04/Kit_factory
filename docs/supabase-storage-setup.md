@@ -38,10 +38,17 @@ When `SUPABASE_SERVICE_ROLE_KEY` is present, the app will automatically create t
 
 If you do not add `SUPABASE_SERVICE_ROLE_KEY`, the local app uses the Supabase anon key, so the bucket needs policies that allow the app to upload and read export files.
 
+The fastest setup path is to open Supabase SQL Editor and run:
+
+```text
+docs/supabase-storage-policies.sql
+```
+
 Minimum policy intent:
 
 - allow insert/upload into `storage.objects` for bucket `kit-exports`
 - allow public read/select from `storage.objects` for bucket `kit-exports`
+- allow temporary health check cleanup for files under `healthcheck/`
 
 Once that is in place, PDF, fillable, mockup, Brand ZIP, and Meet at the Heal ZIP exports will upload automatically and save the public URL into `export_files.file_url`.
 
