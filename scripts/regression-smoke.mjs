@@ -101,6 +101,11 @@ async function testDashboardSelectors(baseUrl) {
 
     await expectVisible(page.getByText("Branch", { exact: true }).first(), "Branch selector label")
     await expectVisible(page.getByText("Design Preset", { exact: true }).first(), "Design Preset selector label")
+    await expectVisible(page.getByTestId("sidebar-new-kit"), "New Kit sidebar action")
+    await expectVisible(page.getByTestId("sidebar-all-kits"), "All Kits sidebar action")
+    await expectVisible(page.getByText("Export History", { exact: true }), "Export History panel")
+    await expectVisible(page.getByRole("button", { name: /Copy Latest/i }), "Copy Latest Link action")
+    await expectVisible(page.getByRole("button", { name: /Copy All/i }), "Copy All Links action")
 
     const selectTriggers = page.locator("button").filter({
       hasText: /Brand Signature|Split|Parse|Generate/i,
@@ -108,6 +113,19 @@ async function testDashboardSelectors(baseUrl) {
     const triggerCount = await selectTriggers.count()
 
     assert(triggerCount >= 3, "Dashboard controls did not render as expected.")
+
+    await page.getByTestId("sidebar-all-kits").click()
+    await expectVisible(page.getByText(/saved kit[s]? in Supabase/i), "All Kits library view")
+    await expectVisible(page.getByTestId("all-kits-search"), "All Kits search input")
+
+    await page.getByTestId("sidebar-new-kit").click()
+    await expectVisible(page.getByText("New kit started."), "New Kit status message")
+
+    const markdownSource = page.getByLabel("Markdown source")
+    const markdownValue = await markdownSource.inputValue()
+
+    assert(markdownValue.includes("title: Untitled Kit"), "New Kit did not load a fresh markdown template.")
+    assert(markdownValue.includes("design_preset: brand"), "New Kit did not reset to the default Brand preset.")
   } finally {
     await browser.close()
   }
