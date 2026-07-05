@@ -298,6 +298,24 @@ export function KitFactoryDashboard() {
     }
   }
 
+  async function copyStorageSetupSql() {
+    try {
+      const response = await fetch("/api/storage/setup-sql")
+
+      if (!response.ok) {
+        const payload = await readApiErrorPayload(response)
+        setMessage(errorMessageFromPayload(payload, "The Supabase setup SQL could not be loaded."))
+        return
+      }
+
+      const payload = (await response.json()) as { sql?: string }
+
+      await copyExportText(payload.sql ?? "", "Supabase setup SQL copied.")
+    } catch {
+      setMessage("The Supabase setup SQL could not be copied.")
+    }
+  }
+
   async function copyExportText(value: string, successMessage: string) {
     if (!value) {
       setMessage("No export link is available yet.")
@@ -1057,6 +1075,7 @@ export function KitFactoryDashboard() {
                 onCopyAllExports={copyAllExportLinks}
                 onCopyExport={copySingleExportLink}
                 onCopyLatestExport={copyLatestExportLink}
+                onCopyStorageSetupSql={copyStorageSetupSql}
                 onDownloadFillable={() => downloadOutput("fillable")}
                 onDownloadMockup={downloadMockup}
                 onDownloadPdf={() => downloadOutput("render")}
@@ -3255,6 +3274,7 @@ function OutputPanel({
   onCopyAllExports,
   onCopyExport,
   onCopyLatestExport,
+  onCopyStorageSetupSql,
   onDownloadFillable,
   onDownloadMockup,
   onDownloadPdf,
@@ -3278,6 +3298,7 @@ function OutputPanel({
   onCopyAllExports: () => void
   onCopyExport: (file: ExportFileSummary) => void
   onCopyLatestExport: () => void
+  onCopyStorageSetupSql: () => void
   onDownloadFillable: () => void
   onDownloadMockup: () => void
   onDownloadPdf: () => void
@@ -3338,21 +3359,34 @@ function OutputPanel({
                   : "Check whether exported files can become real public links."}
               </div>
             </div>
-            <Button
-              disabled={isCheckingStorage}
-              onClick={onCheckStorage}
-              size="sm"
-              variant="outline"
-            >
-              {isCheckingStorage ? (
-                <LoaderCircleIcon data-icon="inline-start" />
-              ) : storageHealth?.ok ? (
-                <CheckCircle2Icon data-icon="inline-start" />
-              ) : (
-                <RefreshCwIcon data-icon="inline-start" />
+            <div className="flex flex-wrap gap-2">
+              {!storageHealth?.ok && (
+                <Button
+                  disabled={isCheckingStorage}
+                  onClick={onCopyStorageSetupSql}
+                  size="sm"
+                  variant="ghost"
+                >
+                  <CopyIcon data-icon="inline-start" />
+                  Copy Setup SQL
+                </Button>
               )}
-              Check Storage
-            </Button>
+              <Button
+                disabled={isCheckingStorage}
+                onClick={onCheckStorage}
+                size="sm"
+                variant="outline"
+              >
+                {isCheckingStorage ? (
+                  <LoaderCircleIcon data-icon="inline-start" />
+                ) : storageHealth?.ok ? (
+                  <CheckCircle2Icon data-icon="inline-start" />
+                ) : (
+                  <RefreshCwIcon data-icon="inline-start" />
+                )}
+                Check Storage
+              </Button>
+            </div>
           </div>
 
           <div className="flex flex-col gap-3 rounded-lg border p-3 md:flex-row md:items-center md:justify-between">
@@ -3597,9 +3631,9 @@ function ExportHistoryPanel({
 
       {copyFallbackText && (
         <div className="grid gap-2">
-          <div className="text-xs font-medium text-muted-foreground">Copy-ready links</div>
+          <div className="text-xs font-medium text-muted-foreground">Copy-ready text</div>
           <Textarea
-            aria-label="Copy-ready export links"
+            aria-label="Copy-ready text"
             className="h-20 resize-none font-mono text-xs"
             onFocus={(event) => event.currentTarget.select()}
             readOnly

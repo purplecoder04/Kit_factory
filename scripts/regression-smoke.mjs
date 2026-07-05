@@ -21,6 +21,7 @@ async function main() {
 
   await testDashboardSelectors(baseUrl)
   await testStorageReadinessEndpoint(baseUrl)
+  await testStorageSetupSqlEndpoint(baseUrl)
   await testParserDefaults(baseUrl, markdown)
   await testReadyRequiresPublicExport(baseUrl, markdown)
   await testSplitPdfOutputs(baseUrl, markdown)
@@ -103,6 +104,7 @@ async function testDashboardSelectors(baseUrl) {
     await expectVisible(page.getByRole("button", { name: /Copy Latest/i }), "Copy Latest Link action")
     await expectVisible(page.getByRole("button", { name: /Copy All/i }), "Copy All Links action")
     await expectVisible(page.getByRole("button", { name: /Check Storage/i }), "Storage readiness action")
+    await expectVisible(page.getByRole("button", { name: /Copy Setup SQL/i }), "Storage setup SQL action")
     await expectVisible(page.getByText("No linked Product yet."), "Ready-to-sell product status")
 
     const selectTriggers = page.locator("button").filter({
@@ -206,6 +208,15 @@ async function testStorageReadinessEndpoint(baseUrl) {
   if (!body.ok) {
     assert(typeof body.issue === "string" && body.issue.length > 0, "Storage check failure did not explain the issue.")
   }
+}
+
+async function testStorageSetupSqlEndpoint(baseUrl) {
+  const payload = await getJson(baseUrl, "/api/storage/setup-sql")
+
+  assert(typeof payload.sql === "string", "Storage setup SQL endpoint did not return SQL text.")
+  assert(payload.sql.includes("insert into storage.buckets"), "Storage setup SQL is missing the bucket setup.")
+  assert(payload.sql.includes("Kit Factory public export reads"), "Storage setup SQL is missing the public read policy.")
+  assert(payload.sql.includes("Kit Factory anon export uploads"), "Storage setup SQL is missing the upload policy.")
 }
 
 async function testSplitPdfOutputs(baseUrl, markdown) {
@@ -325,6 +336,16 @@ async function testMeetAtTheHealPackage(baseUrl) {
   for (const filename of filenames) {
     assert(zipText.includes(filename), `Package ZIP is missing ${filename}.`)
   }
+}
+
+async function getJson(baseUrl, route) {
+  const response = await fetch(new URL(route, baseUrl))
+
+  if (!response.ok) {
+    throw new Error(`${route} failed with status ${response.status}: ${await response.text()}`)
+  }
+
+  return response.json()
 }
 
 async function postJson(baseUrl, route, body) {
