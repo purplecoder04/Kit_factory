@@ -274,19 +274,31 @@ export function KitFactoryDashboard() {
   function copyLatestExportLink() {
     const latestExport = exportFiles[0]
 
-    void copyExportText(latestExport?.fileUrl ?? "", "Latest export link copied.")
+    void copyExportText(
+      latestExport?.fileUrl ?? "",
+      copyExportSuccessMessage(latestExport, "Latest export link copied.")
+    )
   }
 
   function copyAllExportLinks() {
+    const hasLocalFallbackLinks = exportFiles.some((file) => isLocalFallbackExportUrl(file.fileUrl))
     const exportList = exportFiles
-      .map((file) => `${file.fileType}\t${file.filename}\t${file.fileUrl}`)
+      .map(
+        (file) =>
+          `${file.fileType}\t${file.filename}\t${exportLinkKindLabel(file.fileUrl)}\t${file.fileUrl}`
+      )
       .join("\n")
 
-    void copyExportText(exportList, "All export links copied.")
+    void copyExportText(
+      exportList,
+      hasLocalFallbackLinks
+        ? "Export list copied. Local fallbacks still need Supabase Storage for public links."
+        : "All export links copied."
+    )
   }
 
   function copySingleExportLink(file: ExportFileSummary) {
-    void copyExportText(file.fileUrl, `${file.filename} link copied.`)
+    void copyExportText(file.fileUrl, copyExportSuccessMessage(file, `${file.filename} link copied.`))
   }
 
   async function openSavedKit(savedKitId: string) {
@@ -3221,6 +3233,7 @@ function OutputPanel({
 }) {
   const productIsLive = product?.productStatus === "live"
   const productExportName = friendlyExportName(product?.exportUrl ?? "")
+  const productUsesLocalFallback = isLocalFallbackExportUrl(product?.exportUrl ?? "")
 
   return (
     <Card>
@@ -3346,8 +3359,22 @@ function OutputPanel({
                   </div>
                   <div className="truncate">
                     <span className="font-medium text-foreground">Export used:</span>{" "}
-                    {productExportName || "export pending"}
+                    {productExportName || "export pending"}{" "}
+                    {product?.exportUrl && (
+                      <Badge
+                        className="align-middle"
+                        variant={productUsesLocalFallback ? "destructive" : "secondary"}
+                      >
+                        {exportLinkKindLabel(product.exportUrl)}
+                      </Badge>
+                    )}
                   </div>
+                  {productUsesLocalFallback && (
+                    <div className="rounded-md border border-destructive/30 bg-destructive/5 p-2 text-destructive">
+                      This Product is linked to a local fallback file, not a public sale link yet.
+                      Finish Supabase Storage before using it on a live sales page.
+                    </div>
+                  )}
                   {product.reusedProduct && (
                     <div className="text-primary">Existing Product reused to prevent duplicates.</div>
                   )}
@@ -3442,29 +3469,36 @@ function ExportHistoryPanel({
 
       {hasExports ? (
         <div className="grid gap-2">
-          {files.slice(0, 8).map((file) => (
-            <div
-              className="grid gap-2 rounded-md border bg-card/50 p-2 text-sm md:grid-cols-[minmax(0,1fr)_auto]"
-              key={file.id}
-            >
-              <div className="min-w-0">
-                <div className="truncate font-medium">{file.filename}</div>
-                <div className="mt-1 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  <span>{prettyExportType(file.fileType)}</span>
-                  <span>{file.status}</span>
-                  <span>{formatExportDate(file.createdAt)}</span>
-                </div>
-              </div>
-              <Button
-                onClick={() => onCopyFile(file)}
-                size="sm"
-                variant="ghost"
+          {files.slice(0, 8).map((file) => {
+            const hasLocalFallbackLink = isLocalFallbackExportUrl(file.fileUrl)
+
+            return (
+              <div
+                className="grid gap-2 rounded-md border bg-card/50 p-2 text-sm md:grid-cols-[minmax(0,1fr)_auto]"
+                key={file.id}
               >
-                <CopyIcon data-icon="inline-start" />
-                Copy
-              </Button>
-            </div>
-          ))}
+                <div className="min-w-0">
+                  <div className="truncate font-medium">{file.filename}</div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span>{prettyExportType(file.fileType)}</span>
+                    <span>{file.status}</span>
+                    <span>{formatExportDate(file.createdAt)}</span>
+                    <Badge variant={hasLocalFallbackLink ? "destructive" : "secondary"}>
+                      {exportLinkKindLabel(file.fileUrl)}
+                    </Badge>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => onCopyFile(file)}
+                  size="sm"
+                  variant="ghost"
+                >
+                  <CopyIcon data-icon="inline-start" />
+                  Copy
+                </Button>
+              </div>
+            )
+          })}
         </div>
       ) : (
         <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
@@ -3537,6 +3571,26 @@ function shortProductId(value: string) {
   }
 
   return value.length > 12 ? `${value.slice(0, 8)}...${value.slice(-4)}` : value
+}
+
+function isLocalFallbackExportUrl(value: string) {
+  return value.startsWith("kit-factory-download://")
+}
+
+function exportLinkKindLabel(value: string) {
+  if (!value) {
+    return "No link"
+  }
+
+  return isLocalFallbackExportUrl(value) ? "Local fallback" : "Public link"
+}
+
+function copyExportSuccessMessage(file: ExportFileSummary | undefined, publicLinkMessage: string) {
+  if (file && isLocalFallbackExportUrl(file.fileUrl)) {
+    return "Local fallback copied. Supabase Storage is still needed for public links."
+  }
+
+  return publicLinkMessage
 }
 
 function friendlyExportName(value: string) {
