@@ -20,6 +20,7 @@ async function main() {
   const markdown = await fs.readFile(samplePath, "utf8")
 
   await testDashboardSelectors(baseUrl)
+  await testStorageReadinessEndpoint(baseUrl)
   await testParserDefaults(baseUrl, markdown)
   await testReadyRequiresPublicExport(baseUrl, markdown)
   await testSplitPdfOutputs(baseUrl, markdown)
@@ -182,6 +183,29 @@ async function testReadyRequiresPublicExport(baseUrl, markdown) {
     /public export/i.test(body.error || ""),
     "Ready-to-sell fallback guard did not explain that a public export is required."
   )
+}
+
+async function testStorageReadinessEndpoint(baseUrl) {
+  const response = await fetch(new URL("/api/storage/check", baseUrl), {
+    method: "POST",
+  })
+  const body = await response.json()
+
+  assert(
+    response.status === 200 || response.status === 409,
+    `Storage check returned ${response.status}, expected 200 or 409.`
+  )
+  assert(typeof body.bucket === "string" && body.bucket.length > 0, "Storage check did not report a bucket.")
+  assert(typeof body.ok === "boolean", "Storage check did not report ok as a boolean.")
+  assert(typeof body.step === "string" && body.step.length > 0, "Storage check did not report a step.")
+  assert(
+    response.status === (body.ok ? 200 : 409),
+    "Storage check HTTP status did not match the ok flag."
+  )
+
+  if (!body.ok) {
+    assert(typeof body.issue === "string" && body.issue.length > 0, "Storage check failure did not explain the issue.")
+  }
 }
 
 async function testSplitPdfOutputs(baseUrl, markdown) {
