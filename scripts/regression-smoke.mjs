@@ -16,7 +16,7 @@ const startedServerUrl = process.env.KIT_FACTORY_TEST_URL
 let serverProcess
 
 async function main() {
-  const baseUrl = startedServerUrl || (await existingServerUrl()) || (await startServer())
+  const baseUrl = startedServerUrl || (await startServer())
   const markdown = await fs.readFile(samplePath, "utf8")
 
   await testDashboardSelectors(baseUrl)
@@ -71,12 +71,6 @@ async function startServer() {
   return baseUrl
 }
 
-async function existingServerUrl() {
-  const url = "http://localhost:3000"
-
-  return (await isHealthyUrl(url)) ? url : ""
-}
-
 async function isHealthyUrl(url) {
   try {
     const response = await fetch(url)
@@ -106,6 +100,7 @@ async function testDashboardSelectors(baseUrl) {
     await expectVisible(page.getByText("Export History", { exact: true }), "Export History panel")
     await expectVisible(page.getByRole("button", { name: /Copy Latest/i }), "Copy Latest Link action")
     await expectVisible(page.getByRole("button", { name: /Copy All/i }), "Copy All Links action")
+    await expectVisible(page.getByText("No linked Product yet."), "Ready-to-sell product status")
 
     const selectTriggers = page.locator("button").filter({
       hasText: /Brand Signature|Split|Parse|Generate/i,

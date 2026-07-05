@@ -83,6 +83,7 @@ type ReadyProductSummary = {
   exportUrl: string
   productId: string
   productStatus: string
+  reusedProduct?: boolean
 }
 
 type BuildStatus =
@@ -601,7 +602,11 @@ export function KitFactoryDashboard() {
       await loadSavedKits()
       setReadyProduct(productSummaryFromPayload(payload))
       setStatus("Ready to Sell")
-      setMessage("Kit marked ready to sell and linked to Products.")
+      setMessage(
+        payload.reusedProduct
+          ? "Existing Product updated and linked to this kit."
+          : "Kit marked ready to sell and linked to Products."
+      )
     } catch {
       setStatus("Error")
       setMessage("The kit could not be marked ready to sell.")
@@ -3215,6 +3220,7 @@ function OutputPanel({
   status: BuildStatus
 }) {
   const productIsLive = product?.productStatus === "live"
+  const productExportName = friendlyExportName(product?.exportUrl ?? "")
 
   return (
     <Card>
@@ -3321,13 +3327,36 @@ function OutputPanel({
           <Separator />
 
           <div className="flex flex-col gap-3 rounded-lg border border-primary/30 bg-primary/5 p-3 md:flex-row md:items-center md:justify-between">
-            <div>
+            <div className="min-w-0">
               <div className="font-medium">Ready to sell</div>
               <div className="text-xs text-muted-foreground">
                 {productIsLive
-                  ? `Product live - ${friendlyExportName(product.exportUrl) || "export pending"}`
+                  ? "Linked Product is live"
                   : "Creates or updates the linked Products record"}
               </div>
+              {product ? (
+                <div className="mt-2 grid gap-1 text-xs text-muted-foreground">
+                  <div>
+                    <span className="font-medium text-foreground">Product status:</span>{" "}
+                    {product.productStatus || "unknown"}
+                  </div>
+                  <div>
+                    <span className="font-medium text-foreground">Product id:</span>{" "}
+                    {shortProductId(product.productId)}
+                  </div>
+                  <div className="truncate">
+                    <span className="font-medium text-foreground">Export used:</span>{" "}
+                    {productExportName || "export pending"}
+                  </div>
+                  {product.reusedProduct && (
+                    <div className="text-primary">Existing Product reused to prevent duplicates.</div>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-2 text-xs text-muted-foreground">
+                  No linked Product yet. Generate an export, then mark the kit ready.
+                </div>
+              )}
             </div>
             <Button
               disabled={isWorking || !canMarkReady}
@@ -3488,6 +3517,7 @@ function productSummaryFromPayload(payload: {
   productExportUrl?: string
   productId?: string
   productStatus?: string
+  reusedProduct?: boolean
 }) {
   if (!payload.productId) {
     return null
@@ -3497,7 +3527,16 @@ function productSummaryFromPayload(payload: {
     exportUrl: payload.exportUrl || payload.productExportUrl || "",
     productId: payload.productId,
     productStatus: payload.productStatus || "",
+    reusedProduct: payload.reusedProduct,
   }
+}
+
+function shortProductId(value: string) {
+  if (!value) {
+    return "pending"
+  }
+
+  return value.length > 12 ? `${value.slice(0, 8)}...${value.slice(-4)}` : value
 }
 
 function friendlyExportName(value: string) {
