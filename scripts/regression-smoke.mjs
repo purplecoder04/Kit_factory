@@ -21,6 +21,7 @@ async function main() {
 
   await testDashboardSelectors(baseUrl)
   await testParserDefaults(baseUrl, markdown)
+  await testReadyRequiresPublicExport(baseUrl, markdown)
   await testSplitPdfOutputs(baseUrl, markdown)
   await testFillableFields(baseUrl, markdown)
   await testMockupOutput(baseUrl, markdown)
@@ -35,7 +36,7 @@ async function startServer() {
   const nextCli = path.join(root, "node_modules", "next", "dist", "bin", "next")
   const baseUrl = `http://127.0.0.1:${port}`
 
-  serverProcess = spawn(process.execPath, [nextCli, "dev", "-p", String(port), "--hostname", "127.0.0.1"], {
+  serverProcess = spawn(process.execPath, ["--use-system-ca", nextCli, "dev", "-p", String(port), "--hostname", "127.0.0.1"], {
     cwd: root,
     env: {
       ...process.env,
@@ -150,6 +151,36 @@ async function testParserDefaults(baseUrl, markdown) {
   assert(checklistPage?.checks.length >= 3, "CHECK fields were not parsed on checklist page.")
   assert(progressPage?.content.some((block) => block.type === "check-list"), "Progress CHECK fields were not parsed as non-fillable checks.")
   assert(resourcePage?.content.some((block) => block.type === "key-term"), "Resource KEY_TERM was not parsed.")
+}
+
+async function testReadyRequiresPublicExport(baseUrl, markdown) {
+  const uniqueMarkdown = markdown.replace(
+    /^title:.*$/m,
+    `title: Ready Guard Smoke ${Date.now()}`
+  )
+  const payload = await postJson(baseUrl, "/api/parse", {
+    markdown: uniqueMarkdown,
+    branch: "brand",
+    designPreset: "brand",
+    outputMode: "split",
+    persist: true,
+  })
+
+  if (!payload.kitId) {
+    return
+  }
+
+  const response = await fetch(new URL(`/api/kits/${payload.kitId}/ready`, baseUrl), {
+    method: "POST",
+  })
+  const body = await response.json()
+
+  assert(response.status === 409, `Ready-to-sell fallback guard returned ${response.status}, expected 409.`)
+  assert(body.code === "missing_public_export", `Expected missing_public_export, got ${body.code}.`)
+  assert(
+    /public export/i.test(body.error || ""),
+    "Ready-to-sell fallback guard did not explain that a public export is required."
+  )
 }
 
 async function testSplitPdfOutputs(baseUrl, markdown) {

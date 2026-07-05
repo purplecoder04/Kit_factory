@@ -16,9 +16,14 @@ export async function POST(
   const result = await markKitReadyToSell(kitId)
 
   if (!result.productId) {
+    const status = result.code === "missing_public_export" ? 409 : 500
+
     return Response.json(
-      { error: "The kit could not be marked ready to sell." },
-      { status: 500 }
+      {
+        code: result.code,
+        error: result.error || "The kit could not be marked ready to sell.",
+      },
+      { status }
     )
   }
 

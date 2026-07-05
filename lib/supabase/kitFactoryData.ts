@@ -60,6 +60,15 @@ type ProductSummary = {
   status: string
 }
 
+type MarkReadyToSellResult = {
+  code?: "missing_public_export" | "unknown_error"
+  error?: string
+  exportUrl?: string
+  productId: string | null
+  productStatus?: string
+  reusedProduct?: boolean
+}
+
 type ExportKind = "pdf" | "fillable" | "mockup" | "zip"
 
 const missingColumnPatterns = [
@@ -423,7 +432,11 @@ export async function markKitReadyToSell(kitId: string) {
   return withSupabaseTimeout(
     markKitReadyToSellNow(kitId),
     6_000,
-    { productId: null },
+    {
+      code: "unknown_error",
+      error: "The kit could not be marked ready to sell before the request timed out.",
+      productId: null,
+    } satisfies MarkReadyToSellResult,
     "markKitReadyToSell"
   )
 }
@@ -566,11 +579,15 @@ export async function listKitExportFiles(kitId: string): Promise<SavedExportFile
     .filter((file) => file.id && file.fileUrl)
 }
 
-async function markKitReadyToSellNow(kitId: string) {
+async function markKitReadyToSellNow(kitId: string): Promise<MarkReadyToSellResult> {
   const supabase = getSupabaseServerClient()
 
   if (!supabase) {
-    return { productId: null }
+    return {
+      code: "unknown_error",
+      error: "Supabase is not configured, so the kit cannot be marked ready to sell.",
+      productId: null,
+    }
   }
 
   const { data: kit, error: kitError } = await supabase
@@ -584,7 +601,11 @@ async function markKitReadyToSellNow(kitId: string) {
       logSupabaseDataWarning("markKitReadyToSell.kit", kitError)
     }
 
-    return { productId: null }
+    return {
+      code: "unknown_error",
+      error: "The saved kit could not be found.",
+      productId: null,
+    }
   }
 
   const exportUrl = await findLatestExportUrl(supabase, kitId)
@@ -605,6 +626,16 @@ async function markKitReadyToSellNow(kitId: string) {
       branch,
       name: productName,
     }))
+  const publicExportUrl = publicExportUrlFrom(exportUrl) || publicExportUrlFrom(linkedProduct?.exportUrl ?? "")
+
+  if (!publicExportUrl) {
+    return {
+      code: "missing_public_export",
+      error:
+        "Generate a public export after Supabase Storage is ready, then mark the kit ready to sell. Local fallback files cannot be used as public product links.",
+      productId: null,
+    }
+  }
 
   if (linkedProduct) {
     await updateRow(
@@ -613,7 +644,7 @@ async function markKitReadyToSellNow(kitId: string) {
       {
         branch,
         created_from: "kit_factory",
-        export_url: exportUrl || linkedProduct.exportUrl,
+        export_url: publicExportUrl,
         name: productName,
         status: "live",
         type: productType,
@@ -624,7 +655,7 @@ async function markKitReadyToSellNow(kitId: string) {
     await updateKitProductLink(supabase, kitId, linkedProduct.id)
 
     return {
-      exportUrl: exportUrl || linkedProduct.exportUrl,
+      exportUrl: publicExportUrl,
       productId: linkedProduct.id,
       productStatus: "live",
       reusedProduct: true,
@@ -637,7 +668,7 @@ async function markKitReadyToSellNow(kitId: string) {
     {
       branch,
       created_from: "kit_factory",
-      export_url: exportUrl,
+      export_url: publicExportUrl,
       name: productName,
       status: "live",
       type: productType,
@@ -650,7 +681,11 @@ async function markKitReadyToSellNow(kitId: string) {
       logSupabaseDataWarning("markKitReadyToSell.products", productError)
     }
 
-    return { productId: null }
+    return {
+      code: "unknown_error",
+      error: "The Product row could not be created.",
+      productId: null,
+    }
   }
 
   const updateError = await updateKitProductLink(supabase, kitId, product.id)
@@ -660,7 +695,7 @@ async function markKitReadyToSellNow(kitId: string) {
   }
 
   return {
-    exportUrl,
+    exportUrl: publicExportUrl,
     productId: product.id,
     productStatus: "live",
     reusedProduct: false,
@@ -1291,6 +1326,20 @@ function filenameFromExportUrl(fileUrl: string) {
     const filename = fileUrl.split("/").filter(Boolean).at(-1)
 
     return filename ? decodeURIComponent(filename) : "Export file"
+  }
+}
+
+function publicExportUrlFrom(fileUrl: string) {
+  if (!fileUrl || fileUrl.startsWith("kit-factory-download://")) {
+    return ""
+  }
+
+  try {
+    const url = new URL(fileUrl)
+
+    return url.protocol === "http:" || url.protocol === "https:" ? fileUrl : ""
+  } catch {
+    return ""
   }
 }
 

@@ -605,8 +605,14 @@ export function KitFactoryDashboard() {
       })
 
       if (!response.ok) {
+        const payload = await readApiErrorPayload(response)
         setStatus("Error")
-        setMessage("The product record could not be created.")
+        setMessage(
+          errorMessageFromPayload(
+            payload,
+            "Generate a public export before marking this kit ready to sell."
+          )
+        )
         return
       }
 
