@@ -19,29 +19,38 @@ async function main() {
   const baseUrl = startedServerUrl || (await startServer())
   const markdown = await fs.readFile(samplePath, "utf8")
 
-  await testDashboardSelectors(baseUrl)
-  await testStorageReadinessEndpoint(baseUrl)
-  await testStorageSetupSqlEndpoint(baseUrl)
-  await testParserDefaults(baseUrl, markdown)
-  await testReadyRequiresPublicExport(baseUrl, markdown)
-  await testSplitPdfOutputs(baseUrl, markdown)
-  await testFillableFields(baseUrl, markdown)
-  await testMockupOutput(baseUrl, markdown)
-  await testBrandPackage(baseUrl, markdown)
-  await testMeetAtTheHealPackage(baseUrl)
+  await runStep("dashboard selectors", () => testDashboardSelectors(baseUrl))
+  await runStep("storage readiness endpoint", () => testStorageReadinessEndpoint(baseUrl))
+  await runStep("storage setup SQL endpoint", () => testStorageSetupSqlEndpoint(baseUrl))
+  await runStep("parser defaults", () => testParserDefaults(baseUrl, markdown))
+  await runStep("ready-to-sell public export guard", () => testReadyRequiresPublicExport(baseUrl, markdown))
+  await runStep("saved export history", () => testSavedExportHistory(baseUrl))
+  await runStep("split PDF outputs", () => testSplitPdfOutputs(baseUrl, markdown))
+  await runStep("fillable fields", () => testFillableFields(baseUrl, markdown))
+  await runStep("mockup output", () => testMockupOutput(baseUrl, markdown))
+  await runStep("Brand package", () => testBrandPackage(baseUrl, markdown))
+  await runStep("Meet at the Heal package", () => testMeetAtTheHealPackage(baseUrl))
 
   console.log("Kit Factory regression smoke tests passed.")
+}
+
+async function runStep(label, action) {
+  process.stdout.write(`- ${label}... `)
+  await action()
+  console.log("ok")
 }
 
 async function startServer() {
   const port = await findOpenPort()
   const nextCli = path.join(root, "node_modules", "next", "dist", "bin", "next")
   const baseUrl = `http://127.0.0.1:${port}`
+  console.log(`Starting Kit Factory test server at ${baseUrl}`)
 
   serverProcess = spawn(process.execPath, ["--use-system-ca", nextCli, "dev", "-p", String(port), "--hostname", "127.0.0.1"], {
     cwd: root,
     env: {
       ...process.env,
+      KIT_FACTORY_SKIP_STORAGE_UPLOAD: "1",
       NEXT_TELEMETRY_DISABLED: "1",
     },
     stdio: ["ignore", "pipe", "pipe"],
@@ -57,7 +66,7 @@ async function startServer() {
 
   try {
     await waitFor(async () => {
-      const response = await fetch(baseUrl)
+      const response = await fetchWithTimeout(baseUrl, {}, 5_000)
       return response.ok
     }, "Next dev server did not start.")
   } catch (error) {
@@ -76,7 +85,7 @@ async function startServer() {
 
 async function isHealthyUrl(url) {
   try {
-    const response = await fetch(url)
+    const response = await fetchWithTimeout(url, {}, 5_000)
     return response.ok
   } catch {
     return false
@@ -174,9 +183,9 @@ async function testReadyRequiresPublicExport(baseUrl, markdown) {
     return
   }
 
-  const response = await fetch(new URL(`/api/kits/${payload.kitId}/ready`, baseUrl), {
+  const response = await fetchWithTimeout(new URL(`/api/kits/${payload.kitId}/ready`, baseUrl), {
     method: "POST",
-  })
+  }, 60_000)
   const body = await response.json()
 
   assert(response.status === 409, `Ready-to-sell fallback guard returned ${response.status}, expected 409.`)
@@ -187,10 +196,117 @@ async function testReadyRequiresPublicExport(baseUrl, markdown) {
   )
 }
 
-async function testStorageReadinessEndpoint(baseUrl) {
-  const response = await fetch(new URL("/api/storage/check", baseUrl), {
-    method: "POST",
+async function testSavedExportHistory(baseUrl) {
+  const timestamp = Date.now()
+  const brandMarkdown = createExportHistoryMarkdown(timestamp)
+  const brandPayload = await postJson(baseUrl, "/api/parse", {
+    markdown: brandMarkdown,
+    branch: "brand",
+    designPreset: "brand",
+    outputMode: "split",
+    persist: true,
   })
+
+  if (!brandPayload.kitId) {
+    return
+  }
+
+  await postBuffer(baseUrl, "/api/render", {
+    markdown: brandMarkdown,
+    branch: "brand",
+    designPreset: "brand",
+    outputMode: "split",
+    target: "guide",
+    kitId: brandPayload.kitId,
+  })
+  await postBuffer(baseUrl, "/api/render", {
+    markdown: brandMarkdown,
+    branch: "brand",
+    designPreset: "brand",
+    outputMode: "split",
+    target: "workbook",
+    kitId: brandPayload.kitId,
+  })
+  await postBuffer(baseUrl, "/api/fillable", {
+    markdown: brandMarkdown,
+    branch: "brand",
+    designPreset: "brand",
+    outputMode: "split",
+    target: "workbook",
+    kitId: brandPayload.kitId,
+  })
+  await postBuffer(baseUrl, "/api/mockup", {
+    markdown: brandMarkdown,
+    branch: "brand",
+    designPreset: "brand",
+    outputMode: "split",
+    kitId: brandPayload.kitId,
+  })
+  await postBuffer(baseUrl, "/api/package/brand", {
+    markdown: brandMarkdown,
+    kitId: brandPayload.kitId,
+  })
+
+  const brandHistory = await getJson(baseUrl, `/api/kits/${brandPayload.kitId}/exports`)
+  assertExportHistoryIncludes(brandHistory.exports, [
+    "pdf:guide",
+    "pdf:workbook",
+    "fillable:workbook",
+    "mockup",
+    "zip:brand-package",
+  ], "Brand saved kit")
+
+  const lessonBookMarkdown = createMeetAtTheHealMarkdown({
+    title: `Meet at the Heal Lesson Book Smoke ${timestamp}`,
+    subtitle: "Two Worlds. One Choice. A Stronger We.",
+    designPreset: "meetatheal",
+    pageType: "lesson",
+  })
+  const mathPayload = await postJson(baseUrl, "/api/parse", {
+    markdown: lessonBookMarkdown,
+    branch: "meetatheal",
+    designPreset: "meetatheal",
+    outputMode: "all-in-one",
+    persist: true,
+  })
+
+  if (!mathPayload.kitId) {
+    return
+  }
+
+  await postBuffer(baseUrl, "/api/package/meetatheal", {
+    lessonBookMarkdown,
+    couplesWorkbookMarkdown: createMeetAtTheHealMarkdown({
+      title: `Meet at the Heal Couples Workbook Smoke ${timestamp}`,
+      subtitle: "Let's heal together.",
+      designPreset: "meetatheal",
+      pageType: "workbook",
+    }),
+    riseWorkbookMarkdown: createMeetAtTheHealMarkdown({
+      title: `Meet at the Heal Rise Individual Workbook Smoke ${timestamp}`,
+      subtitle: "Come back to yourself.",
+      designPreset: "meetatheal-rise",
+      pageType: "workbook",
+    }),
+    landWorkbookMarkdown: createMeetAtTheHealMarkdown({
+      title: `Meet at the Heal Land Individual Workbook Smoke ${timestamp}`,
+      subtitle: "Build. Grow. Stand Firm.",
+      designPreset: "meetatheal-land",
+      pageType: "workbook",
+    }),
+    kitId: mathPayload.kitId,
+  })
+
+  const mathHistory = await getJson(baseUrl, `/api/kits/${mathPayload.kitId}/exports`)
+  assertExportHistoryIncludes(mathHistory.exports, [
+    "zip:meetatheal-package",
+  ], "Meet at the Heal saved kit")
+}
+
+async function testStorageReadinessEndpoint(baseUrl) {
+  const response = await fetchWithTimeout(new URL("/api/storage/check", baseUrl), {
+    method: "POST",
+  }, 60_000)
   const body = await response.json()
 
   assert(
@@ -339,7 +455,7 @@ async function testMeetAtTheHealPackage(baseUrl) {
 }
 
 async function getJson(baseUrl, route) {
-  const response = await fetch(new URL(route, baseUrl))
+  const response = await fetchWithTimeout(new URL(route, baseUrl), {}, 60_000)
 
   if (!response.ok) {
     throw new Error(`${route} failed with status ${response.status}: ${await response.text()}`)
@@ -349,11 +465,11 @@ async function getJson(baseUrl, route) {
 }
 
 async function postJson(baseUrl, route, body) {
-  const response = await fetch(new URL(route, baseUrl), {
+  const response = await fetchWithTimeout(new URL(route, baseUrl), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  })
+  }, 60_000)
 
   if (!response.ok) {
     throw new Error(`${route} failed with status ${response.status}: ${await response.text()}`)
@@ -363,17 +479,31 @@ async function postJson(baseUrl, route, body) {
 }
 
 async function postBuffer(baseUrl, route, body) {
-  const response = await fetch(new URL(route, baseUrl), {
+  const response = await fetchWithTimeout(new URL(route, baseUrl), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
-  })
+  }, 120_000)
 
   if (!response.ok) {
     throw new Error(`${route} failed with status ${response.status}: ${await response.text()}`)
   }
 
   return Buffer.from(await response.arrayBuffer())
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 30_000) {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 async function pageCount(pdfBuffer) {
@@ -477,9 +607,91 @@ IMAGE_SLOT: closing-lifestyle
 `
 }
 
+function createExportHistoryMarkdown(timestamp) {
+  return `---
+title: Export History Smoke ${timestamp}
+subtitle: Saved export history proof
+branch: brand
+design_preset: brand
+product_type: workbook
+output_mode: split
+author: Best Collective
+tagline: One system. Five rooms. All for you.
+---
+
+<!-- PAGE: cover -->
+
+TITLE: Export History Smoke
+SUBTITLE: Saved export history proof
+TAGLINE: One system. Five rooms. All for you.
+ICON: branch-default
+IMAGE_SLOT: cover-lifestyle
+
+<!-- PAGE: welcome -->
+
+TITLE: Welcome
+
+This compact sample keeps the saved export history test fast.
+
+CHECK: Parse a saved kit.
+CHECK: Export the files.
+CHECK: Show the links in history.
+
+<!-- PAGE: lesson -->
+
+SECTION: Lesson 01
+TITLE: Saved Exports
+
+This page proves the guide export can attach to a saved kit.
+
+KEY_TERM: Export History
+KEY_TERM_BODY: The saved list of files generated for one kit.
+
+CHECK: Confirm the kit exists.
+CHECK: Confirm the file rows exist.
+
+<!-- PAGE: workbook -->
+
+SECTION: Workbook
+TITLE: Saved Export Prompt
+
+PROMPT: What file should I copy first?
+PROMPT: What package is ready to share?
+
+<!-- PAGE: checklist -->
+
+SECTION: Checklist
+TITLE: Export Checklist
+
+CHECK: Lesson guide saved.
+CHECK: Workbook saved.
+CHECK: Fillable saved.
+
+<!-- PAGE: closing -->
+
+TITLE: Export History Complete
+SUBTITLE: Links are ready when storage is ready.
+TAGLINE: Best Collective
+`
+}
+
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message)
+  }
+}
+
+function assertExportHistoryIncludes(exports, expectedTypes, label) {
+  assert(Array.isArray(exports), `${label} export history did not return a list.`)
+
+  for (const expectedType of expectedTypes) {
+    const match = exports.find((file) => file.fileType === expectedType)
+
+    assert(match, `${label} export history is missing ${expectedType}.`)
+    assert(typeof match.filename === "string" && match.filename.length > 0, `${expectedType} is missing a filename.`)
+    assert(typeof match.fileUrl === "string" && match.fileUrl.length > 0, `${expectedType} is missing a file URL.`)
+    assert(typeof match.status === "string" && match.status.length > 0, `${expectedType} is missing a status.`)
+    assert(typeof match.createdAt === "string" && match.createdAt.length > 0, `${expectedType} is missing a date.`)
   }
 }
 

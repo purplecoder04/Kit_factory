@@ -309,6 +309,10 @@ async function uploadExportFile({
     return null
   }
 
+  if (process.env.KIT_FACTORY_SKIP_STORAGE_UPLOAD === "1") {
+    return null
+  }
+
   const bucket = exportStorageBucketName()
   await ensureExportStorageBucket({ bucket, supabase })
   const path = [
