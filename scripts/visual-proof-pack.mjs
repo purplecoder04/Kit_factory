@@ -11,6 +11,7 @@ import { chromium } from "playwright"
 const execFileAsync = promisify(execFile)
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const samplePath = path.join(root, "samples", "golden-kit.md")
+const meetAtTheHealSampleDir = path.join(root, "samples", "meet-at-the-heal-package")
 const outputRoot =
   process.env.KIT_FACTORY_PROOF_OUTPUT_ROOT ||
   path.join(root, "output", "visual-proof-pack", "latest")
@@ -191,11 +192,36 @@ async function main() {
     await createBrandPackageProof(baseUrl, dirs.package, sampleMarkdown)
   }
   if (shouldCreateMeetAtTheHealPackage(selectedPresets)) {
-    await createMeetAtTheHealPackageProof(baseUrl, dirs.package)
+    await createMeetAtTheHealPackageProof(
+      baseUrl,
+      dirs.package,
+      await loadMeetAtTheHealPackageSamples()
+    )
   }
   await writeReadme(baseUrl, proofRows)
 
   console.log(`Visual proof pack ready: ${outputRoot}`)
+}
+
+async function loadMeetAtTheHealPackageSamples() {
+  return {
+    couplesWorkbookMarkdown: await fs.readFile(
+      path.join(meetAtTheHealSampleDir, "meetatheal-couples-workbook.md"),
+      "utf8"
+    ),
+    landWorkbookMarkdown: await fs.readFile(
+      path.join(meetAtTheHealSampleDir, "meetatheal-land-individual-workbook.md"),
+      "utf8"
+    ),
+    lessonBookMarkdown: await fs.readFile(
+      path.join(meetAtTheHealSampleDir, "meetatheal-lesson-book.md"),
+      "utf8"
+    ),
+    riseWorkbookMarkdown: await fs.readFile(
+      path.join(meetAtTheHealSampleDir, "meetatheal-rise-individual-workbook.md"),
+      "utf8"
+    ),
+  }
 }
 
 function filterProofPresets(presets) {
@@ -275,33 +301,13 @@ async function createBrandPackageProof(baseUrl, packageDir, markdown) {
   )
 }
 
-async function createMeetAtTheHealPackageProof(baseUrl, packageDir) {
+async function createMeetAtTheHealPackageProof(baseUrl, packageDir, meetAtTheHealPackage) {
   const zipPath = path.join(packageDir, "meet-at-the-heal-kit-package.zip")
   const zip = await postBuffer(baseUrl, "/api/package/meetatheal", {
-    lessonBookMarkdown: createMeetAtTheHealMarkdown({
-      title: "Meet at the Heal Lesson Book",
-      subtitle: "Two Worlds. One Choice. A Stronger We.",
-      designPreset: "meetatheal",
-      pageType: "lesson",
-    }),
-    couplesWorkbookMarkdown: createMeetAtTheHealMarkdown({
-      title: "Meet at the Heal Couples Workbook",
-      subtitle: "Let's heal together.",
-      designPreset: "meetatheal",
-      pageType: "workbook",
-    }),
-    riseWorkbookMarkdown: createMeetAtTheHealMarkdown({
-      title: "Meet at the Heal Rise Individual Workbook",
-      subtitle: "Come back to yourself.",
-      designPreset: "meetatheal-rise",
-      pageType: "workbook",
-    }),
-    landWorkbookMarkdown: createMeetAtTheHealMarkdown({
-      title: "Meet at the Heal Land Individual Workbook",
-      subtitle: "Build. Grow. Stand Firm.",
-      designPreset: "meetatheal-land",
-      pageType: "workbook",
-    }),
+    lessonBookMarkdown: meetAtTheHealPackage.lessonBookMarkdown,
+    couplesWorkbookMarkdown: meetAtTheHealPackage.couplesWorkbookMarkdown,
+    riseWorkbookMarkdown: meetAtTheHealPackage.riseWorkbookMarkdown,
+    landWorkbookMarkdown: meetAtTheHealPackage.landWorkbookMarkdown,
   })
   const expectedFiles = [
     "meet-at-the-heal-lesson-book.pdf",
@@ -636,65 +642,6 @@ function closingTitle(preset) {
   }
 
   return preset.title
-}
-
-function createMeetAtTheHealMarkdown({ title, subtitle, designPreset, pageType }) {
-  const innerPage =
-    pageType === "lesson"
-      ? `<!-- PAGE: lesson -->
-
-SECTION: Lesson 01
-TITLE: Healing Together
-
-This is the shared lesson space for the couple.
-
-CHECK: Come back to us.
-CHECK: Recognize the patterns.
-CHECK: Communicate with care.
-
-REFLECT: What would feel different if we chose repair instead of defense?
-
-BOTTOM_NOTE: We choose us, every day.`
-      : `<!-- PAGE: workbook -->
-
-SECTION: Workbook
-TITLE: Get Honest With You
-
-PROMPT: What do I keep ignoring about myself?
-PROMPT: What do I know deep down I deserve?
-PROMPT: What support would help me show up with more honesty?
-
-BOTTOM_NOTE: Healing starts with the truth we are brave enough to name.`
-
-  return `---
-title: ${title}
-subtitle: ${subtitle}
-branch: meetatheal
-design_preset: ${designPreset}
-product_type: workbook
-output_mode: all-in-one
-author: Best Collective
-tagline: Two worlds. One choice. A stronger we.
----
-
-<!-- PAGE: cover -->
-
-TITLE: ${title}
-SUBTITLE: ${subtitle}
-TAGLINE: Two worlds. One choice. A stronger we.
-ICON: branch-default
-IMAGE_SLOT: cover-lifestyle
-
-${innerPage}
-
-<!-- PAGE: closing -->
-
-TITLE: Meet at the Heal
-SUBTITLE: Two Worlds. One Choice. A Stronger We.
-TAGLINE: We choose us, every day.
-ICON: branch-default
-IMAGE_SLOT: closing-lifestyle
-`
 }
 
 function escapeHtml(value) {
