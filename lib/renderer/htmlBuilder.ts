@@ -3884,6 +3884,25 @@ function buildCss(tokens: DesignPresetTokens) {
         bottom: 1.14in;
         transform: scale(0.86);
       }
+      .style-land:not(.cover) {
+        background:
+          radial-gradient(ellipse at 2% 102%, ${transparent(tokens.plum, 0.16)}, transparent 2.45in),
+          radial-gradient(ellipse at 100% 94%, ${transparent(tokens.sage, 0.16)}, transparent 2.2in),
+          linear-gradient(140deg, transparent 0 69%, ${transparent(tokens.sage, 0.1)} 69.5% 100%),
+          linear-gradient(28deg, transparent 0 75%, ${transparent(tokens.plum, 0.08)} 75.5% 100%),
+          ${tokens.paper};
+      }
+      .style-land:not(.cover) .spark-lines {
+        opacity: 0.26;
+      }
+      .style-land.type-how-to-use .mountain-mark,
+      .style-land.type-workbook .mountain-mark,
+      .style-land.type-resource .mountain-mark {
+        opacity: 0.3;
+      }
+      .style-land.type-closing .mountain-mark {
+        opacity: 0.4;
+      }
       .style-rebuild.cover {
         text-align: left;
         align-content: center;
@@ -4296,6 +4315,26 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-rebuild.type-closing .floral-right {
         right: 0.46in;
         bottom: 1.1in;
+      }
+      .style-rebuild:not(.cover) {
+        background:
+          radial-gradient(ellipse at 98% 7%, ${transparent(tokens.blue, 0.18)}, transparent 2.25in),
+          radial-gradient(ellipse at 10% 96%, ${transparent(tokens.lilac, 0.18)}, transparent 2.35in),
+          radial-gradient(ellipse at 88% 92%, ${transparent(tokens.rose, 0.13)}, transparent 1.8in),
+          linear-gradient(138deg, transparent 0 68%, ${transparent(tokens.blue, 0.08)} 68.5% 100%),
+          linear-gradient(28deg, transparent 0 76%, ${transparent(tokens.rose, 0.08)} 76.5% 100%),
+          ${tokens.paper};
+      }
+      .style-rebuild:not(.cover) .wash-a {
+        opacity: 0.92;
+        transform: rotate(-18deg) scale(1.08);
+      }
+      .style-rebuild:not(.cover) .wash-b {
+        opacity: 0.88;
+        transform: rotate(14deg) scale(1.08);
+      }
+      .style-rebuild:not(.cover) .floral-right {
+        opacity: 0.76;
       }
       .style-meetatheal.cover .image-slot,
       .style-meetatheal.type-section-divider .image-slot,
