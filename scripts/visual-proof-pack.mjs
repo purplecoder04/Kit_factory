@@ -6,6 +6,7 @@ import process from "node:process"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
+import { PDFDocument } from "pdf-lib"
 import { chromium } from "playwright"
 
 const execFileAsync = promisify(execFile)
@@ -18,6 +19,7 @@ const outputRoot =
 const pdftoppmPath = process.env.PDFTOPPM_PATH || findBundledPdftoppm()
 const startedServerUrl = process.env.KIT_FACTORY_TEST_URL
 const expectedCompletePageCount = 19
+const proofMode = normaliseProofMode(process.argv, process.env.KIT_FACTORY_PROOF_MODE)
 let serverProcess
 
 const proofPresets = [
@@ -112,94 +114,96 @@ async function main() {
 
   const selectedPresets = filterProofPresets(proofPresets)
 
-  for (const preset of selectedPresets) {
-    const markdown = markdownForPreset(sampleMarkdown, preset)
-    const pdfPath = path.join(dirs.pdfs, `${preset.slug}-complete.pdf`)
-    const mockupPath = path.join(dirs.mockups, `${preset.slug}-mockup.png`)
-    const pageDir = path.join(dirs.pages, preset.slug)
-    const mockup = await postBuffer(baseUrl, "/api/mockup", {
-      markdown,
-      branch: preset.branch,
-      designPreset: preset.designPreset,
-      outputMode: "all-in-one",
-    })
-
-    await fs.mkdir(pageDir, { recursive: true })
-    await writeBuffer(
-      pdfPath,
-      await postBuffer(baseUrl, "/api/render", {
+  if (proofMode !== "packages") {
+    for (const preset of selectedPresets) {
+      const markdown = markdownForPreset(sampleMarkdown, preset)
+      const pdfPath = path.join(dirs.pdfs, `${preset.slug}-complete.pdf`)
+      const mockupPath = path.join(dirs.mockups, `${preset.slug}-mockup.png`)
+      const pageDir = path.join(dirs.pages, preset.slug)
+      const mockup = await postBuffer(baseUrl, "/api/mockup", {
         markdown,
         branch: preset.branch,
         designPreset: preset.designPreset,
         outputMode: "all-in-one",
-        target: "complete",
       })
-    )
-    assertPngBuffer(mockup, `${preset.label} mockup`)
-    await writeBuffer(mockupPath, mockup)
 
-    const pageImages = await renderPdfPages(pdfPath, pageDir)
-    assertPageCount(pageImages, expectedCompletePageCount, `${preset.label} complete PDF`)
-    const coverPath = path.join(dirs.covers, `${preset.slug}-cover.png`)
-    await fs.copyFile(pageImages[0], coverPath)
+      await fs.mkdir(pageDir, { recursive: true })
+      await writeBuffer(
+        pdfPath,
+        await postBuffer(baseUrl, "/api/render", {
+          markdown,
+          branch: preset.branch,
+          designPreset: preset.designPreset,
+          outputMode: "all-in-one",
+          target: "complete",
+        })
+      )
+      assertPngBuffer(mockup, `${preset.label} mockup`)
+      await writeBuffer(mockupPath, mockup)
 
-    const contactSheetPath = path.join(dirs.contactSheets, `${preset.slug}-contact.png`)
+      const pageImages = await renderPdfPages(pdfPath, pageDir)
+      assertPageCount(pageImages, expectedCompletePageCount, `${preset.label} complete PDF`)
+      const coverPath = path.join(dirs.covers, `${preset.slug}-cover.png`)
+      await fs.copyFile(pageImages[0], coverPath)
+
+      const contactSheetPath = path.join(dirs.contactSheets, `${preset.slug}-contact.png`)
+      await createImageGrid({
+        title: `${preset.label} - Full PDF Contact Sheet`,
+        images: pageImages.map((image, index) => ({
+          label: `Page ${index + 1}`,
+          path: image,
+        })),
+        outputPath: contactSheetPath,
+        columns: 5,
+        imageWidth: 220,
+      })
+
+      proofRows.push({
+        ...preset,
+        pdfPath,
+        mockupPath,
+        coverPath,
+        contactSheetPath,
+        pageCount: pageImages.length,
+      })
+
+      console.log(`Created proofs for ${preset.label}.`)
+    }
+
     await createImageGrid({
-      title: `${preset.label} - Full PDF Contact Sheet`,
-      images: pageImages.map((image, index) => ({
-        label: `Page ${index + 1}`,
-        path: image,
+      title: "Kit Factory Cover Overview",
+      images: proofRows.map((row) => ({
+        label: row.label,
+        path: row.coverPath,
       })),
-      outputPath: contactSheetPath,
-      columns: 5,
-      imageWidth: 220,
+      outputPath: path.join(outputRoot, "cover-overview.png"),
+      columns: 4,
+      imageWidth: 250,
     })
 
-    proofRows.push({
-      ...preset,
-      pdfPath,
-      mockupPath,
-      coverPath,
-      contactSheetPath,
-      pageCount: pageImages.length,
+    await createImageGrid({
+      title: "Kit Factory Website Mockup Overview",
+      images: proofRows.map((row) => ({
+        label: row.label,
+        path: row.mockupPath,
+      })),
+      outputPath: path.join(outputRoot, "mockup-overview.png"),
+      columns: 2,
+      imageWidth: 520,
     })
-
-    console.log(`Created proofs for ${preset.label}.`)
   }
 
-  await createImageGrid({
-    title: "Kit Factory Cover Overview",
-    images: proofRows.map((row) => ({
-      label: row.label,
-      path: row.coverPath,
-    })),
-    outputPath: path.join(outputRoot, "cover-overview.png"),
-    columns: 4,
-    imageWidth: 250,
-  })
-
-  await createImageGrid({
-    title: "Kit Factory Website Mockup Overview",
-    images: proofRows.map((row) => ({
-      label: row.label,
-      path: row.mockupPath,
-    })),
-    outputPath: path.join(outputRoot, "mockup-overview.png"),
-    columns: 2,
-    imageWidth: 520,
-  })
-
-  if (shouldCreateBrandPackage(selectedPresets)) {
+  if (proofMode !== "designs" && shouldCreateBrandPackage(selectedPresets)) {
     await createBrandPackageProof(baseUrl, dirs.package, sampleMarkdown)
   }
-  if (shouldCreateMeetAtTheHealPackage(selectedPresets)) {
+  if (proofMode !== "designs" && shouldCreateMeetAtTheHealPackage(selectedPresets)) {
     await createMeetAtTheHealPackageProof(
       baseUrl,
       dirs.package,
       await loadMeetAtTheHealPackageSamples()
     )
   }
-  await writeReadme(baseUrl, proofRows)
+  await writeReadme(baseUrl, proofRows, proofMode)
 
   console.log(`Visual proof pack ready: ${outputRoot}`)
 }
@@ -244,6 +248,22 @@ function filterProofPresets(presets) {
   return filtered
 }
 
+function normaliseProofMode(argv, envMode) {
+  if (argv.includes("--packages")) {
+    return "packages"
+  }
+
+  if (argv.includes("--designs")) {
+    return "designs"
+  }
+
+  if (envMode === "packages" || envMode === "designs") {
+    return envMode
+  }
+
+  return "full"
+}
+
 function shouldCreateMeetAtTheHealPackage(selectedPresets) {
   const isFullPack = selectedPresets.length === proofPresets.length
 
@@ -278,12 +298,32 @@ async function createBrandPackageProof(baseUrl, packageDir, markdown) {
   const zip = await postBuffer(baseUrl, "/api/package/brand", {
     markdown,
   })
-  const expectedFiles = ["brand-complete.pdf", "brand-land-complete.pdf"]
-  const zipText = zip.toString("latin1")
-  const missing = expectedFiles.filter((filename) => !zipText.includes(filename))
+  const entries = extractStoredZipEntries(zip)
+  const expectedFiles = [
+    {
+      suffix: "brand-complete.pdf",
+      pageCount: expectedCompletePageCount,
+    },
+    {
+      suffix: "brand-land-complete.pdf",
+      pageCount: expectedCompletePageCount,
+    },
+  ]
+  const confirmedFiles = []
 
-  if (missing.length > 0) {
-    throw new Error(`Brand package is missing: ${missing.join(", ")}`)
+  if (entries.size !== expectedFiles.length) {
+    throw new Error(`Brand package contains ${entries.size} files; expected ${expectedFiles.length}.`)
+  }
+
+  for (const expectedFile of expectedFiles) {
+    const [filename, data] = findZipEntryBySuffix(entries, expectedFile.suffix)
+
+    if (!filename || !data) {
+      throw new Error(`Brand package is missing: ${expectedFile.suffix}`)
+    }
+
+    await assertPdfPageCount(data, expectedFile.pageCount, `Brand package ${filename}`)
+    confirmedFiles.push(filename)
   }
 
   await writeBuffer(zipPath, zip)
@@ -296,7 +336,7 @@ async function createBrandPackageProof(baseUrl, packageDir, markdown) {
       `Size: ${zip.length} bytes`,
       "",
       "Files confirmed in ZIP:",
-      ...expectedFiles.map((filename) => `- ${filename}`),
+      ...confirmedFiles.map((filename) => `- ${filename}`),
       "",
     ].join("\n")
   )
@@ -321,11 +361,22 @@ async function createMeetAtTheHealPackageProof(baseUrl, packageDir, meetAtTheHea
     "meet-at-the-heal-rise-individual-workbook.pdf",
     "meet-at-the-heal-land-individual-workbook.pdf",
   ]
-  const zipText = zip.toString("latin1")
-  const missing = expectedFiles.filter((filename) => !zipText.includes(filename))
+  const entries = extractStoredZipEntries(zip)
 
-  if (missing.length > 0) {
-    throw new Error(`Meet at the Heal package is missing: ${missing.join(", ")}`)
+  if (entries.size !== expectedFiles.length) {
+    throw new Error(
+      `Meet at the Heal package contains ${entries.size} files; expected ${expectedFiles.length}.`
+    )
+  }
+
+  for (const filename of expectedFiles) {
+    const data = entries.get(filename)
+
+    if (!data) {
+      throw new Error(`Meet at the Heal package is missing: ${filename}`)
+    }
+
+    await assertPdfPageCount(data, 5, `Meet at the Heal package ${filename}`)
   }
 
   await writeBuffer(zipPath, zip)
@@ -560,28 +611,108 @@ function assertPngBuffer(buffer, label) {
   }
 }
 
-async function writeReadme(baseUrl, rows) {
+async function assertPdfPageCount(pdfBuffer, expectedCount, label) {
+  assertPdfHeader(pdfBuffer, label)
+  const pdf = await PDFDocument.load(pdfBuffer)
+  const pages = pdf.getPages()
+
+  assertPageCount(pages, expectedCount, label)
+
+  for (const [index, page] of pages.entries()) {
+    const { width, height } = page.getSize()
+
+    if (!approximately(width, 612) || !approximately(height, 792)) {
+      throw new Error(`${label} page ${index + 1} should be US Letter, got ${width}x${height}.`)
+    }
+  }
+}
+
+function assertPdfHeader(pdfBuffer, label) {
+  if (
+    pdfBuffer[0] !== 0x25 ||
+    pdfBuffer[1] !== 0x50 ||
+    pdfBuffer[2] !== 0x44 ||
+    pdfBuffer[3] !== 0x46
+  ) {
+    throw new Error(`${label} is not a PDF file.`)
+  }
+}
+
+function extractStoredZipEntries(zipBuffer) {
+  const entries = new Map()
+  let offset = 0
+
+  while (offset + 30 <= zipBuffer.length && zipBuffer.readUInt32LE(offset) === 0x04034b50) {
+    const compressionMethod = zipBuffer.readUInt16LE(offset + 8)
+    const compressedSize = zipBuffer.readUInt32LE(offset + 18)
+    const filenameLength = zipBuffer.readUInt16LE(offset + 26)
+    const extraLength = zipBuffer.readUInt16LE(offset + 28)
+    const filenameStart = offset + 30
+    const filenameEnd = filenameStart + filenameLength
+    const dataStart = filenameEnd + extraLength
+    const dataEnd = dataStart + compressedSize
+    const filename = zipBuffer.subarray(filenameStart, filenameEnd).toString("utf8")
+
+    if (compressionMethod !== 0) {
+      throw new Error(`${filename} should be stored without compression.`)
+    }
+
+    if (dataEnd > zipBuffer.length) {
+      throw new Error(`${filename} extends past the end of the ZIP file.`)
+    }
+
+    entries.set(filename, zipBuffer.subarray(dataStart, dataEnd))
+    offset = dataEnd
+  }
+
+  if (entries.size === 0) {
+    throw new Error("ZIP file did not contain any local file entries.")
+  }
+
+  return entries
+}
+
+function findZipEntryBySuffix(entries, filenameSuffix) {
+  return (
+    Array.from(entries.entries()).find(([filename]) => filename.endsWith(filenameSuffix)) ?? ["", null]
+  )
+}
+
+function approximately(value, expected, tolerance = 2) {
+  return Math.abs(value - expected) <= tolerance
+}
+
+async function writeReadme(baseUrl, rows, mode) {
   const lines = [
     "# Kit Factory Visual Proof Pack",
     "",
     `Generated from: ${baseUrl}`,
     `Generated at: ${new Date().toISOString()}`,
+    `Mode: ${mode}`,
     "",
     "## Start Here",
     "",
-    "- `cover-overview.png` compares the first page for every preset.",
-    "- `mockup-overview.png` compares the website mockup image for every preset.",
-    "- `contact-sheets/` contains one full-PDF contact sheet per preset.",
-    "- `package/` contains ZIP proof artifacts and package summaries.",
+    ...(mode === "packages"
+      ? ["- `package/` contains ZIP proof artifacts and package summaries."]
+      : [
+          "- `cover-overview.png` compares the first page for every preset.",
+          "- `mockup-overview.png` compares the website mockup image for every preset.",
+          "- `contact-sheets/` contains one full-PDF contact sheet per preset.",
+          ...(mode === "full"
+            ? ["- `package/` contains ZIP proof artifacts and package summaries."]
+            : []),
+        ]),
     "",
     "## Presets",
     "",
-    ...rows.map(
-      (row) =>
-        `- ${row.label}: ${row.pageCount} pages, PDF \`pdfs/${path.basename(
-          row.pdfPath
-        )}\`, mockup \`mockups/${path.basename(row.mockupPath)}\``
-    ),
+    ...(rows.length > 0
+      ? rows.map(
+          (row) =>
+            `- ${row.label}: ${row.pageCount} pages, PDF \`pdfs/${path.basename(
+              row.pdfPath
+            )}\`, mockup \`mockups/${path.basename(row.mockupPath)}\``
+        )
+      : ["- Preset contact sheets were skipped in package-only mode."]),
     "",
   ]
 

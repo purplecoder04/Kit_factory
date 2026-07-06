@@ -21,11 +21,15 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 ```bash
 npm test
 npm run proofs
+npm run proofs:designs
+npm run proofs:packages
 npm run lint
 npm run build
 ```
 
 `npm run proofs` writes review files to `output/visual-proof-pack/latest/`, including cover overviews, website mockups, full PDF contact sheets, and the Meet at the Heal package proof.
+
+Use `npm run proofs:designs` when you only need the design-family cover, mockup, and full-PDF contact sheets. Use `npm run proofs:packages` when you only need Brand ZIP and Meet at the Heal ZIP package proof artifacts.
 
 ## Source Of Truth Docs
 

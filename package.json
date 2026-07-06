@@ -8,6 +8,8 @@
     "start": "node --use-system-ca ./node_modules/next/dist/bin/next start",
     "lint": "eslint",
     "proofs": "node scripts/visual-proof-pack.mjs",
+    "proofs:designs": "node scripts/visual-proof-pack.mjs --designs",
+    "proofs:packages": "node scripts/visual-proof-pack.mjs --packages",
     "storage:check": "node --use-system-ca scripts/check-supabase-storage.mjs",
     "test": "node scripts/regression-smoke.mjs"
   },
