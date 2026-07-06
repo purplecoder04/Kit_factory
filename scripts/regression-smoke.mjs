@@ -12,19 +12,23 @@ import { chromium } from "playwright"
 const execFileAsync = promisify(execFile)
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const samplePath = path.join(root, "samples", "golden-kit.md")
+const meetAtTheHealSampleDir = path.join(root, "samples", "meet-at-the-heal-package")
 const startedServerUrl = process.env.KIT_FACTORY_TEST_URL
 let serverProcess
 
 async function main() {
   const baseUrl = startedServerUrl || (await startServer())
   const markdown = await fs.readFile(samplePath, "utf8")
+  const meetAtTheHealPackage = await loadMeetAtTheHealPackageSamples()
 
   await runStep("dashboard selectors", () => testDashboardSelectors(baseUrl))
   await runStep("storage readiness endpoint", () => testStorageReadinessEndpoint(baseUrl))
   await runStep("storage setup SQL endpoint", () => testStorageSetupSqlEndpoint(baseUrl))
   await runStep("parser defaults", () => testParserDefaults(baseUrl, markdown))
   await runStep("ready-to-sell public export guard", () => testReadyRequiresPublicExport(baseUrl, markdown))
-  const savedExportHistoryKit = await runStep("saved export history", () => testSavedExportHistory(baseUrl))
+  const savedExportHistoryKit = await runStep("saved export history", () =>
+    testSavedExportHistory(baseUrl, meetAtTheHealPackage)
+  )
   if (savedExportHistoryKit) {
     await runStep("dashboard export history panel", () =>
       testDashboardExportHistoryPanel(baseUrl, savedExportHistoryKit)
@@ -34,7 +38,9 @@ async function main() {
   await runStep("fillable fields", () => testFillableFields(baseUrl, markdown))
   await runStep("mockup output", () => testMockupOutput(baseUrl, markdown))
   await runStep("Brand package", () => testBrandPackage(baseUrl, markdown))
-  await runStep("Meet at the Heal package", () => testMeetAtTheHealPackage(baseUrl))
+  await runStep("Meet at the Heal package", () =>
+    testMeetAtTheHealPackage(baseUrl, meetAtTheHealPackage)
+  )
 
   console.log("Kit Factory regression smoke tests passed.")
 }
@@ -44,6 +50,27 @@ async function runStep(label, action) {
   const result = await action()
   console.log("ok")
   return result
+}
+
+async function loadMeetAtTheHealPackageSamples() {
+  return {
+    couplesWorkbookMarkdown: await fs.readFile(
+      path.join(meetAtTheHealSampleDir, "meetatheal-couples-workbook.md"),
+      "utf8"
+    ),
+    landWorkbookMarkdown: await fs.readFile(
+      path.join(meetAtTheHealSampleDir, "meetatheal-land-individual-workbook.md"),
+      "utf8"
+    ),
+    lessonBookMarkdown: await fs.readFile(
+      path.join(meetAtTheHealSampleDir, "meetatheal-lesson-book.md"),
+      "utf8"
+    ),
+    riseWorkbookMarkdown: await fs.readFile(
+      path.join(meetAtTheHealSampleDir, "meetatheal-rise-individual-workbook.md"),
+      "utf8"
+    ),
+  }
 }
 
 async function startServer() {
@@ -202,7 +229,7 @@ async function testReadyRequiresPublicExport(baseUrl, markdown) {
   )
 }
 
-async function testSavedExportHistory(baseUrl) {
+async function testSavedExportHistory(baseUrl, meetAtTheHealPackage) {
   const timestamp = Date.now()
   const brandKitName = `Export History Smoke ${timestamp}`
   const brandMarkdown = createExportHistoryMarkdown(brandKitName)
@@ -267,12 +294,10 @@ async function testSavedExportHistory(baseUrl) {
     brandKitName,
   }
 
-  const lessonBookMarkdown = createMeetAtTheHealMarkdown({
-    title: `Meet at the Heal Lesson Book Smoke ${timestamp}`,
-    subtitle: "Two Worlds. One Choice. A Stronger We.",
-    designPreset: "meetatheal",
-    pageType: "lesson",
-  })
+  const lessonBookMarkdown = meetAtTheHealPackage.lessonBookMarkdown.replace(
+    /^title:.*$/m,
+    `title: Meet at the Heal Lesson Book Smoke ${timestamp}`
+  )
   const mathPayload = await postJson(baseUrl, "/api/parse", {
     markdown: lessonBookMarkdown,
     branch: "meetatheal",
@@ -287,24 +312,9 @@ async function testSavedExportHistory(baseUrl) {
 
   await postBuffer(baseUrl, "/api/package/meetatheal", {
     lessonBookMarkdown,
-    couplesWorkbookMarkdown: createMeetAtTheHealMarkdown({
-      title: `Meet at the Heal Couples Workbook Smoke ${timestamp}`,
-      subtitle: "Let's heal together.",
-      designPreset: "meetatheal",
-      pageType: "workbook",
-    }),
-    riseWorkbookMarkdown: createMeetAtTheHealMarkdown({
-      title: `Meet at the Heal Rise Individual Workbook Smoke ${timestamp}`,
-      subtitle: "Come back to yourself.",
-      designPreset: "meetatheal-rise",
-      pageType: "workbook",
-    }),
-    landWorkbookMarkdown: createMeetAtTheHealMarkdown({
-      title: `Meet at the Heal Land Individual Workbook Smoke ${timestamp}`,
-      subtitle: "Build. Grow. Stand Firm.",
-      designPreset: "meetatheal-land",
-      pageType: "workbook",
-    }),
+    couplesWorkbookMarkdown: meetAtTheHealPackage.couplesWorkbookMarkdown,
+    riseWorkbookMarkdown: meetAtTheHealPackage.riseWorkbookMarkdown,
+    landWorkbookMarkdown: meetAtTheHealPackage.landWorkbookMarkdown,
     kitId: mathPayload.kitId,
   })
 
@@ -470,32 +480,12 @@ async function testBrandPackage(baseUrl, markdown) {
   }
 }
 
-async function testMeetAtTheHealPackage(baseUrl) {
+async function testMeetAtTheHealPackage(baseUrl, meetAtTheHealPackage) {
   const zip = await postBuffer(baseUrl, "/api/package/meetatheal", {
-    lessonBookMarkdown: createMeetAtTheHealMarkdown({
-      title: "Meet at the Heal Lesson Book",
-      subtitle: "Two Worlds. One Choice. A Stronger We.",
-      designPreset: "meetatheal",
-      pageType: "lesson",
-    }),
-    couplesWorkbookMarkdown: createMeetAtTheHealMarkdown({
-      title: "Meet at the Heal Couples Workbook",
-      subtitle: "Let's heal together.",
-      designPreset: "meetatheal",
-      pageType: "workbook",
-    }),
-    riseWorkbookMarkdown: createMeetAtTheHealMarkdown({
-      title: "Meet at the Heal Rise Individual Workbook",
-      subtitle: "Come back to yourself.",
-      designPreset: "meetatheal-rise",
-      pageType: "workbook",
-    }),
-    landWorkbookMarkdown: createMeetAtTheHealMarkdown({
-      title: "Meet at the Heal Land Individual Workbook",
-      subtitle: "Build. Grow. Stand Firm.",
-      designPreset: "meetatheal-land",
-      pageType: "workbook",
-    }),
+    lessonBookMarkdown: meetAtTheHealPackage.lessonBookMarkdown,
+    couplesWorkbookMarkdown: meetAtTheHealPackage.couplesWorkbookMarkdown,
+    riseWorkbookMarkdown: meetAtTheHealPackage.riseWorkbookMarkdown,
+    landWorkbookMarkdown: meetAtTheHealPackage.landWorkbookMarkdown,
   })
   const zipText = zip.toString("latin1")
   const filenames = [
@@ -603,65 +593,6 @@ async function findOpenPort() {
   await new Promise((resolve) => server.close(resolve))
 
   return address.port
-}
-
-function createMeetAtTheHealMarkdown({ title, subtitle, designPreset, pageType }) {
-  const innerPage =
-    pageType === "lesson"
-      ? `<!-- PAGE: lesson -->
-
-SECTION: Lesson 01
-TITLE: Healing Together
-
-This is the shared lesson space for the couple.
-
-CHECK: Come back to us.
-CHECK: Recognize the patterns.
-CHECK: Communicate with care.
-
-REFLECT: What would feel different if we chose repair instead of defense?
-
-BOTTOM_NOTE: We choose us, every day.`
-      : `<!-- PAGE: workbook -->
-
-SECTION: Workbook
-TITLE: Get Honest With You
-
-PROMPT: What do I keep ignoring about myself?
-PROMPT: What do I know deep down I deserve?
-PROMPT: What support would help me show up with more honesty?
-
-BOTTOM_NOTE: Healing starts with the truth we are brave enough to name.`
-
-  return `---
-title: ${title}
-subtitle: ${subtitle}
-branch: meetatheal
-design_preset: ${designPreset}
-product_type: workbook
-output_mode: all-in-one
-author: Best Collective
-tagline: Two worlds. One choice. A stronger we.
----
-
-<!-- PAGE: cover -->
-
-TITLE: ${title}
-SUBTITLE: ${subtitle}
-TAGLINE: Two worlds. One choice. A stronger we.
-ICON: branch-default
-IMAGE_SLOT: cover-lifestyle
-
-${innerPage}
-
-<!-- PAGE: closing -->
-
-TITLE: Meet at the Heal
-SUBTITLE: Two Worlds. One Choice. A Stronger We.
-TAGLINE: We choose us, every day.
-ICON: branch-default
-IMAGE_SLOT: closing-lifestyle
-`
 }
 
 function createExportHistoryMarkdown(title) {
