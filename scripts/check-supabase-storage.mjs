@@ -21,6 +21,7 @@ async function main() {
       bucket,
       issue: "Missing Supabase URL or key.",
       ok: false,
+      serviceRoleConfigured: Boolean(serviceRoleKey),
       step: "config",
     })
     return
@@ -53,6 +54,7 @@ async function main() {
       bucket,
       issue: upload.error.message,
       ok: false,
+      serviceRoleConfigured: Boolean(serviceRoleKey),
       step: "upload",
     })
     return
@@ -70,6 +72,7 @@ async function main() {
     path: upload.data.path,
     publicFetchStatus: publicLink.status,
     publicUrlWorks: publicLink.ok,
+    serviceRoleConfigured: Boolean(serviceRoleKey),
     step: publicLink.ok ? "complete" : "public-read",
   }
 
@@ -89,6 +92,7 @@ async function ensureBucket(supabase) {
       bucket,
       issue: buckets.error.message,
       ok: false,
+      serviceRoleConfigured: Boolean(serviceRoleKey),
       step: "list-buckets",
     })
     return false
@@ -103,6 +107,7 @@ async function ensureBucket(supabase) {
         issue:
           "Bucket not found. Run docs/supabase-storage-policies.sql in Supabase SQL Editor or add SUPABASE_SERVICE_ROLE_KEY locally so this check can create it.",
         ok: false,
+        serviceRoleConfigured: false,
         step: "bucket",
       })
       return false
@@ -117,12 +122,25 @@ async function ensureBucket(supabase) {
         bucket,
         issue: created.error.message,
         ok: false,
+        serviceRoleConfigured: true,
         step: "create-bucket",
       })
       return false
     }
 
     return true
+  }
+
+  if (existingBucket.public === false && !serviceRoleKey) {
+    fail({
+      bucket,
+      issue:
+        "Bucket exists but is not public. Make it public in Supabase or add SUPABASE_SERVICE_ROLE_KEY locally so this check can update it.",
+      ok: false,
+      serviceRoleConfigured: false,
+      step: "public-bucket",
+    })
+    return false
   }
 
   if (existingBucket.public === false && serviceRoleKey) {
@@ -135,6 +153,7 @@ async function ensureBucket(supabase) {
         bucket,
         issue: updated.error.message,
         ok: false,
+        serviceRoleConfigured: true,
         step: "public-bucket",
       })
       return false
@@ -215,6 +234,7 @@ main().catch((error) => {
     bucket,
     issue: error instanceof Error ? error.message : "Storage check failed.",
     ok: false,
+    serviceRoleConfigured: Boolean(serviceRoleKey),
     step: "unexpected",
   })
 })

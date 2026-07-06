@@ -73,3 +73,10 @@ npm run storage:check
 ```
 
 The check uploads a tiny temporary file, opens its public URL, then deletes the file. It prints which step failed if real public links are not ready yet.
+
+Common failed steps:
+
+- `bucket`: the `kit-exports` bucket does not exist yet. Run `docs/supabase-storage-policies.sql` in Supabase SQL Editor or add `SUPABASE_SERVICE_ROLE_KEY` locally so the checker can create it.
+- `public-bucket`: the bucket exists, but it is private. Make the bucket public in Supabase Storage settings or add `SUPABASE_SERVICE_ROLE_KEY` locally so the checker can update it.
+- `upload`: the bucket exists, but the anon key cannot upload yet. Re-run the storage policies SQL.
+- `public-read`: the file uploaded, but the public URL did not open outside the app. Confirm the bucket is public and the public read policy exists.
