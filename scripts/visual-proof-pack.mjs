@@ -303,6 +303,11 @@ async function createBrandPackageProof(baseUrl, packageDir, markdown) {
 
 async function createMeetAtTheHealPackageProof(baseUrl, packageDir, meetAtTheHealPackage) {
   const zipPath = path.join(packageDir, "meet-at-the-heal-kit-package.zip")
+  const documentProofs = await createMeetAtTheHealDocumentProofs(
+    baseUrl,
+    packageDir,
+    meetAtTheHealPackage
+  )
   const zip = await postBuffer(baseUrl, "/api/package/meetatheal", {
     lessonBookMarkdown: meetAtTheHealPackage.lessonBookMarkdown,
     couplesWorkbookMarkdown: meetAtTheHealPackage.couplesWorkbookMarkdown,
@@ -334,8 +339,95 @@ async function createMeetAtTheHealPackageProof(baseUrl, packageDir, meetAtTheHea
       "Files confirmed in ZIP:",
       ...expectedFiles.map((filename) => `- ${filename}`),
       "",
+      "Individual real-markdown proof PDFs:",
+      ...documentProofs.map(
+        (proof) =>
+          `- ${proof.label}: ${proof.pageCount} pages, PDF \`${relativeProofPath(packageDir, proof.pdfPath)}\`, contact sheet \`${relativeProofPath(packageDir, proof.contactSheetPath)}\``
+      ),
+      "",
     ].join("\n")
   )
+}
+
+async function createMeetAtTheHealDocumentProofs(baseUrl, packageDir, meetAtTheHealPackage) {
+  const documents = [
+    {
+      label: "Lesson Book",
+      slug: "meetatheal-lesson-book",
+      designPreset: "meetatheal",
+      markdown: meetAtTheHealPackage.lessonBookMarkdown,
+    },
+    {
+      label: "Couples Workbook",
+      slug: "meetatheal-couples-workbook",
+      designPreset: "meetatheal",
+      markdown: meetAtTheHealPackage.couplesWorkbookMarkdown,
+    },
+    {
+      label: "Rise Individual Workbook",
+      slug: "meetatheal-rise-individual-workbook",
+      designPreset: "meetatheal-rise",
+      markdown: meetAtTheHealPackage.riseWorkbookMarkdown,
+    },
+    {
+      label: "Land Individual Workbook",
+      slug: "meetatheal-land-individual-workbook",
+      designPreset: "meetatheal-land",
+      markdown: meetAtTheHealPackage.landWorkbookMarkdown,
+    },
+  ]
+  const contactSheetDir = path.join(packageDir, "contact-sheets")
+  const documentPdfDir = path.join(packageDir, "documents")
+  const pageRoot = path.join(packageDir, "pages")
+  const proofs = []
+
+  await Promise.all(
+    [contactSheetDir, documentPdfDir, pageRoot].map((dir) => fs.mkdir(dir, { recursive: true }))
+  )
+
+  for (const document of documents) {
+    const pdfPath = path.join(documentPdfDir, `${document.slug}.pdf`)
+    const pageDir = path.join(pageRoot, document.slug)
+
+    await fs.mkdir(pageDir, { recursive: true })
+    await writeBuffer(
+      pdfPath,
+      await postBuffer(baseUrl, "/api/render", {
+        markdown: document.markdown,
+        branch: "meetatheal",
+        designPreset: document.designPreset,
+        outputMode: "all-in-one",
+        target: "complete",
+      })
+    )
+
+    const pageImages = await renderPdfPages(pdfPath, pageDir)
+    const contactSheetPath = path.join(contactSheetDir, `${document.slug}-contact.png`)
+
+    await createImageGrid({
+      title: `Meet at the Heal ${document.label} - Real Markdown Contact Sheet`,
+      images: pageImages.map((image, index) => ({
+        label: `Page ${index + 1}`,
+        path: image,
+      })),
+      outputPath: contactSheetPath,
+      columns: 4,
+      imageWidth: 220,
+    })
+
+    proofs.push({
+      ...document,
+      contactSheetPath,
+      pageCount: pageImages.length,
+      pdfPath,
+    })
+  }
+
+  return proofs
+}
+
+function relativeProofPath(rootDir, filePath) {
+  return path.relative(rootDir, filePath).replaceAll(path.sep, "/")
 }
 
 async function createImageGrid({ title, images, outputPath, columns, imageWidth }) {
