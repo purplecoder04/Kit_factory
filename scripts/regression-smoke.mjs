@@ -504,6 +504,9 @@ async function testSplitPdfOutputs(baseUrl, markdown) {
     target: "workbook",
   })
 
+  await assertUsLetterPdf(complete, "Complete PDF")
+  await assertUsLetterPdf(guide, "Lesson guide PDF")
+  await assertUsLetterPdf(workbook, "Workbook PDF")
   assert((await pageCount(complete)) === 19, "Complete PDF should include every page in the proof kit.")
   assert((await pageCount(guide)) === 14, "Lesson guide should include cover, guide pages, and closing page.")
   assert((await pageCount(workbook)) === 8, "Workbook PDF should include cover, intro, workbook pages, and closing page.")
@@ -518,6 +521,7 @@ async function testFillableFields(baseUrl, markdown) {
     target: "workbook",
   })
   const pdf = await PDFDocument.load(fillable)
+  assertUsLetterPages(pdf, "Fillable workbook PDF")
   const fields = pdf.getForm().getFields()
   const fieldCount = fields.length
   const firstCheckbox = fields.find((field) => field.getName().includes("check_01"))
@@ -635,6 +639,39 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 30_000) {
 async function pageCount(pdfBuffer) {
   const pdf = await PDFDocument.load(pdfBuffer)
   return pdf.getPageCount()
+}
+
+async function assertUsLetterPdf(pdfBuffer, label) {
+  assertPdfHeader(pdfBuffer, label)
+  const pdf = await PDFDocument.load(pdfBuffer)
+
+  assertUsLetterPages(pdf, label)
+}
+
+function assertPdfHeader(pdfBuffer, label) {
+  assert(
+    pdfBuffer[0] === 0x25 && pdfBuffer[1] === 0x50 && pdfBuffer[2] === 0x44 && pdfBuffer[3] === 0x46,
+    `${label} is not a PDF file.`
+  )
+}
+
+function assertUsLetterPages(pdf, label) {
+  const pages = pdf.getPages()
+
+  assert(pages.length > 0, `${label} has no pages.`)
+
+  for (const [index, page] of pages.entries()) {
+    const { width, height } = page.getSize()
+
+    assert(
+      approximately(width, 612) && approximately(height, 792),
+      `${label} page ${index + 1} should be US Letter, got ${width}x${height}.`
+    )
+  }
+}
+
+function approximately(value, expected, tolerance = 2) {
+  return Math.abs(value - expected) <= tolerance
 }
 
 async function expectVisible(locator, label) {
