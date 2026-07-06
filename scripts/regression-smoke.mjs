@@ -383,11 +383,11 @@ async function testDashboardExportHistoryPanel(baseUrl, savedKit) {
       "Copy All feedback"
     )
 
-    await page.getByRole("button", { name: /Mark Ready/i }).click()
     await expectVisible(
-      page.getByText(/Generate a public export after Supabase Storage is ready/i),
-      "ready-to-sell public export warning"
+      page.getByText(/No public export link yet\. Current saved exports are local fallbacks/i),
+      "ready-to-sell local fallback warning"
     )
+    await expectDisabled(page.getByRole("button", { name: /Mark Ready/i }), "Mark Ready action without public export")
 
     if (savedKit.mathKitId) {
       await page.getByTestId("sidebar-all-kits").click()
@@ -599,6 +599,10 @@ async function pageCount(pdfBuffer) {
 
 async function expectVisible(locator, label) {
   await waitFor(async () => locator.isVisible(), `${label} was not visible.`)
+}
+
+async function expectDisabled(locator, label) {
+  await waitFor(async () => locator.isDisabled(), `${label} was not disabled.`)
 }
 
 async function waitFor(check, failureMessage, timeoutMs = 60_000) {

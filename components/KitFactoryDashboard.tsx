@@ -209,6 +209,12 @@ export function KitFactoryDashboard() {
       [kit.name, kit.status].some((value) => value.toLowerCase().includes(query))
     )
   }, [savedKitSearch, savedKits])
+  const hasPublicExportLink = useMemo(
+    () => exportFiles.some((file) => isPublicExportUrl(file.fileUrl)),
+    [exportFiles]
+  )
+  const productHasPublicExportLink = isPublicExportUrl(readyProduct?.exportUrl ?? "")
+  const canMarkReady = Boolean(kitId && (hasPublicExportLink || productHasPublicExportLink))
   const progressValue = useMemo(() => {
     if (status === "Draft") return 12
     if (status === "Parsed") return 34
@@ -1086,7 +1092,7 @@ export function KitFactoryDashboard() {
                 progressValue={progressValue}
                 status={status}
                 storageHealth={storageHealth}
-                canMarkReady={Boolean(kitId)}
+                canMarkReady={canMarkReady}
               />
             </section>
           </div>
@@ -3318,6 +3324,8 @@ function OutputPanel({
   const productIsLive = product?.productStatus === "live"
   const productExportName = friendlyExportName(product?.exportUrl ?? "")
   const productUsesLocalFallback = isLocalFallbackExportUrl(product?.exportUrl ?? "")
+  const localFallbackCount = exportFiles.filter((file) => isLocalFallbackExportUrl(file.fileUrl)).length
+  const publicExportCount = exportFiles.filter((file) => isPublicExportUrl(file.fileUrl)).length
 
   return (
     <Card>
@@ -3510,7 +3518,11 @@ function OutputPanel({
                 </div>
               ) : (
                 <div className="mt-2 text-xs text-muted-foreground">
-                  No linked Product yet. Generate an export, then mark the kit ready.
+                  {publicExportCount > 0
+                    ? "No linked Product yet. Public export is ready for product creation."
+                    : localFallbackCount > 0
+                      ? "No public export link yet. Current saved exports are local fallbacks until Supabase Storage is ready."
+                      : "No linked Product yet. Generate a public export, then mark the kit ready."}
                 </div>
               )}
             </div>
@@ -3751,6 +3763,20 @@ function storageHealthMessage(value: StorageHealthSummary) {
 
 function isLocalFallbackExportUrl(value: string) {
   return value.startsWith("kit-factory-download://")
+}
+
+function isPublicExportUrl(value: string) {
+  if (!value || isLocalFallbackExportUrl(value)) {
+    return false
+  }
+
+  try {
+    const url = new URL(value)
+
+    return url.protocol === "http:" || url.protocol === "https:"
+  } catch {
+    return false
+  }
 }
 
 function exportLinkKindLabel(value: string) {
