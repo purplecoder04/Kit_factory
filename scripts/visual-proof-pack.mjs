@@ -17,6 +17,7 @@ const outputRoot =
   path.join(root, "output", "visual-proof-pack", "latest")
 const pdftoppmPath = process.env.PDFTOPPM_PATH || findBundledPdftoppm()
 const startedServerUrl = process.env.KIT_FACTORY_TEST_URL
+const expectedCompletePageCount = 19
 let serverProcess
 
 const proofPresets = [
@@ -116,6 +117,12 @@ async function main() {
     const pdfPath = path.join(dirs.pdfs, `${preset.slug}-complete.pdf`)
     const mockupPath = path.join(dirs.mockups, `${preset.slug}-mockup.png`)
     const pageDir = path.join(dirs.pages, preset.slug)
+    const mockup = await postBuffer(baseUrl, "/api/mockup", {
+      markdown,
+      branch: preset.branch,
+      designPreset: preset.designPreset,
+      outputMode: "all-in-one",
+    })
 
     await fs.mkdir(pageDir, { recursive: true })
     await writeBuffer(
@@ -128,17 +135,11 @@ async function main() {
         target: "complete",
       })
     )
-    await writeBuffer(
-      mockupPath,
-      await postBuffer(baseUrl, "/api/mockup", {
-        markdown,
-        branch: preset.branch,
-        designPreset: preset.designPreset,
-        outputMode: "all-in-one",
-      })
-    )
+    assertPngBuffer(mockup, `${preset.label} mockup`)
+    await writeBuffer(mockupPath, mockup)
 
     const pageImages = await renderPdfPages(pdfPath, pageDir)
+    assertPageCount(pageImages, expectedCompletePageCount, `${preset.label} complete PDF`)
     const coverPath = path.join(dirs.covers, `${preset.slug}-cover.png`)
     await fs.copyFile(pageImages[0], coverPath)
 
@@ -402,6 +403,7 @@ async function createMeetAtTheHealDocumentProofs(baseUrl, packageDir, meetAtTheH
     )
 
     const pageImages = await renderPdfPages(pdfPath, pageDir)
+    assertMinimumPageCount(pageImages, 1, `Meet at the Heal ${document.label}`)
     const contactSheetPath = path.join(contactSheetDir, `${document.slug}-contact.png`)
 
     await createImageGrid({
@@ -538,6 +540,24 @@ async function renderPdfPages(pdfPath, pageDir) {
 
 function pageNumber(file) {
   return Number(file.match(/-(\d+)\.png$/)?.[1] || 0)
+}
+
+function assertPageCount(pageImages, expectedCount, label) {
+  if (pageImages.length !== expectedCount) {
+    throw new Error(`${label} rendered ${pageImages.length} pages; expected ${expectedCount}.`)
+  }
+}
+
+function assertMinimumPageCount(pageImages, minimumCount, label) {
+  if (pageImages.length < minimumCount) {
+    throw new Error(`${label} rendered ${pageImages.length} pages; expected at least ${minimumCount}.`)
+  }
+}
+
+function assertPngBuffer(buffer, label) {
+  if (!buffer?.length || buffer[0] !== 0x89 || buffer[1] !== 0x50 || buffer[2] !== 0x4e || buffer[3] !== 0x47) {
+    throw new Error(`${label} did not return a valid PNG file.`)
+  }
 }
 
 async function writeReadme(baseUrl, rows) {
