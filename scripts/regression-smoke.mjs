@@ -370,6 +370,12 @@ async function testDashboardExportHistoryPanel(baseUrl, savedKit) {
     await expectVisible(page.getByText("fillable / workbook", { exact: true }), "fillable export type")
     await expectVisible(page.getByText("mockup", { exact: true }), "mockup export type")
     await expectVisible(page.getByText("zip / brand package", { exact: true }), "Brand ZIP export type")
+    await expectExportHistoryRow(page, "pdf:complete", /\.pdf$/i, "complete PDF export row")
+    await expectExportHistoryRow(page, "pdf:guide", /\.pdf$/i, "lesson guide export row")
+    await expectExportHistoryRow(page, "pdf:workbook", /\.pdf$/i, "workbook PDF export row")
+    await expectExportHistoryRow(page, "fillable:workbook", /\.pdf$/i, "fillable workbook export row")
+    await expectExportHistoryRow(page, "mockup", /\.png$/i, "mockup export row")
+    await expectExportHistoryRow(page, "zip:brand-package", /\.zip$/i, "Brand ZIP export row")
 
     await page.getByRole("button", { name: /Copy Latest/i }).click()
     await expectVisible(
@@ -402,6 +408,12 @@ async function testDashboardExportHistoryPanel(baseUrl, savedKit) {
       await expectVisible(
         page.getByText("zip / meetatheal package", { exact: true }),
         "Meet at the Heal ZIP export type"
+      )
+      await expectExportHistoryRow(
+        page,
+        "zip:meetatheal-package",
+        /meet-at-the-heal-kit-package\.zip$/i,
+        "Meet at the Heal ZIP export row"
       )
     }
 
@@ -616,6 +628,25 @@ async function expectVisible(locator, label) {
 
 async function expectDisabled(locator, label) {
   await waitFor(async () => locator.isDisabled(), `${label} was not disabled.`)
+}
+
+async function expectExportHistoryRow(page, fileType, filenamePattern, label) {
+  const row = page.getByTestId(`export-history-row-${fileType}`)
+
+  await expectVisible(row, label)
+  await expectVisible(
+    page.getByTestId(`export-history-filename-${fileType}`).filter({ hasText: filenamePattern }),
+    `${label} filename`
+  )
+  await expectVisible(
+    page.getByTestId(`export-history-status-${fileType}`).filter({ hasText: /^completed$/i }),
+    `${label} status`
+  )
+  await waitFor(async () => {
+    const dateText = await page.getByTestId(`export-history-date-${fileType}`).innerText()
+
+    return Boolean(dateText.trim()) && dateText.trim() !== "No date"
+  }, `${label} date was missing.`)
 }
 
 async function waitFor(check, failureMessage, timeoutMs = 60_000) {

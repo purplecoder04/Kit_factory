@@ -3616,14 +3616,23 @@ function ExportHistoryPanel({
             return (
               <div
                 className="grid gap-2 rounded-md border bg-card/50 p-2 text-sm md:grid-cols-[minmax(0,1fr)_auto]"
+                data-testid={`export-history-row-${file.fileType}`}
                 key={file.id}
               >
                 <div className="min-w-0">
-                  <div className="truncate font-medium">{file.filename}</div>
+                  <div className="truncate font-medium" data-testid={`export-history-filename-${file.fileType}`}>
+                    {file.filename}
+                  </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                    <span>{prettyExportType(file.fileType)}</span>
-                    <span>{file.status}</span>
-                    <span>{formatExportDate(file.createdAt)}</span>
+                    <span data-testid={`export-history-type-${file.fileType}`}>
+                      {prettyExportType(file.fileType)}
+                    </span>
+                    <span data-testid={`export-history-status-${file.fileType}`}>
+                      {file.status}
+                    </span>
+                    <span data-testid={`export-history-date-${file.fileType}`}>
+                      {formatExportDate(file.createdAt)}
+                    </span>
                     <Badge variant={hasLocalFallbackLink ? "destructive" : "secondary"}>
                       {exportLinkKindLabel(file.fileUrl)}
                     </Badge>
