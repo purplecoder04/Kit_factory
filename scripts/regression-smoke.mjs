@@ -347,6 +347,13 @@ async function testDashboardExportHistoryPanel(baseUrl, savedKit) {
 
     const savedKitButton = page.getByTestId(`all-kits-open-${savedKit.brandKitId}`)
     await expectVisible(savedKitButton, "Saved kit with exports")
+    await expectVisible(page.getByText(/Showing \d+ of \d+ saved kit/i), "filtered saved kit count")
+
+    await page.getByTestId("all-kits-search").fill(`no saved kit ${Date.now()}`)
+    await expectVisible(page.getByText("No saved kits match that search."), "saved kit empty search result")
+
+    await page.getByTestId("all-kits-search").fill(savedKit.brandKitName)
+    await expectVisible(savedKitButton, "Saved kit after clearing no-match search")
     await savedKitButton.click()
 
     await expectVisible(page.getByText("Saved kit opened."), "saved kit opened message")

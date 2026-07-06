@@ -1239,13 +1239,18 @@ function SavedKitLibraryPanel({
   search: string
   totalCount: number
 }) {
+  const trimmedSearch = search.trim()
+  const visibleCount = kits.length
+
   return (
     <Card>
       <CardHeader>
         <div>
           <CardTitle>All Kits</CardTitle>
           <CardDescription>
-            {totalCount} saved kit{totalCount === 1 ? "" : "s"} in Supabase
+            {trimmedSearch
+              ? `Showing ${visibleCount} of ${totalCount} saved kit${totalCount === 1 ? "" : "s"}`
+              : `${totalCount} saved kit${totalCount === 1 ? "" : "s"} in Supabase`}
           </CardDescription>
         </div>
         <CardAction className="flex gap-2">
