@@ -1132,14 +1132,15 @@ async function findLatestExportUrl(supabase: SupabaseClient, kitId: string) {
     .select("file_url")
     .in("export_job_id", jobIds)
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    .limit(25)
 
-  if (filesError || !files) {
+  if (filesError || !files?.length) {
     return ""
   }
 
-  return stringValue(files.file_url)
+  const exportUrls = files.map((file) => stringValue(file.file_url)).filter(Boolean)
+
+  return exportUrls.find(publicExportUrlFrom) ?? exportUrls[0] ?? ""
 }
 
 async function resolveReferenceId(

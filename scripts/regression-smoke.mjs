@@ -6,6 +6,7 @@ import process from "node:process"
 import { fileURLToPath } from "node:url"
 import { promisify } from "node:util"
 
+import { createClient } from "@supabase/supabase-js"
 import { PDFDocument } from "pdf-lib"
 import { chromium } from "playwright"
 
@@ -26,6 +27,9 @@ async function main() {
   await runStep("storage setup SQL endpoint", () => testStorageSetupSqlEndpoint(baseUrl))
   await runStep("parser defaults", () => testParserDefaults(baseUrl, markdown))
   await runStep("ready-to-sell public export guard", () => testReadyRequiresPublicExport(baseUrl, markdown))
+  await runStep("ready-to-sell public export reuse", () =>
+    testReadyUsesPublicExportAndReusesProduct(baseUrl, markdown)
+  )
   const savedExportHistoryKit = await runStep("saved export history", () =>
     testSavedExportHistory(baseUrl, meetAtTheHealPackage)
   )
@@ -227,6 +231,74 @@ async function testReadyRequiresPublicExport(baseUrl, markdown) {
     /public export/i.test(body.error || ""),
     "Ready-to-sell fallback guard did not explain that a public export is required."
   )
+}
+
+async function testReadyUsesPublicExportAndReusesProduct(baseUrl) {
+  const supabase = smokeSupabaseClient()
+
+  if (!supabase) {
+    return
+  }
+
+  const title = `Ready Reuse Smoke ${Date.now()}`
+  const readyMarkdown = createExportHistoryMarkdown(title)
+  const payload = await postJson(baseUrl, "/api/parse", {
+    markdown: readyMarkdown,
+    branch: "brand",
+    designPreset: "brand",
+    outputMode: "split",
+    persist: true,
+  })
+
+  if (!payload.kitId) {
+    return
+  }
+
+  const publicUrl = `https://example.com/kit-factory/${payload.kitId}/ready-smoke.pdf`
+  let productId = ""
+
+  try {
+    await insertPublicExportForReadySmoke(supabase, payload.kitId, publicUrl)
+    await postBuffer(baseUrl, "/api/render", {
+      markdown: readyMarkdown,
+      branch: "brand",
+      designPreset: "brand",
+      outputMode: "all-in-one",
+      target: "complete",
+      kitId: payload.kitId,
+    })
+
+    const firstResponse = await fetchWithTimeout(new URL(`/api/kits/${payload.kitId}/ready`, baseUrl), {
+      method: "POST",
+    }, 60_000)
+    const firstReady = await firstResponse.json()
+
+    assert(firstResponse.ok, `Ready-to-sell public export returned ${firstResponse.status}: ${firstReady.error || ""}`)
+    assert(firstReady.exportUrl === publicUrl, "Ready-to-sell did not choose the latest public export URL.")
+    assert(firstReady.productId, "Ready-to-sell did not create a Product row.")
+    assert(firstReady.productStatus === "live", `Product status should be live, got ${firstReady.productStatus}.`)
+    productId = firstReady.productId
+
+    const secondResponse = await fetchWithTimeout(new URL(`/api/kits/${payload.kitId}/ready`, baseUrl), {
+      method: "POST",
+    }, 60_000)
+    const secondReady = await secondResponse.json()
+
+    assert(secondResponse.ok, `Ready-to-sell reuse returned ${secondResponse.status}: ${secondReady.error || ""}`)
+    assert(secondReady.productId === productId, "Ready-to-sell created a duplicate Product instead of reusing the first one.")
+    assert(secondReady.reusedProduct === true, "Ready-to-sell did not report that it reused the existing Product.")
+
+    const savedKit = await getJson(baseUrl, `/api/kits/${payload.kitId}`)
+
+    assert(savedKit.productId === productId, "Saved kit did not keep the linked Product id.")
+    assert(savedKit.productStatus === "live", `Saved kit product status should be live, got ${savedKit.productStatus}.`)
+  } finally {
+    await cleanupReadySmokeRows(supabase, {
+      kitId: payload.kitId,
+      productId,
+      productName: title,
+    })
+  }
 }
 
 async function testSavedExportHistory(baseUrl, meetAtTheHealPackage) {
@@ -593,6 +665,110 @@ async function testMeetAtTheHealPackage(baseUrl, meetAtTheHealPackage) {
   }
 }
 
+function smokeSupabaseClient() {
+  const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || ""
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    ""
+
+  if (!url || !key) {
+    return null
+  }
+
+  return createClient(url, key, {
+    auth: {
+      persistSession: false,
+    },
+  })
+}
+
+async function insertPublicExportForReadySmoke(supabase, kitId, publicUrl) {
+  const timestamp = new Date().toISOString()
+  const job = await insertSmokeRow(
+    supabase,
+    "export_jobs",
+    {
+      completed_at: timestamp,
+      export_type: "pdf",
+      kit_id: kitId,
+      started_at: timestamp,
+      status: "completed",
+      target: "complete",
+      type: "pdf",
+    },
+    "id"
+  )
+
+  assert(job?.id, "Could not create the public export job for ready-to-sell smoke test.")
+
+  await insertSmokeRow(
+    supabase,
+    "export_files",
+    {
+      export_job_id: job.id,
+      file_type: "pdf:complete",
+      file_url: publicUrl,
+    },
+    "id"
+  )
+}
+
+async function cleanupReadySmokeRows(supabase, { kitId, productId, productName }) {
+  if (productId) {
+    await supabase.from("products").delete().eq("id", productId)
+  }
+
+  if (productName) {
+    await supabase
+      .from("products")
+      .delete()
+      .eq("name", productName)
+      .eq("created_from", "kit_factory")
+  }
+
+  if (!kitId) {
+    return
+  }
+
+  const { data: jobs } = await supabase.from("export_jobs").select("id").eq("kit_id", kitId)
+  const jobIds = (jobs ?? []).map((job) => String(job.id)).filter(Boolean)
+
+  if (jobIds.length > 0) {
+    await supabase.from("export_files").delete().in("export_job_id", jobIds)
+    await supabase.from("export_jobs").delete().in("id", jobIds)
+  }
+
+  await supabase.from("assets").delete().eq("kit_id", kitId)
+  await supabase.from("kit_pages").delete().eq("kit_id", kitId)
+  await supabase.from("kit_documents").delete().eq("kit_id", kitId)
+  await supabase.from("kit_versions").delete().eq("kit_id", kitId)
+  await supabase.from("kits").delete().eq("id", kitId)
+}
+
+async function insertSmokeRow(supabase, table, row, select = "*") {
+  let currentRow = pruneEmptyValues(row)
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const { data, error } = await supabase.from(table).insert(currentRow).select(select).single()
+
+    if (!error) {
+      return data
+    }
+
+    const missingColumn = missingColumnFromSupabaseError(error)
+
+    if (!missingColumn || !Object.hasOwn(currentRow, missingColumn)) {
+      throw error
+    }
+
+    currentRow = withoutKey(currentRow, missingColumn)
+  }
+
+  throw new Error(`Could not insert smoke row into ${table}.`)
+}
+
 async function getJson(baseUrl, route) {
   const response = await fetchWithTimeout(new URL(route, baseUrl), {}, 60_000)
 
@@ -887,6 +1063,34 @@ function assertExportHistoryIncludes(exports, expectedTypes, label) {
     assert(typeof match.status === "string" && match.status.length > 0, `${expectedType} is missing a status.`)
     assert(typeof match.createdAt === "string" && match.createdAt.length > 0, `${expectedType} is missing a date.`)
   }
+}
+
+function missingColumnFromSupabaseError(error) {
+  const combined = [error.message, error.details, error.hint].filter(Boolean).join(" ")
+  const patterns = [
+    /find the ['"]([^'"]+)['"] column/i,
+    /column ['"]?([^'"\s]+)['"]?/i,
+  ]
+
+  for (const pattern of patterns) {
+    const match = combined.match(pattern)
+
+    if (match?.[1]) {
+      return match[1]
+    }
+  }
+
+  return null
+}
+
+function pruneEmptyValues(row) {
+  return Object.fromEntries(
+    Object.entries(row).filter(([, value]) => value !== undefined && value !== null)
+  )
+}
+
+function withoutKey(row, key) {
+  return Object.fromEntries(Object.entries(row).filter(([entryKey]) => entryKey !== key))
 }
 
 async function stopServer() {
