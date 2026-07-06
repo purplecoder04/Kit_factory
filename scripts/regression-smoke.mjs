@@ -262,6 +262,10 @@ async function testSavedExportHistory(baseUrl) {
     "mockup",
     "zip:brand-package",
   ], "Brand saved kit")
+  const savedKit = {
+    brandKitId: brandPayload.kitId,
+    brandKitName,
+  }
 
   const lessonBookMarkdown = createMeetAtTheHealMarkdown({
     title: `Meet at the Heal Lesson Book Smoke ${timestamp}`,
@@ -278,7 +282,7 @@ async function testSavedExportHistory(baseUrl) {
   })
 
   if (!mathPayload.kitId) {
-    return
+    return savedKit
   }
 
   await postBuffer(baseUrl, "/api/package/meetatheal", {
@@ -309,10 +313,7 @@ async function testSavedExportHistory(baseUrl) {
     "zip:meetatheal-package",
   ], "Meet at the Heal saved kit")
 
-  return {
-    brandKitId: brandPayload.kitId,
-    brandKitName,
-  }
+  return savedKit
 }
 
 async function testDashboardExportHistoryPanel(baseUrl, savedKit) {
@@ -347,6 +348,12 @@ async function testDashboardExportHistoryPanel(baseUrl, savedKit) {
     await expectVisible(
       page.getByText(/Export list copied|All export links copied|Links are ready below/i),
       "Copy All feedback"
+    )
+
+    await page.getByRole("button", { name: /Mark Ready/i }).click()
+    await expectVisible(
+      page.getByText(/Generate a public export after Supabase Storage is ready/i),
+      "ready-to-sell public export warning"
     )
   } finally {
     await browser.close()
