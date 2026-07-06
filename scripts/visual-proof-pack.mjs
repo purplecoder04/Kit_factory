@@ -11,7 +11,9 @@ import { chromium } from "playwright"
 const execFileAsync = promisify(execFile)
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 const samplePath = path.join(root, "samples", "golden-kit.md")
-const outputRoot = path.join(root, "output", "visual-proof-pack", "latest")
+const outputRoot =
+  process.env.KIT_FACTORY_PROOF_OUTPUT_ROOT ||
+  path.join(root, "output", "visual-proof-pack", "latest")
 const pdftoppmPath = process.env.PDFTOPPM_PATH || findBundledPdftoppm()
 const startedServerUrl = process.env.KIT_FACTORY_TEST_URL
 let serverProcess
@@ -473,10 +475,11 @@ async function startServer() {
   const nextCli = path.join(root, "node_modules", "next", "dist", "bin", "next")
   const baseUrl = `http://127.0.0.1:${port}`
 
-  serverProcess = spawn(process.execPath, [nextCli, "dev", "-p", String(port), "--hostname", "127.0.0.1"], {
+  serverProcess = spawn(process.execPath, ["--use-system-ca", nextCli, "dev", "-p", String(port), "--hostname", "127.0.0.1"], {
     cwd: root,
     env: {
       ...process.env,
+      KIT_FACTORY_SKIP_STORAGE_UPLOAD: "1",
       NEXT_TELEMETRY_DISABLED: "1",
     },
     stdio: ["ignore", "pipe", "pipe"],
@@ -731,4 +734,7 @@ main()
     console.error(error)
     process.exitCode = 1
   })
-  .finally(stopServer)
+  .finally(async () => {
+    await stopServer()
+    process.exit(process.exitCode ?? 0)
+  })
