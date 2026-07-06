@@ -404,6 +404,19 @@ async function testDashboardExportHistoryPanel(baseUrl, savedKit) {
         "Meet at the Heal ZIP export type"
       )
     }
+
+    await page.getByTestId("sidebar-new-kit").click()
+    await expectVisible(page.getByText("New kit started."), "New Kit reset message")
+    await expectVisible(page.getByText("No saved files yet"), "New Kit cleared export history")
+    await expectVisible(
+      page.getByText("No linked Product yet. Generate a public export, then mark the kit ready."),
+      "New Kit cleared ready-to-sell product state"
+    )
+    await expectDisabled(page.getByRole("button", { name: /Mark Ready/i }), "New Kit ready action")
+
+    const newKitMarkdown = await page.getByLabel("Markdown source").inputValue()
+    assert(newKitMarkdown.includes("title: Untitled Kit"), "New Kit did not reset the markdown title after opening a saved kit.")
+    assert(newKitMarkdown.includes("design_preset: brand"), "New Kit did not reset the design preset after opening a saved kit.")
   } finally {
     await browser.close()
   }
