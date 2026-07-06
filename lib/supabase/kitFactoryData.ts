@@ -468,22 +468,36 @@ export async function listSavedKits() {
     return []
   }
 
-  const { data, error } = await supabase
-    .from("kits")
-    .select("id,name,status")
-    .order("id", { ascending: false })
-    .limit(50)
-
-  if (error) {
-    logSupabaseDataWarning("listSavedKits", error)
-    return []
-  }
+  const data =
+    (await listSavedKitRows(supabase, "created_at")) ??
+    (await listSavedKitRows(supabase, "updated_at")) ??
+    (await listSavedKitRows(supabase, "id")) ??
+    []
 
   return (data ?? []).map((kit): SavedKitSummary => ({
     id: stringValue(kit.id),
     name: stringValue(kit.name) || "Untitled Kit",
     status: stringValue(kit.status) || "draft",
   }))
+}
+
+async function listSavedKitRows(supabase: SupabaseClient, orderColumn: string) {
+  const { data, error } = await supabase
+    .from("kits")
+    .select("id,name,status")
+    .order(orderColumn, { ascending: false })
+    .limit(200)
+
+  if (!error) {
+    return data ?? []
+  }
+
+  if (missingColumnFromError(error) && orderColumn !== "id") {
+    return null
+  }
+
+  logSupabaseDataWarning(`listSavedKits.${orderColumn}`, error)
+  return []
 }
 
 export async function getSavedKit(kitId: string): Promise<SavedKitDetail | null> {

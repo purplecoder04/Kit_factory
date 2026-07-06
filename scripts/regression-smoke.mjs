@@ -346,6 +346,7 @@ async function testDashboardExportHistoryPanel(baseUrl, savedKit) {
 
   try {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
+    await disableClipboardForCopyFallback(page)
     await page.goto(baseUrl, { waitUntil: "networkidle" })
 
     await page.getByTestId("sidebar-all-kits").click()
@@ -382,11 +383,25 @@ async function testDashboardExportHistoryPanel(baseUrl, savedKit) {
       page.getByText(/Local fallback copied|Latest export link copied|Links are ready below/i),
       "Copy Latest feedback"
     )
+    await expectCopyReadyTextIncludes(page, ["kit-factory-download://"], "Copy Latest fallback text")
 
     await page.getByRole("button", { name: /Copy All/i }).click()
     await expectVisible(
       page.getByText(/Export list copied|All export links copied|Links are ready below/i),
       "Copy All feedback"
+    )
+    await expectCopyReadyTextIncludes(
+      page,
+      [
+        "pdf:complete",
+        "pdf:guide",
+        "pdf:workbook",
+        "fillable:workbook",
+        "mockup",
+        "zip:brand-package",
+        "kit-factory-download://",
+      ],
+      "Copy All export list"
     )
 
     await expectVisible(
@@ -647,6 +662,31 @@ async function expectExportHistoryRow(page, fileType, filenamePattern, label) {
 
     return Boolean(dateText.trim()) && dateText.trim() !== "No date"
   }, `${label} date was missing.`)
+}
+
+async function expectCopyReadyTextIncludes(page, expectedParts, label) {
+  const textarea = page.getByLabel("Copy-ready text")
+
+  await expectVisible(textarea, label)
+  await waitFor(async () => {
+    const value = await textarea.inputValue()
+
+    return expectedParts.every((part) => value.includes(part))
+  }, `${label} did not include expected export text.`)
+}
+
+async function disableClipboardForCopyFallback(page) {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: async () => {
+          throw new Error("Clipboard disabled for smoke test.")
+        },
+      },
+    })
+    document.execCommand = () => false
+  })
 }
 
 async function waitFor(check, failureMessage, timeoutMs = 60_000) {
