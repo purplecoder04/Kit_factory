@@ -249,6 +249,14 @@ async function testSavedExportHistory(baseUrl, meetAtTheHealPackage) {
     markdown: brandMarkdown,
     branch: "brand",
     designPreset: "brand",
+    outputMode: "all-in-one",
+    target: "complete",
+    kitId: brandPayload.kitId,
+  })
+  await postBuffer(baseUrl, "/api/render", {
+    markdown: brandMarkdown,
+    branch: "brand",
+    designPreset: "brand",
     outputMode: "split",
     target: "guide",
     kitId: brandPayload.kitId,
@@ -283,6 +291,7 @@ async function testSavedExportHistory(baseUrl, meetAtTheHealPackage) {
 
   const brandHistory = await getJson(baseUrl, `/api/kits/${brandPayload.kitId}/exports`)
   assertExportHistoryIncludes(brandHistory.exports, [
+    "pdf:complete",
     "pdf:guide",
     "pdf:workbook",
     "fillable:workbook",
@@ -341,7 +350,8 @@ async function testDashboardExportHistoryPanel(baseUrl, savedKit) {
     await savedKitButton.click()
 
     await expectVisible(page.getByText("Saved kit opened."), "saved kit opened message")
-    await expectVisible(page.getByText("5 saved files"), "saved export count")
+    await expectVisible(page.getByText("6 saved files"), "saved export count")
+    await expectVisible(page.getByText("pdf / complete", { exact: true }), "complete PDF export type")
     await expectVisible(page.getByText("pdf / guide", { exact: true }), "lesson guide export type")
     await expectVisible(page.getByText("pdf / workbook", { exact: true }), "workbook export type")
     await expectVisible(page.getByText("fillable / workbook", { exact: true }), "fillable export type")
