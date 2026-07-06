@@ -24,7 +24,12 @@ async function main() {
   await runStep("storage setup SQL endpoint", () => testStorageSetupSqlEndpoint(baseUrl))
   await runStep("parser defaults", () => testParserDefaults(baseUrl, markdown))
   await runStep("ready-to-sell public export guard", () => testReadyRequiresPublicExport(baseUrl, markdown))
-  await runStep("saved export history", () => testSavedExportHistory(baseUrl))
+  const savedExportHistoryKit = await runStep("saved export history", () => testSavedExportHistory(baseUrl))
+  if (savedExportHistoryKit) {
+    await runStep("dashboard export history panel", () =>
+      testDashboardExportHistoryPanel(baseUrl, savedExportHistoryKit)
+    )
+  }
   await runStep("split PDF outputs", () => testSplitPdfOutputs(baseUrl, markdown))
   await runStep("fillable fields", () => testFillableFields(baseUrl, markdown))
   await runStep("mockup output", () => testMockupOutput(baseUrl, markdown))
@@ -36,8 +41,9 @@ async function main() {
 
 async function runStep(label, action) {
   process.stdout.write(`- ${label}... `)
-  await action()
+  const result = await action()
   console.log("ok")
+  return result
 }
 
 async function startServer() {
@@ -198,7 +204,8 @@ async function testReadyRequiresPublicExport(baseUrl, markdown) {
 
 async function testSavedExportHistory(baseUrl) {
   const timestamp = Date.now()
-  const brandMarkdown = createExportHistoryMarkdown(timestamp)
+  const brandKitName = `Export History Smoke ${timestamp}`
+  const brandMarkdown = createExportHistoryMarkdown(brandKitName)
   const brandPayload = await postJson(baseUrl, "/api/parse", {
     markdown: brandMarkdown,
     branch: "brand",
@@ -301,6 +308,49 @@ async function testSavedExportHistory(baseUrl) {
   assertExportHistoryIncludes(mathHistory.exports, [
     "zip:meetatheal-package",
   ], "Meet at the Heal saved kit")
+
+  return {
+    brandKitId: brandPayload.kitId,
+    brandKitName,
+  }
+}
+
+async function testDashboardExportHistoryPanel(baseUrl, savedKit) {
+  const browser = await chromium.launch({ headless: true })
+
+  try {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } })
+    await page.goto(baseUrl, { waitUntil: "networkidle" })
+
+    await page.getByTestId("sidebar-all-kits").click()
+    await page.getByTestId("all-kits-search").fill(savedKit.brandKitName)
+
+    const savedKitButton = page.getByTestId(`all-kits-open-${savedKit.brandKitId}`)
+    await expectVisible(savedKitButton, "Saved kit with exports")
+    await savedKitButton.click()
+
+    await expectVisible(page.getByText("Saved kit opened."), "saved kit opened message")
+    await expectVisible(page.getByText("5 saved files"), "saved export count")
+    await expectVisible(page.getByText("pdf / guide", { exact: true }), "lesson guide export type")
+    await expectVisible(page.getByText("pdf / workbook", { exact: true }), "workbook export type")
+    await expectVisible(page.getByText("fillable / workbook", { exact: true }), "fillable export type")
+    await expectVisible(page.getByText("mockup", { exact: true }), "mockup export type")
+    await expectVisible(page.getByText("zip / brand package", { exact: true }), "Brand ZIP export type")
+
+    await page.getByRole("button", { name: /Copy Latest/i }).click()
+    await expectVisible(
+      page.getByText(/Local fallback copied|Latest export link copied|Links are ready below/i),
+      "Copy Latest feedback"
+    )
+
+    await page.getByRole("button", { name: /Copy All/i }).click()
+    await expectVisible(
+      page.getByText(/Export list copied|All export links copied|Links are ready below/i),
+      "Copy All feedback"
+    )
+  } finally {
+    await browser.close()
+  }
 }
 
 async function testStorageReadinessEndpoint(baseUrl) {
@@ -607,9 +657,9 @@ IMAGE_SLOT: closing-lifestyle
 `
 }
 
-function createExportHistoryMarkdown(timestamp) {
+function createExportHistoryMarkdown(title) {
   return `---
-title: Export History Smoke ${timestamp}
+title: ${title}
 subtitle: Saved export history proof
 branch: brand
 design_preset: brand
