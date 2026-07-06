@@ -3339,9 +3339,10 @@ function OutputPanel({
         <div className="grid gap-3">
           <Alert className="border-primary/30 bg-primary/5">
             <AlertCircleIcon />
-            <AlertTitle>Local export mode</AlertTitle>
+            <AlertTitle>Export runtime</AlertTitle>
             <AlertDescription>
-              PDF, fillable, mockup, and ZIP exports are local-only for now. Use the local app for final files.
+              Use the local app to generate final files. When Supabase Storage is ready,
+              saved exports also store public links in Export History.
             </AlertDescription>
           </Alert>
 
