@@ -301,11 +301,14 @@ async function testSavedExportHistory(baseUrl, meetAtTheHealPackage) {
   const savedKit = {
     brandKitId: brandPayload.kitId,
     brandKitName,
+    mathKitId: "",
+    mathKitName: "",
   }
 
+  const mathKitName = `Meet at the Heal Lesson Book Smoke ${timestamp}`
   const lessonBookMarkdown = meetAtTheHealPackage.lessonBookMarkdown.replace(
     /^title:.*$/m,
-    `title: Meet at the Heal Lesson Book Smoke ${timestamp}`
+    `title: ${mathKitName}`
   )
   const mathPayload = await postJson(baseUrl, "/api/parse", {
     markdown: lessonBookMarkdown,
@@ -331,6 +334,9 @@ async function testSavedExportHistory(baseUrl, meetAtTheHealPackage) {
   assertExportHistoryIncludes(mathHistory.exports, [
     "zip:meetatheal-package",
   ], "Meet at the Heal saved kit")
+
+  savedKit.mathKitId = mathPayload.kitId
+  savedKit.mathKitName = mathKitName
 
   return savedKit
 }
@@ -382,6 +388,22 @@ async function testDashboardExportHistoryPanel(baseUrl, savedKit) {
       page.getByText(/Generate a public export after Supabase Storage is ready/i),
       "ready-to-sell public export warning"
     )
+
+    if (savedKit.mathKitId) {
+      await page.getByTestId("sidebar-all-kits").click()
+      await page.getByTestId("all-kits-search").fill(savedKit.mathKitName)
+
+      const mathKitButton = page.getByTestId(`all-kits-open-${savedKit.mathKitId}`)
+      await expectVisible(mathKitButton, "Saved Meet at the Heal kit with package export")
+      await mathKitButton.click()
+
+      await expectVisible(page.getByText("Saved kit opened."), "Meet at the Heal saved kit opened message")
+      await expectVisible(page.getByText("1 saved file"), "Meet at the Heal saved export count")
+      await expectVisible(
+        page.getByText("zip / meetatheal package", { exact: true }),
+        "Meet at the Heal ZIP export type"
+      )
+    }
   } finally {
     await browser.close()
   }
