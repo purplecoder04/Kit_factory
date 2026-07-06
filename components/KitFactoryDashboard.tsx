@@ -391,7 +391,7 @@ export function KitFactoryDashboard() {
       })
       setReadyProduct(productSummaryFromPayload(payload))
       void loadExportFiles(payload.kitId ?? savedKitId)
-      setStatus(hasErrors ? "Error" : "Preview Ready")
+      setStatus(hasErrors ? "Error" : buildStatusFromSavedKit(payload))
       setMessage(hasErrors ? "Saved kit opened with validation errors." : "Saved kit opened.")
     } catch {
       setStatus("Error")
@@ -3686,6 +3686,17 @@ function productSummaryFromPayload(payload: {
     productStatus: payload.productStatus || "",
     reusedProduct: payload.reusedProduct,
   }
+}
+
+function buildStatusFromSavedKit(payload: Pick<SavedKitLoadResult, "productStatus" | "status">): BuildStatus {
+  const savedStatus = payload.status.toLowerCase()
+  const productStatus = payload.productStatus.toLowerCase()
+
+  if (savedStatus === "ready_to_sell" || savedStatus === "live" || productStatus === "live") {
+    return "Ready to Sell"
+  }
+
+  return "Preview Ready"
 }
 
 function shortProductId(value: string) {
