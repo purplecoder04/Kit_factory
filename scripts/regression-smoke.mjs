@@ -551,15 +551,18 @@ async function testBrandPackage(baseUrl, markdown) {
   const zip = await postBuffer(baseUrl, "/api/package/brand", {
     markdown,
   })
-  const zipText = zip.toString("latin1")
-  const filenames = [
-    "brand-complete.pdf",
-    "brand-land-complete.pdf",
-  ]
+  const entries = extractStoredZipEntries(zip)
+  const expectedFilenameSuffixes = ["brand-complete.pdf", "brand-land-complete.pdf"]
 
   assert(zip.length > 100_000, "Brand package ZIP is unexpectedly small.")
-  for (const filename of filenames) {
-    assert(zipText.includes(filename), `Brand package ZIP is missing ${filename}.`)
+  assert(entries.size === 2, `Brand package ZIP should contain 2 files, got ${entries.size}.`)
+
+  for (const filenameSuffix of expectedFilenameSuffixes) {
+    const [filename, data] = findZipEntryBySuffix(entries, filenameSuffix)
+
+    assert(filename, `Brand package ZIP is missing ${filenameSuffix}.`)
+    await assertUsLetterPdf(data, `Brand package file ${filename}`)
+    assert((await pageCount(data)) === 19, `${filename} should be a complete 19-page PDF.`)
   }
 }
 
@@ -570,7 +573,7 @@ async function testMeetAtTheHealPackage(baseUrl, meetAtTheHealPackage) {
     riseWorkbookMarkdown: meetAtTheHealPackage.riseWorkbookMarkdown,
     landWorkbookMarkdown: meetAtTheHealPackage.landWorkbookMarkdown,
   })
-  const zipText = zip.toString("latin1")
+  const entries = extractStoredZipEntries(zip)
   const filenames = [
     "meet-at-the-heal-lesson-book.pdf",
     "meet-at-the-heal-couples-workbook.pdf",
@@ -579,8 +582,14 @@ async function testMeetAtTheHealPackage(baseUrl, meetAtTheHealPackage) {
   ]
 
   assert(zip.length > 100_000, "Meet at the Heal package ZIP is unexpectedly small.")
+  assert(entries.size === 4, `Meet at the Heal package ZIP should contain 4 files, got ${entries.size}.`)
+
   for (const filename of filenames) {
-    assert(zipText.includes(filename), `Package ZIP is missing ${filename}.`)
+    const data = entries.get(filename)
+
+    assert(data, `Package ZIP is missing ${filename}.`)
+    await assertUsLetterPdf(data, `Meet at the Heal package file ${filename}`)
+    assert((await pageCount(data)) === 5, `${filename} should be a 5-page sample PDF.`)
   }
 }
 
@@ -672,6 +681,39 @@ function assertUsLetterPages(pdf, label) {
 
 function approximately(value, expected, tolerance = 2) {
   return Math.abs(value - expected) <= tolerance
+}
+
+function extractStoredZipEntries(zipBuffer) {
+  const entries = new Map()
+  let offset = 0
+
+  while (offset + 30 <= zipBuffer.length && zipBuffer.readUInt32LE(offset) === 0x04034b50) {
+    const compressionMethod = zipBuffer.readUInt16LE(offset + 8)
+    const compressedSize = zipBuffer.readUInt32LE(offset + 18)
+    const filenameLength = zipBuffer.readUInt16LE(offset + 26)
+    const extraLength = zipBuffer.readUInt16LE(offset + 28)
+    const filenameStart = offset + 30
+    const filenameEnd = filenameStart + filenameLength
+    const dataStart = filenameEnd + extraLength
+    const dataEnd = dataStart + compressedSize
+    const filename = zipBuffer.subarray(filenameStart, filenameEnd).toString("utf8")
+
+    assert(compressionMethod === 0, `${filename} should be stored without compression.`)
+    assert(dataEnd <= zipBuffer.length, `${filename} extends past the end of the ZIP file.`)
+
+    entries.set(filename, zipBuffer.subarray(dataStart, dataEnd))
+    offset = dataEnd
+  }
+
+  assert(entries.size > 0, "ZIP file did not contain any local file entries.")
+
+  return entries
+}
+
+function findZipEntryBySuffix(entries, filenameSuffix) {
+  return (
+    Array.from(entries.entries()).find(([filename]) => filename.endsWith(filenameSuffix)) ?? ["", null]
+  )
 }
 
 async function expectVisible(locator, label) {
