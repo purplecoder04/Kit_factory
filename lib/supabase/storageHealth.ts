@@ -36,11 +36,18 @@ export async function checkExportStorageHealth(): Promise<ExportStorageHealthRes
   }
 
   try {
-    const bucketReady = await ensureBucket({
-      bucket,
-      serviceRoleConfigured,
-      supabase,
-    })
+    const bucketReady = serviceRoleConfigured
+      ? await ensureBucket({
+          bucket,
+          serviceRoleConfigured,
+          supabase,
+        })
+      : {
+          bucket,
+          ok: true,
+          serviceRoleConfigured,
+          step: "complete" as const,
+        }
 
     if (!bucketReady.ok) {
       return bucketReady

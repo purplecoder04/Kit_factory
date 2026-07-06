@@ -33,7 +33,7 @@ async function main() {
     },
   })
 
-  const bucketReady = await ensureBucket(supabase)
+  const bucketReady = serviceRoleKey ? await ensureBucket(supabase) : true
 
   if (!bucketReady) {
     return

@@ -883,6 +883,7 @@ async function createKitVersion({
     {
       kit_id: kitId,
       version_number: versionNumber,
+      snapshot: kit,
       source_markdown: sourceMarkdown,
       parsed_snapshot: kit,
       status: "draft",
@@ -945,6 +946,7 @@ async function createKitPages({
     kit_document_id: documentId,
     document_id: documentId,
     page_index: index + 1,
+    page_number: index + 1,
     sort_order: index + 1,
     page_type: page.type,
     type: page.type,
@@ -956,11 +958,15 @@ async function createKitPages({
     raw_markdown: page.raw,
   }))
 
-  const { data, error } = await insertRows<{ id?: string; page_index?: number }>(
+  const { data, error } = await insertRows<{
+    id?: string
+    page_index?: number
+    page_number?: number
+  }>(
     supabase,
     "kit_pages",
     pageRows,
-    "id,page_index"
+    "id,page_index,page_number"
   )
 
   if (error) {
@@ -981,13 +987,16 @@ async function createAssetRows({
   documentId: string | null
   kit: ParsedKit
   kitId: string
-  pages: { id?: string; page_index?: number }[]
+  pages: { id?: string; page_index?: number; page_number?: number }[]
   supabase: SupabaseClient
 }) {
   const pageIdByIndex = new Map(
     pages
-      .filter((page) => page.id && page.page_index)
-      .map((page) => [page.page_index as number, page.id as string])
+      .filter((page) => page.id && (page.page_index || page.page_number))
+      .map((page) => [
+        (page.page_index || page.page_number) as number,
+        page.id as string,
+      ])
   )
   const assetRows = kit.pages.flatMap((page, index) =>
     assetRowsForPage({
@@ -1067,9 +1076,32 @@ async function clearParsedKitChildren({
   kitId: string
   supabase: SupabaseClient
 }) {
+  const documentIds = await listKitDocumentIds(supabase, kitId)
+
   await deleteRows(supabase, "assets", "kit_id", kitId)
-  await deleteRows(supabase, "kit_pages", "kit_id", kitId)
+  await Promise.all(
+    documentIds.map((documentId) =>
+      deleteRows(supabase, "kit_pages", "kit_document_id", documentId)
+    )
+  )
   await deleteRows(supabase, "kit_documents", "kit_id", kitId)
+}
+
+async function listKitDocumentIds(supabase: SupabaseClient, kitId: string) {
+  const { data, error } = await supabase
+    .from("kit_documents")
+    .select("id")
+    .eq("kit_id", kitId)
+
+  if (error || !data) {
+    if (error) {
+      logSupabaseDataWarning("listKitDocumentIds", error)
+    }
+
+    return []
+  }
+
+  return data.map((document) => stringValue(document.id)).filter(Boolean)
 }
 
 async function nextVersionNumber(supabase: SupabaseClient, kitId: string) {
@@ -1198,12 +1230,14 @@ async function insertRow<T>(
   select = "*"
 ): Promise<DbResult<T>> {
   let currentRow = pruneEmptyValues(row)
+  let currentSelect = select
+  const maxAttempts = retryLimitForRows([currentRow], currentSelect)
 
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const { data, error } = await supabase
       .from(table)
       .insert(currentRow)
-      .select(select)
+      .select(currentSelect)
       .single()
 
     if (!error) {
@@ -1212,11 +1246,21 @@ async function insertRow<T>(
 
     const missingColumn = missingColumnFromError(error)
 
-    if (!missingColumn || !Object.hasOwn(currentRow, missingColumn)) {
+    if (!missingColumn) {
       return { data: null, error }
     }
 
-    currentRow = withoutKey(currentRow, missingColumn)
+    const nextRow = Object.hasOwn(currentRow, missingColumn)
+      ? withoutKey(currentRow, missingColumn)
+      : currentRow
+    const nextSelect = withoutSelectColumn(currentSelect, missingColumn)
+
+    if (nextRow === currentRow && nextSelect === currentSelect) {
+      return { data: null, error }
+    }
+
+    currentRow = nextRow
+    currentSelect = nextSelect
   }
 
   return { data: null, error: new Error(`Could not insert into ${table}.`) }
@@ -1229,9 +1273,11 @@ async function insertRows<T>(
   select = "*"
 ): Promise<DbResult<T[]>> {
   let currentRows = rows.map(pruneEmptyValues)
+  let currentSelect = select
+  const maxAttempts = retryLimitForRows(currentRows, currentSelect)
 
-  for (let attempt = 0; attempt < 8; attempt += 1) {
-    const query = supabase.from(table).insert(currentRows).select(select)
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const query = supabase.from(table).insert(currentRows).select(currentSelect)
     const { data, error } = await query
 
     if (!error) {
@@ -1240,11 +1286,21 @@ async function insertRows<T>(
 
     const missingColumn = missingColumnFromError(error)
 
-    if (!missingColumn || !rowsHaveColumn(currentRows, missingColumn)) {
+    if (!missingColumn) {
       return { data: null, error }
     }
 
-    currentRows = currentRows.map((row) => withoutKey(row, missingColumn))
+    const nextRows = rowsHaveColumn(currentRows, missingColumn)
+      ? currentRows.map((row) => withoutKey(row, missingColumn))
+      : currentRows
+    const nextSelect = withoutSelectColumn(currentSelect, missingColumn)
+
+    if (nextRows === currentRows && nextSelect === currentSelect) {
+      return { data: null, error }
+    }
+
+    currentRows = nextRows
+    currentSelect = nextSelect
   }
 
   return { data: null, error: new Error(`Could not insert into ${table}.`) }
@@ -1258,8 +1314,9 @@ async function updateRow(
   matchValue: string
 ): Promise<DbResult<null>> {
   let currentRow = pruneEmptyValues(row)
+  const maxAttempts = retryLimitForRows([currentRow])
 
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const { error } = await supabase
       .from(table)
       .update(currentRow)
@@ -1301,7 +1358,7 @@ function missingColumnFromError(error: PostgrestError) {
     const match = combined.match(pattern)
 
     if (match?.[1]) {
-      return match[1]
+      return match[1].split(".").pop() ?? match[1]
     }
   }
 
@@ -1320,6 +1377,34 @@ function pruneEmptyValues(row: UnknownRow) {
   return Object.fromEntries(
     Object.entries(row).filter(([, value]) => value !== undefined && value !== null)
   )
+}
+
+function retryLimitForRows(rows: UnknownRow[], select = "*") {
+  const rowColumnCount = new Set(rows.flatMap((row) => Object.keys(row))).size
+  return Math.max(8, rowColumnCount + selectColumnList(select).length + 2)
+}
+
+function withoutSelectColumn(select: string, missingColumn: string) {
+  const columns = selectColumnList(select)
+
+  if (!columns.length || !columns.includes(missingColumn)) {
+    return select
+  }
+
+  const nextColumns = columns.filter((column) => column !== missingColumn)
+
+  return nextColumns.length ? nextColumns.join(",") : "id"
+}
+
+function selectColumnList(select: string) {
+  if (select === "*" || select.includes("(")) {
+    return []
+  }
+
+  return select
+    .split(",")
+    .map((column) => column.trim())
+    .filter(Boolean)
 }
 
 function stringValue(value: unknown) {
