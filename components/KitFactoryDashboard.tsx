@@ -1453,8 +1453,8 @@ function PagePreview({
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 lg:grid-cols-[156px_1fr]">
-          <div className="order-2 max-h-[240px] overflow-auto rounded-lg border lg:order-1 lg:max-h-[430px]">
+        <div className="grid gap-4 2xl:grid-cols-[156px_1fr]">
+          <div className="order-2 max-h-[240px] overflow-auto rounded-lg border 2xl:order-1 2xl:max-h-[430px]">
             {pages.map((page, index) => (
               <button
                 aria-pressed={safeIndex === index}
@@ -1486,7 +1486,7 @@ function PagePreview({
             ))}
           </div>
 
-          <div className="order-1 lg:order-2">
+          <div className="order-1 2xl:order-2">
             <MiniPagePreview
               kit={kit}
               page={selectedPage}
@@ -1556,20 +1556,26 @@ function MiniPreviewDecorations({
   tokens: DesignPresetTokens
 }) {
   const coverArtPath = pageType === "cover" ? getPreviewCoverArtPath(tokens) : ""
-  const useCoverArt = Boolean(coverArtPath)
+  const brandTemplateArtPath = getPreviewBrandTemplateArtPath(pageType, tokens)
+  const pageArtPath = coverArtPath || brandTemplateArtPath
+  const usePageArt = Boolean(pageArtPath)
   const isWelcome = pageType === "welcome"
   const isToc = pageType === "toc"
   const isSectionDivider = pageType === "section-divider"
   const isBrandLesson = pageType === "lesson" && tokens.styleFamily === "brand"
   const coverArtStyle = {
-    backgroundImage: `url('${coverArtPath}')`,
+    backgroundImage: `url('${pageArtPath}')`,
     backgroundPosition:
-      tokens.styleFamily === "brand" || tokens.styleFamily === "rebuild"
+      brandTemplateArtPath
+        ? "center"
+        : tokens.styleFamily === "brand" || tokens.styleFamily === "rebuild"
         ? "center bottom"
         : "center",
     backgroundRepeat: "no-repeat",
     backgroundSize:
-      tokens.styleFamily === "brand"
+      brandTemplateArtPath
+        ? "cover"
+        : tokens.styleFamily === "brand"
         ? "112% auto"
         : tokens.styleFamily === "rebuild"
           ? "116% auto"
@@ -1578,7 +1584,7 @@ function MiniPreviewDecorations({
 
   return (
     <div aria-hidden="true" className="absolute inset-0 z-0 overflow-hidden">
-      {useCoverArt ? (
+      {usePageArt ? (
         <>
           <span className="absolute inset-0 bg-cover bg-center" style={coverArtStyle} />
           <span className="absolute inset-0 bg-[var(--preview-paper)] opacity-[0.04]" />
@@ -1611,7 +1617,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {!useCoverArt && !isWelcome && !isToc && !isSectionDivider && !isBrandLesson && tokens.styleFamily === "brand" && (
+      {!usePageArt && !isWelcome && !isToc && !isSectionDivider && !isBrandLesson && tokens.styleFamily === "brand" && (
         <>
           <span
             className="absolute -left-20 -top-16 size-44 rounded-full opacity-18"
@@ -1663,7 +1669,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {!useCoverArt && !isWelcome && !isToc && tokens.styleFamily === "rise" && (
+      {!usePageArt && !isWelcome && !isToc && tokens.styleFamily === "rise" && (
         <>
           <span
             className="absolute -right-16 top-12 h-32 w-44 rotate-[-28deg] rounded-[48%] opacity-35"
@@ -1708,7 +1714,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {!useCoverArt && !isWelcome && !isToc && tokens.styleFamily === "land" && (
+      {!usePageArt && !isWelcome && !isToc && tokens.styleFamily === "land" && (
         <>
           <span
             className="absolute -left-6 -top-10 h-52 w-96 opacity-30"
@@ -1755,7 +1761,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {!useCoverArt && !isWelcome && !isToc && tokens.styleFamily === "rebuild" && (
+      {!usePageArt && !isWelcome && !isToc && tokens.styleFamily === "rebuild" && (
         <>
           <span
             className="absolute -right-14 top-10 h-56 w-48 rounded-full opacity-50 blur-sm"
@@ -1797,7 +1803,7 @@ function MiniPreviewDecorations({
         </>
       )}
 
-      {!useCoverArt && !isWelcome && !isToc && tokens.styleFamily === "meetatheal" && (
+      {!usePageArt && !isWelcome && !isToc && tokens.styleFamily === "meetatheal" && (
         <>
           <span
             className="absolute bottom-14 left-1/2 h-28 w-52 -translate-x-1/2 opacity-45"
@@ -1827,6 +1833,35 @@ function MiniPreviewDecorations({
       )}
     </div>
   )
+}
+
+function getPreviewBrandTemplateArtPath(pageType: KitPage["type"] | null | undefined, tokens: DesignPresetTokens) {
+  if (tokens.slug !== "brand" || !pageType || pageType === "cover") {
+    return ""
+  }
+
+  const pageMap: Partial<Record<KitPage["type"], string>> = {
+    "welcome": "02",
+    "toc": "03",
+    "quote": "04",
+    "section-divider": "05",
+    "lesson": "06",
+    "lesson-continue": "07",
+    "reflection": "07",
+    "workbook": "08",
+    "checklist": "10",
+    "progress-check": "10",
+    "tracker": "11",
+    "notes": "12",
+    "action-plan": "13",
+    "resource": "14",
+    "closing": "14",
+    "case-study": "15",
+    "back-cover": "16",
+  }
+  const pageNumber = pageMap[pageType]
+
+  return pageNumber ? `/kit-assets/brand-template/brand-template-${pageNumber}-blank.jpg` : ""
 }
 
 function MiniPagePreview({
