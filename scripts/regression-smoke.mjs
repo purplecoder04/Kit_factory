@@ -605,7 +605,7 @@ async function testFillableFields(baseUrl, markdown) {
   assert(fieldCount >= 30, `Expected fillable workbook fields, got ${fieldCount}.`)
   assert(firstCheckboxRect, "Expected a fillable checklist checkbox field.")
   assert(
-    firstCheckboxRect.x > 60 && firstCheckboxRect.x < 85,
+    firstCheckboxRect.x > 170 && firstCheckboxRect.x < 205,
     `Checklist checkbox should align to the designed box, got x=${firstCheckboxRect.x}.`
   )
 }

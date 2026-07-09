@@ -41,6 +41,7 @@ export function buildKitHtml(kit: ParsedKit, target: RenderTarget = "complete") 
 function buildCss(tokens: DesignPresetTokens) {
   const coverArt = buildCoverAssetDataUri(tokens)
   const brandCoverArt = tokens.styleFamily === "brand" ? coverArt : ""
+  const brandTemplateCss = buildBrandTemplateCss(tokens)
 
   return `
       @page { size: Letter; margin: 0; }
@@ -5520,6 +5521,498 @@ function buildCss(tokens: DesignPresetTokens) {
         left: 2.04in;
         bottom: 0.78in;
         transform: scale(0.88);
+      }
+
+      /* Brand workbook template fidelity pass.
+         These overrides pull the generated Brand pages closer to the supplied
+         styled Brand PDF while keeping text and fillable fields dynamic. */
+      .style-brand:not(.cover) {
+        padding: 0.74in 0.64in 0.58in;
+        background:
+          radial-gradient(circle at -0.34in -0.2in, ${transparent(tokens.plum, 0.88)} 0 1.18in, transparent 1.2in),
+          radial-gradient(circle at 0.98in 0.1in, ${transparent(tokens.lilac, 0.5)} 0 0.9in, transparent 0.92in),
+          radial-gradient(circle at 8.62in 10.62in, ${transparent(tokens.plum, 0.82)} 0 1.18in, transparent 1.2in),
+          radial-gradient(circle at 7.32in 10.24in, ${transparent(tokens.lilac, 0.46)} 0 0.92in, transparent 0.94in),
+          radial-gradient(ellipse at 16% 82%, ${transparent(tokens.accent, 0.09)}, transparent 1.56in),
+          repeating-radial-gradient(circle at 0.58in 8.92in, transparent 0 0.52in, ${transparent(tokens.gold, 0.42)} 0.525in 0.53in, transparent 0.535in 0.74in),
+          linear-gradient(126deg, transparent 0 72%, ${transparent(tokens.lilac, 0.1)} 72.3% 100%),
+          ${tokens.paper};
+      }
+      .style-brand:not(.cover)::before {
+        border-color: transparent;
+      }
+      .style-brand:not(.cover)::after {
+        opacity: 0.075;
+      }
+      .style-brand:not(.cover) .dots {
+        display: block;
+        right: 0.5in;
+        top: 0.52in;
+        width: 0.54in;
+        height: 0.54in;
+        background-size: 0.105in 0.105in;
+        opacity: 0.72;
+      }
+      .style-brand:not(.cover) .spark-lines {
+        display: block;
+        right: 0.08in;
+        top: 0.08in;
+        opacity: 0.26;
+        transform: rotate(-7deg) scale(0.94);
+      }
+      .style-brand:not(.cover) .brand-arc {
+        display: block;
+        left: -0.52in;
+        bottom: 0.48in;
+        width: 2.95in;
+        height: 2.95in;
+        opacity: 0.56;
+      }
+      .style-brand:not(.cover):not(.type-welcome):not(.type-toc):not(.type-quote):not(.type-section-divider):not(.type-closing):not(.type-back-cover) .page-ribbon {
+        display: flex;
+        left: 0.36in;
+        right: auto;
+        top: 0.18in;
+        width: 1.48in;
+        min-height: 0.56in;
+        justify-content: center;
+        padding: 0;
+        background: ${tokens.plum};
+        color: ${tokens.paper};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 0;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: none;
+      }
+      .style-brand:not(.cover):not(.type-welcome):not(.type-toc):not(.type-quote):not(.type-section-divider):not(.type-closing):not(.type-back-cover) .page-ribbon::before {
+        content: "B";
+        color: ${tokens.paper};
+        font-size: 18px;
+      }
+      .style-brand:not(.cover):not(.type-welcome):not(.type-toc):not(.type-quote):not(.type-section-divider):not(.type-closing):not(.type-back-cover) .page-ribbon::after {
+        content: "C";
+        position: static;
+        width: auto;
+        height: auto;
+        margin-left: -0.02in;
+        background: transparent;
+        color: ${tokens.accent};
+        font-size: 18px;
+      }
+      .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing):not(.type-back-cover) .section-label {
+        color: ${tokens.accent};
+        font-size: 8.4px;
+        font-weight: 800;
+        letter-spacing: 0.32em;
+        margin-left: 1.65in;
+        margin-top: 0.08in;
+      }
+      .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing):not(.type-back-cover) h2 {
+        color: ${tokens.ink};
+        font-size: 39px;
+        line-height: 0.96;
+        margin-left: 1.65in;
+        max-width: 4.72in;
+      }
+      .style-brand:not(.cover):not(.type-section-divider):not(.type-quote):not(.type-closing):not(.type-back-cover) .subtitle {
+        margin-left: 1.65in;
+        max-width: 4.5in;
+      }
+      .style-brand.type-welcome .welcome-frame,
+      .style-brand.type-toc .toc-frame {
+        margin: 0 auto;
+        max-width: 5.85in;
+        min-height: 8.25in;
+        padding-top: 1.12in;
+      }
+      .style-brand.type-welcome .welcome-title,
+      .style-brand.type-toc .toc-title {
+        color: ${tokens.ink};
+        font-size: 58px;
+        line-height: 0.9;
+        text-align: center;
+      }
+      .style-brand.type-welcome .welcome-intro {
+        color: ${tokens.background};
+        font-size: 18px;
+        line-height: 1.58;
+        margin: 0.38in auto 0;
+        max-width: 3.9in;
+      }
+      .style-brand.type-welcome .welcome-benefits {
+        gap: 0.18in;
+        margin: 0.42in auto 0;
+        max-width: 4.15in;
+      }
+      .style-brand.type-welcome .welcome-benefits li {
+        border-bottom: 1px solid ${transparent(tokens.line, 0.8)};
+        grid-template-columns: 0.42in 1fr;
+        padding-bottom: 0.08in;
+      }
+      .style-brand.type-welcome .welcome-benefit-icon {
+        border: 1px solid ${tokens.plum};
+        background: transparent;
+        color: ${tokens.plum};
+      }
+      .style-brand.type-welcome .brand-light {
+        right: 1.14in;
+        top: 0.08in;
+        transform: scale(1.14);
+      }
+      .style-brand.type-welcome .brand-plant {
+        right: 0.76in;
+        bottom: 1.02in;
+        top: auto;
+        transform: scale(1.18);
+      }
+      .style-brand.type-welcome .brand-card {
+        right: 1.3in;
+        bottom: 0.72in;
+        top: auto;
+        transform: rotate(7deg) scale(0.98);
+      }
+      .style-brand.type-toc .toc-title {
+        margin-top: 0.28in;
+      }
+      .style-brand.type-toc .toc-rule {
+        color: ${tokens.accent};
+        margin: 0.36in auto 0;
+      }
+      .style-brand.type-toc .toc-list {
+        margin: 0.52in auto 0;
+        max-width: 5.35in;
+      }
+      .style-brand.type-toc .toc-row {
+        color: ${tokens.background};
+        font-size: 17px;
+        min-height: 0.5in;
+      }
+      .style-brand.type-toc .toc-number {
+        color: ${tokens.plum};
+        font-size: 20px;
+      }
+      .style-brand.type-toc .toc-leader {
+        border-bottom-color: ${transparent(tokens.background, 0.8)};
+      }
+      .style-brand.type-toc .brand-book {
+        right: 0.58in;
+        bottom: 0.3in;
+        transform: rotate(6deg) scale(1.34);
+      }
+      .style-brand.type-toc .brand-plant {
+        left: 0.34in;
+        bottom: 0.56in;
+        transform: scale(1.08);
+      }
+      .style-brand.type-quote .quote-page {
+        padding-top: 1.68in;
+      }
+      .style-brand.type-quote .quote-page .quote-text {
+        font-size: 38px;
+        line-height: 1.12;
+      }
+      .style-brand.type-section-divider .section-divider-page {
+        min-height: 8.9in;
+        padding-top: 1.28in;
+      }
+      .style-brand.type-section-divider h2 {
+        font-size: 43px;
+      }
+      .style-brand.type-lesson {
+        padding: 0.58in 0.54in 0.58in;
+      }
+      .style-brand.type-lesson .lesson-content-page {
+        grid-template-columns: 2.1in 1fr;
+        min-height: 9.72in;
+        padding-top: 0.78in;
+        position: relative;
+      }
+      .style-brand.type-lesson .lesson-content-page::before {
+        content: "B C";
+        position: absolute;
+        left: 0;
+        top: -0.38in;
+        width: 1.42in;
+        height: 0.58in;
+        display: grid;
+        place-items: center;
+        background: ${tokens.plum};
+        color: ${tokens.paper};
+        font-family: "Cormorant Garamond", Georgia, serif;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+      }
+      .style-brand.type-lesson .lesson-sidebar {
+        background: transparent;
+        border-left: 0;
+        box-shadow: none;
+        padding: 0;
+      }
+      .style-brand.type-lesson .lesson-title {
+        font-size: 31px;
+      }
+      .style-brand.type-lesson .lesson-main {
+        background: ${transparent(tokens.paper, 0.78)};
+        border-left: 0.05in solid ${tokens.accent};
+        border-radius: 0.08in;
+        box-shadow: 0 0.12in 0.3in ${transparent(tokens.ink, 0.07)};
+        padding: 0.22in 0.26in;
+      }
+      .style-brand.type-lesson .lesson-section-title {
+        font-size: 22px;
+      }
+      .style-brand.type-lesson .lesson-section-body {
+        font-size: 10.4px;
+      }
+      .style-brand.type-lesson .lesson-takeaway-box {
+        margin: 0 0.24in;
+      }
+      .style-brand.type-workbook .content,
+      .style-brand.type-checklist .content,
+      .style-brand.type-tracker .content,
+      .style-brand.type-action-plan .content,
+      .style-brand.type-notes .content,
+      .style-brand.type-reflection .content,
+      .style-brand.type-progress-check .content,
+      .style-brand.type-resource .content,
+      .style-brand.type-case-study .content,
+      .style-brand.type-lesson-continue .content {
+        margin-left: 1.65in;
+        max-width: 5.55in;
+      }
+      .style-brand.type-workbook .prompt-card,
+      .style-brand.type-action-plan .prompt-card,
+      .style-brand.type-reflection .reflect-box,
+      .style-brand.type-progress-check .quote-box,
+      .style-brand.type-case-study .story-box,
+      .style-brand.type-resource .key-term-box,
+      .style-brand.type-resource .alert-box {
+        background: ${transparent(tokens.paper, 0.88)};
+        border-left-color: ${tokens.accent};
+        border-radius: 0.08in;
+        box-shadow: 0 0.12in 0.3in ${transparent(tokens.ink, 0.075)};
+      }
+      .style-brand.type-workbook .prompt-card {
+        min-height: 1.42in;
+      }
+      .style-brand.type-workbook .prompt-text {
+        color: ${tokens.ink};
+        font-size: 18px;
+      }
+      .style-brand.type-workbook .brand-plant,
+      .style-brand.type-workbook .brand-cup,
+      .style-brand.type-workbook .brand-pen,
+      .style-brand.type-workbook .brand-card {
+        display: block;
+      }
+      .style-brand.type-workbook .brand-plant {
+        right: 0.62in;
+        bottom: 1.12in;
+        opacity: 0.82;
+        transform: scale(0.92);
+      }
+      .style-brand.type-workbook .brand-cup {
+        right: 0.82in;
+        bottom: 0.62in;
+        opacity: 0.84;
+        transform: scale(0.82);
+      }
+      .style-brand.type-checklist .prompt-stack,
+      .style-brand.type-action-plan .action-grid,
+      .style-brand.type-tracker .tracker-table {
+        max-width: 5.55in;
+      }
+      .style-brand.type-checklist .prompt-stack,
+      .style-brand.type-tracker .tracker-table {
+        background: ${transparent(tokens.paper, 0.9)};
+      }
+      .style-brand.type-tracker .tracker-table th {
+        background: ${tokens.plum};
+      }
+      .style-brand.type-notes .notes-field {
+        min-height: 6.9in;
+        background-color: ${transparent(tokens.paper, 0.58)};
+      }
+      .style-brand.type-action-plan .brand-laptop,
+      .style-brand.type-action-plan .brand-card,
+      .style-brand.type-action-plan .brand-cup,
+      .style-brand.type-checklist .brand-book,
+      .style-brand.type-checklist .brand-pen,
+      .style-brand.type-checklist .brand-plant,
+      .style-brand.type-tracker .brand-plant,
+      .style-brand.type-case-study .brand-card,
+      .style-brand.type-case-study .brand-pen,
+      .style-brand.type-case-study .brand-glasses {
+        filter: drop-shadow(0 0.08in 0.14in ${transparent(tokens.ink, 0.16)});
+      }
+      .style-brand.type-closing,
+      .style-brand.type-back-cover {
+        background:
+          radial-gradient(circle at -0.34in -0.2in, ${transparent(tokens.plum, 0.9)} 0 1.2in, transparent 1.22in),
+          radial-gradient(circle at 8.72in 10.68in, ${transparent(tokens.plum, 0.86)} 0 1.28in, transparent 1.3in),
+          radial-gradient(circle at 7.28in 10.2in, ${transparent(tokens.lilac, 0.44)} 0 0.96in, transparent 0.98in),
+          ${tokens.paper};
+      }
+      ${brandTemplateCss}`
+}
+
+function buildBrandTemplateCss(tokens: DesignPresetTokens) {
+  if (tokens.slug !== "brand") {
+    return ""
+  }
+
+  const template = {
+    action: buildBrandTemplatePageDataUri(13, "blank"),
+    backCover: buildBrandTemplatePageDataUri(16, "blank"),
+    caseStudy: buildBrandTemplatePageDataUri(15, "blank"),
+    checklist: buildBrandTemplatePageDataUri(10, "blank"),
+    closing: buildBrandTemplatePageDataUri(14, "blank"),
+    lesson: buildBrandTemplatePageDataUri(6, "blank"),
+    lessonContinue: buildBrandTemplatePageDataUri(7, "blank"),
+    notes: buildBrandTemplatePageDataUri(12, "blank"),
+    quote: buildBrandTemplatePageDataUri(4, "blank"),
+    resource: buildBrandTemplatePageDataUri(14, "blank"),
+    sectionDivider: buildBrandTemplatePageDataUri(5, "blank"),
+    toc: buildBrandTemplatePageDataUri(3, "blank"),
+    tracker: buildBrandTemplatePageDataUri(11, "blank"),
+    welcome: buildBrandTemplatePageDataUri(2, "blank"),
+    workbook: buildBrandTemplatePageDataUri(8, "blank"),
+  }
+
+  return `
+      .style-brand.type-welcome,
+      .style-brand.type-toc,
+      .style-brand.type-quote,
+      .style-brand.type-section-divider,
+      .style-brand.type-lesson,
+      .style-brand.type-lesson-continue,
+      .style-brand.type-workbook,
+      .style-brand.type-checklist,
+      .style-brand.type-tracker,
+      .style-brand.type-action-plan,
+      .style-brand.type-notes,
+      .style-brand.type-reflection,
+      .style-brand.type-progress-check,
+      .style-brand.type-resource,
+      .style-brand.type-case-study,
+      .style-brand.type-closing,
+      .style-brand.type-back-cover {
+        background-color: ${tokens.paper};
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+      .style-brand.type-welcome { background-image: url("${template.welcome}"); }
+      .style-brand.type-toc { background-image: url("${template.toc}"); }
+      .style-brand.type-quote { background-image: url("${template.quote}"); }
+      .style-brand.type-section-divider { background-image: url("${template.sectionDivider}"); }
+      .style-brand.type-lesson { background-image: url("${template.lesson}"); }
+      .style-brand.type-lesson-continue { background-image: url("${template.lessonContinue}"); }
+      .style-brand.type-workbook { background-image: url("${template.workbook}"); }
+      .style-brand.type-checklist { background-image: url("${template.checklist}"); }
+      .style-brand.type-tracker { background-image: url("${template.tracker}"); }
+      .style-brand.type-action-plan { background-image: url("${template.action}"); }
+      .style-brand.type-notes { background-image: url("${template.notes}"); }
+      .style-brand.type-reflection { background-image: url("${template.lessonContinue}"); }
+      .style-brand.type-progress-check { background-image: url("${template.checklist}"); }
+      .style-brand.type-resource { background-image: url("${template.resource}"); }
+      .style-brand.type-case-study { background-image: url("${template.caseStudy}"); }
+      .style-brand.type-closing { background-image: url("${template.closing}"); }
+      .style-brand.type-back-cover { background-image: url("${template.backCover}"); }
+      .style-brand.type-resource,
+      .style-brand.type-closing {
+        background:
+          radial-gradient(circle at -0.34in -0.2in, ${transparent(tokens.plum, 0.88)} 0 1.18in, transparent 1.2in),
+          radial-gradient(circle at 0.98in 0.1in, ${transparent(tokens.lilac, 0.5)} 0 0.9in, transparent 0.92in),
+          radial-gradient(circle at 8.62in 10.62in, ${transparent(tokens.plum, 0.82)} 0 1.18in, transparent 1.2in),
+          radial-gradient(circle at 7.32in 10.24in, ${transparent(tokens.lilac, 0.46)} 0 0.92in, transparent 0.94in),
+          linear-gradient(126deg, transparent 0 72%, ${transparent(tokens.lilac, 0.1)} 72.3% 100%),
+          ${tokens.paper};
+      }
+      .style-brand:not(.cover) .decor,
+      .style-brand:not(.cover) .dots,
+      .style-brand:not(.cover) .swoop,
+      .style-brand:not(.cover) .spark-lines,
+      .style-brand:not(.cover) .brand-arc,
+      .style-brand:not(.cover) .brand-cup,
+      .style-brand:not(.cover) .brand-card,
+      .style-brand:not(.cover) .brand-laptop,
+      .style-brand:not(.cover) .brand-plant,
+      .style-brand:not(.cover) .brand-door,
+      .style-brand:not(.cover) .brand-book,
+      .style-brand:not(.cover) .brand-light,
+      .style-brand:not(.cover) .brand-pen,
+      .style-brand:not(.cover) .brand-glasses {
+        display: none !important;
+      }
+      .style-brand.type-welcome .welcome-frame,
+      .style-brand.type-toc .toc-frame,
+      .style-brand.type-quote .quote-page .quote-box,
+      .style-brand.type-section-divider .section-divider-box,
+      .style-brand.type-closing .closing-content-card {
+        background: ${transparent(tokens.paper, 0.98)};
+        border-radius: 0.08in;
+        box-shadow: 0 0.1in 0.28in ${transparent(tokens.ink, 0.08)};
+      }
+      .style-brand.type-welcome .welcome-frame {
+        margin-left: 1.44in;
+        max-width: 4.5in;
+        min-height: auto;
+        padding: 1.04in 0.34in 0.36in;
+      }
+      .style-brand.type-welcome .welcome-title {
+        font-size: 53px;
+      }
+      .style-brand.type-welcome .welcome-intro {
+        max-width: 3.62in;
+      }
+      .style-brand.type-toc .toc-frame {
+        margin-top: 0.96in;
+        max-width: 5.1in;
+        min-height: auto;
+        padding: 0.3in 0.34in 0.36in;
+      }
+      .style-brand.type-toc .toc-title {
+        font-size: 47px;
+      }
+      .style-brand.type-toc .toc-list {
+        margin-top: 0.32in;
+      }
+      .style-brand.type-quote .quote-page .quote-box {
+        min-width: 3.35in;
+        padding: 0.34in 0.38in;
+      }
+      .style-brand.type-section-divider .section-divider-box {
+        min-width: 4.7in;
+        padding: 0.5in 0.44in;
+      }
+      .style-brand.type-lesson .lesson-main,
+      .style-brand.type-lesson .lesson-takeaway-box,
+      .style-brand.type-workbook .prompt-card,
+      .style-brand.type-checklist .prompt-stack,
+      .style-brand.type-tracker .tracker-table,
+      .style-brand.type-action-plan .prompt-card,
+      .style-brand.type-notes .notes-field,
+      .style-brand.type-reflection .reflect-box,
+      .style-brand.type-progress-check .quote-box,
+      .style-brand.type-resource .content,
+      .style-brand.type-case-study .story-box {
+        background-color: ${transparent(tokens.paper, 0.92)};
+      }
+      .style-brand.type-closing .closing-panel,
+      .style-brand.type-back-cover .closing-panel {
+        background: ${transparent(tokens.paper, 0.76)};
+        border-radius: 0.08in;
+        margin: 1.24in auto 0;
+        max-width: 5.3in;
+        min-height: 5.6in;
+        padding: 0.44in;
+      }
+      .style-brand.type-back-cover h1 {
+        font-size: 38px;
+        line-height: 1.02;
       }`
 }
 
@@ -6608,6 +7101,14 @@ function buildCoverAssetDataUri(tokens: DesignPresetTokens) {
   const fileName = coverAssetFileName(tokens)
 
   return fileName ? buildAssetDataUri(`public/kit-assets/${fileName}`) : ""
+}
+
+function buildBrandTemplatePageDataUri(pageNumber: number, variant = "") {
+  const suffix = variant ? `-${variant}` : ""
+
+  return buildAssetDataUri(
+    `public/kit-assets/brand-template/brand-template-${String(pageNumber).padStart(2, "0")}${suffix}.jpg`
+  )
 }
 
 function coverAssetFileName(tokens: DesignPresetTokens) {
