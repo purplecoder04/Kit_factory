@@ -1757,7 +1757,6 @@ function buildCss(tokens: DesignPresetTokens) {
         letter-spacing: 0.28em;
         margin: 0;
         text-transform: uppercase;
-        text-shadow: 0 1px 5px ${transparent(tokens.paper, 0.72)};
       }
       .cover .image-slot {
         position: absolute;
@@ -3121,7 +3120,6 @@ function buildCss(tokens: DesignPresetTokens) {
         right: 0.72in;
         bottom: 0.42in;
         z-index: 3;
-        text-shadow: 0 1px 4px ${transparent(tokens.paper, 0.9)};
       }
       .style-rise .section-label {
         color: ${tokens.rose};
@@ -3569,7 +3567,6 @@ function buildCss(tokens: DesignPresetTokens) {
         right: 0.72in;
         bottom: 0.62in;
         z-index: 3;
-        text-shadow: 0 1px 5px ${transparent(tokens.ink, 0.6)};
       }
       .style-land.cover .footer {
         display: none;
@@ -5011,7 +5008,6 @@ function buildCss(tokens: DesignPresetTokens) {
         letter-spacing: 0.28em;
         margin: 0;
         text-align: center;
-        text-shadow: 0 1px 5px ${transparent(tokens.paper, 0.72)};
         text-transform: uppercase;
       }
       .style-brand.page.cover .cover-title {
@@ -5047,7 +5043,6 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-land.page.cover .cover-tagline,
       .style-meetatheal.page.cover .cover-tagline {
         color: ${tokens.paper};
-        text-shadow: 0 1px 5px ${transparent(tokens.background, 0.78)};
       }
       .style-rebuild.page.cover .cover-copy {
         align-items: center;
@@ -5908,25 +5903,25 @@ function buildBrandTemplateCss(tokens: DesignPresetTokens) {
         background-repeat: no-repeat;
         background-size: cover;
       }
-      .style-brand.type-welcome { background-image: url("${template.welcome}"); }
-      .style-brand.type-toc { background-image: url("${template.toc}"); }
-      .style-brand.type-quote { background-image: url("${template.quote}"); }
-      .style-brand.type-section-divider { background-image: url("${template.sectionDivider}"); }
-      .style-brand.type-how-to-use { background-image: url("${template.howToUse}"); }
-      .style-brand.type-important-to-know { background-image: url("${template.importantToKnow}"); }
-      .style-brand.type-lesson { background-image: url("${template.lesson}"); }
-      .style-brand.type-lesson-continue { background-image: url("${template.lessonContinue}"); }
-      .style-brand.type-workbook { background-image: url("${template.workbook}"); }
-      .style-brand.type-checklist { background-image: url("${template.checklist}"); }
-      .style-brand.type-tracker { background-image: url("${template.tracker}"); }
-      .style-brand.type-action-plan { background-image: url("${template.action}"); }
-      .style-brand.type-notes { background-image: url("${template.notes}"); }
-      .style-brand.type-reflection { background-image: url("${template.lessonContinue}"); }
-      .style-brand.type-progress-check { background-image: url("${template.checklist}"); }
-      .style-brand.type-resource { background-image: url("${template.resource}"); }
-      .style-brand.type-case-study { background-image: url("${template.caseStudy}"); }
-      .style-brand.type-closing { background-image: url("${template.closing}"); }
-      .style-brand.type-back-cover { background-image: url("${template.backCover}"); }
+      .style-brand.type-welcome { background: url("${template.welcome}") center / cover no-repeat !important; }
+      .style-brand.type-toc { background: url("${template.toc}") center / cover no-repeat !important; }
+      .style-brand.type-quote { background: url("${template.quote}") center / cover no-repeat !important; }
+      .style-brand.type-section-divider { background: url("${template.sectionDivider}") center / cover no-repeat !important; }
+      .style-brand.type-how-to-use { background: url("${template.howToUse}") center / cover no-repeat !important; }
+      .style-brand.type-important-to-know { background: url("${template.importantToKnow}") center / cover no-repeat !important; }
+      .style-brand.type-lesson { background: url("${template.lesson}") center / cover no-repeat !important; }
+      .style-brand.type-lesson-continue { background: url("${template.lessonContinue}") center / cover no-repeat !important; }
+      .style-brand.type-workbook { background: url("${template.workbook}") center / cover no-repeat !important; }
+      .style-brand.type-checklist { background: url("${template.checklist}") center / cover no-repeat !important; }
+      .style-brand.type-tracker { background: url("${template.tracker}") center / cover no-repeat !important; }
+      .style-brand.type-action-plan { background: url("${template.action}") center / cover no-repeat !important; }
+      .style-brand.type-notes { background: url("${template.notes}") center / cover no-repeat !important; }
+      .style-brand.type-reflection { background: url("${template.lessonContinue}") center / cover no-repeat !important; }
+      .style-brand.type-progress-check { background: url("${template.checklist}") center / cover no-repeat !important; }
+      .style-brand.type-resource { background: url("${template.resource}") center / cover no-repeat !important; }
+      .style-brand.type-case-study { background: url("${template.caseStudy}") center / cover no-repeat !important; }
+      .style-brand.type-closing { background: url("${template.closing}") center / cover no-repeat !important; }
+      .style-brand.type-back-cover { background: url("${template.backCover}") center / cover no-repeat !important; }
       .style-brand.type-resource,
       .style-brand.type-closing {
         background:
@@ -5952,6 +5947,41 @@ function buildBrandTemplateCss(tokens: DesignPresetTokens) {
       .style-brand:not(.cover) .brand-pen,
       .style-brand:not(.cover) .brand-glasses {
         display: none !important;
+      }
+      .style-brand.type-welcome .page-ribbon,
+      .style-brand.type-toc .page-ribbon,
+      .style-brand.type-quote .page-ribbon,
+      .style-brand.type-section-divider .page-ribbon,
+      .style-brand.type-how-to-use .page-ribbon,
+      .style-brand.type-important-to-know .page-ribbon,
+      .style-brand.type-lesson .page-ribbon,
+      .style-brand.type-lesson-continue .page-ribbon,
+      .style-brand.type-workbook .page-ribbon,
+      .style-brand.type-checklist .page-ribbon,
+      .style-brand.type-tracker .page-ribbon,
+      .style-brand.type-action-plan .page-ribbon,
+      .style-brand.type-notes .page-ribbon,
+      .style-brand.type-reflection .page-ribbon,
+      .style-brand.type-progress-check .page-ribbon,
+      .style-brand.type-resource .page-ribbon,
+      .style-brand.type-case-study .page-ribbon,
+      .style-brand.type-closing .page-ribbon,
+      .style-brand.type-back-cover .page-ribbon {
+        display: none !important;
+      }
+      .style-brand.type-workbook .content,
+      .style-brand.type-checklist .content,
+      .style-brand.type-tracker .content,
+      .style-brand.type-action-plan .content,
+      .style-brand.type-notes .content,
+      .style-brand.type-reflection .content,
+      .style-brand.type-progress-check .content,
+      .style-brand.type-resource .content,
+      .style-brand.type-case-study .content,
+      .style-brand.type-closing .content {
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
       }
       .style-brand.type-welcome .welcome-frame,
       .style-brand.type-toc .toc-frame,
