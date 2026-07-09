@@ -84,12 +84,25 @@ export function validateKit(kit: ParsedKit): ValidationIssue[] {
     )
   }
 
-  if (kit.pages.length > 0 && kit.pages.at(-1)?.type !== "closing") {
+  if (kit.pages.length > 0 && kit.pages.at(-1)?.type !== "back-cover") {
     issues.push(
       error(
-        "missing-closing-last",
-        "The last PAGE tag must be closing.",
-        "End the kit with <!-- PAGE: closing -->."
+        "missing-back-cover-last",
+        "The last PAGE tag must be back-cover.",
+        "End the kit with <!-- PAGE: back-cover -->."
+      )
+    )
+  }
+
+  if (
+    kit.pages.length > 1 &&
+    !kit.pages.some((page) => page.type === "closing")
+  ) {
+    issues.push(
+      warning(
+        "missing-closing-next-steps",
+        "Add a closing page before the back cover.",
+        "Use <!-- PAGE: closing --> for next steps, then <!-- PAGE: back-cover --> for the final branded page."
       )
     )
   }
@@ -282,7 +295,8 @@ function validatePage(
     !page.title &&
     page.type !== "unknown" &&
     page.type !== "cover" &&
-    page.type !== "quote"
+    page.type !== "quote" &&
+    page.type !== "back-cover"
   ) {
     issues.push(
       warning(

@@ -18,7 +18,7 @@ const outputRoot =
   path.join(root, "output", "visual-proof-pack", "latest")
 const pdftoppmPath = process.env.PDFTOPPM_PATH || findBundledPdftoppm()
 const startedServerUrl = process.env.KIT_FACTORY_TEST_URL
-const expectedCompletePageCount = 19
+const expectedCompletePageCount = 20
 const proofMode = normaliseProofMode(process.argv, process.env.KIT_FACTORY_PROOF_MODE)
 let serverProcess
 
@@ -376,7 +376,7 @@ async function createMeetAtTheHealPackageProof(baseUrl, packageDir, meetAtTheHea
       throw new Error(`Meet at the Heal package is missing: ${filename}`)
     }
 
-    await assertPdfPageCount(data, 5, `Meet at the Heal package ${filename}`)
+    await assertPdfPageCount(data, 6, `Meet at the Heal package ${filename}`)
   }
 
   await writeBuffer(zipPath, zip)
@@ -873,6 +873,9 @@ function markdownForPreset(source, preset) {
     .replace(/(<!-- PAGE: closing -->[\s\S]*?TITLE: ).*/m, `$1${closingTitle(preset)}`)
     .replace(/(<!-- PAGE: closing -->[\s\S]*?SUBTITLE: ).*/m, `$1${preset.subtitle}`)
     .replace(/(<!-- PAGE: closing -->[\s\S]*?TAGLINE: ).*/m, `$1${preset.tagline}`)
+    .replace(/(<!-- PAGE: back-cover -->[\s\S]*?TITLE: ).*/m, `$1${closingTitle(preset)}`)
+    .replace(/(<!-- PAGE: back-cover -->[\s\S]*?SUBTITLE: ).*/m, `$1${preset.subtitle}`)
+    .replace(/(<!-- PAGE: back-cover -->[\s\S]*?TAGLINE: ).*/m, `$1${preset.tagline}`)
 }
 
 function closingTitle(preset) {

@@ -233,6 +233,21 @@ BOTTOM_NOTE: Your story is being written right now.
 
 <!-- PAGE: closing -->
 
+SECTION: Closing
+TITLE: Your Next Step
+
+Choose one decision from this kit and turn it into a simple action before you close the workbook.
+
+CHECK: I know what I need to handle next.
+CHECK: I know what can wait.
+CHECK: I know what needs outside help or official confirmation.
+
+TAGLINE: Your clarity becomes real when you act on it.
+
+BOTTOM_NOTE: Do the next clean thing.
+
+<!-- PAGE: back-cover -->
+
 TITLE: Best Collective
 SUBTITLE: One System. Five Rooms. All For You.
 TAGLINE: You are becoming everything you prayed for.

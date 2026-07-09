@@ -13,7 +13,7 @@ slug: your-kit-slug
 Use this template when creating a real kit. For layout QA, use `samples/all-page-types-layout-test.md`.
 
 Recommended test size:
-- 19 pages total: one page for every supported page type.
+- 20 pages total: one page for every supported page type.
 - 15 chapter entries in the table of contents.
 - Use 20 chapters only for a long-kit stress test.
 
@@ -195,8 +195,20 @@ BOTTOM_NOTE: Add a short story reminder here.
 
 <!-- PAGE: closing -->
 SECTION: Closing
-TITLE: Closing Page Title
-SUBTITLE: Your closing promise or next step
+TITLE: Your Next Step
+Write the final action or review paragraph here.
+
+CHECK: Add the first closing action.
+CHECK: Add the second closing action.
+
 TAGLINE: Add the final encouragement here.
+
+BOTTOM_NOTE: Closing pages should tell the reader what to do next.
+
+<!-- PAGE: back-cover -->
+SECTION: Back Cover
+TITLE: Best Collective
+SUBTITLE: Your closing promise or brand sign-off
+TAGLINE: Add the final brand reminder here.
 IMAGE_SLOT: closing-lifestyle
 ICON: branch-default

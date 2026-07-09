@@ -90,17 +90,18 @@ Supported page types:
 | `progress-check` | Progress Check Page | Non-fillable completion checks before moving on | No |
 | `resource` | Resource Page | Links, key terms, warnings, and reference notes | No |
 | `case-study` | Case Study / Story Page | Real story, example, and takeaway | No |
-| `closing` | Closing / Back Cover Page | Final promise, footer, or back cover | No |
+| `closing` | Closing / Next Steps Page | Final action, review, or next-step instructions | No |
+| `back-cover` | Back Cover Page | Final branded end page | No |
 
-The first page should be `cover`. The last page should be `closing`.
+The first page should be `cover`. The last page should be `back-cover`.
 
-For a layout test file, use one page for each page type. That creates a clean 19-page test kit.
+For a layout test file, use one page for each page type. That creates a clean 20-page test kit.
 
 ## 2A. Recommended Test Kit Size
 
 For layout testing, use:
 
-- 19 pages total: one page for each supported page type.
+- 20 pages total: one page for each supported page type.
 - 15 chapters in the table of contents: enough to test long TOC spacing without making the sample huge.
 - 3-4 prompts on workbook and action-plan pages.
 - 6-8 checks on checklist and progress-check pages.
@@ -130,7 +131,7 @@ Rules:
 - Use 3 action prompts and 1-2 deadline questions.
 - REFLECT fields are non-fillable.
 - CHECK fields are fillable only on checklist pages.
-- End with a closing page.
+- End with a closing page, then a back-cover page.
 
 Supported page types:
 1. cover
@@ -152,6 +153,7 @@ Supported page types:
 17. resource
 18. case-study
 19. closing
+20. back-cover
 
 Return only the markdown file content.
 ```
@@ -377,10 +379,24 @@ STORY: Add the short story or example here.
 TAKEAWAY: Add the key takeaway here.
 ```
 
-### Closing
+### Closing / Next Steps
 
 ```md
 <!-- PAGE: closing -->
+SECTION: Closing
+TITLE: Your Next Step
+Write the final action, review, or next-step paragraph here.
+
+CHECK: Add the first closing action.
+CHECK: Add the second closing action.
+
+TAGLINE: Add the final encouragement here.
+```
+
+### Back Cover
+
+```md
+<!-- PAGE: back-cover -->
 TITLE: Best Collective
 SUBTITLE: One System. Five Rooms. All For You.
 TAGLINE: You are becoming everything you prayed for.
@@ -401,6 +417,13 @@ Meet at the Heal packages use four markdown files:
 - Couples Workbook
 - Rise Individual Workbook
 - Land Individual Workbook
+
+Upload all four files together or paste them into the four package tabs. Name the files so the dashboard can recognize them:
+
+- Lesson Book: include `lesson` or `guide`
+- Couples Workbook: include `couples`, `shared`, `together`, or `partner`
+- Rise Individual Workbook: include `rise`, `her`, `woman`, or `women`
+- Land Individual Workbook: include `land`, `his`, `man`, or `men`
 
 See `docs/best-collective-branch-system.md` for the Meet at the Heal rule: each chapter should teach in the Lesson Book, create private Rise and Land reflection, then bring both partners together in the Couples Workbook.
 

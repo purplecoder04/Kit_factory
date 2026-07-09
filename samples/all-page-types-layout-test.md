@@ -26,6 +26,7 @@ CHECK: Confirm the cover and welcome pages feel polished.
 CHECK: Confirm teaching pages have enough breathing room.
 CHECK: Confirm fillable pages line up correctly.
 CHECK: Confirm closing pages look saleable.
+CHECK: Confirm back cover pages feel finished.
 
 BOTTOM_NOTE: Use this sample when testing a new design preset.
 
@@ -210,7 +211,20 @@ BOTTOM_NOTE: A clean test sample protects the real product.
 
 <!-- PAGE: closing -->
 SECTION: Closing
-TITLE: All Page Types Reviewed
+TITLE: Your Final Layout Review
+This closing page checks the next-step page that comes before the back cover.
+
+CHECK: Choose the page type that needs one more visual pass.
+CHECK: Confirm every fillable field still lines up.
+CHECK: Decide whether the kit is ready for proof export.
+
+TAGLINE: Test first. Publish with confidence.
+
+BOTTOM_NOTE: Closing pages should help the reader know what to do next.
+
+<!-- PAGE: back-cover -->
+SECTION: Back Cover
+TITLE: Best Collective
 SUBTITLE: One test file. Every layout. Cleaner exports.
 TAGLINE: Test first. Publish with confidence.
 IMAGE_SLOT: closing-lifestyle

@@ -20,21 +20,25 @@ export const dynamic = "force-dynamic"
 const packageDocuments = [
   {
     bodyKey: "lessonBookMarkdown",
+    label: "Lesson Book",
     filename: "meet-at-the-heal-lesson-book.pdf",
     designPreset: "meetatheal",
   },
   {
     bodyKey: "couplesWorkbookMarkdown",
+    label: "Couples Workbook",
     filename: "meet-at-the-heal-couples-workbook.pdf",
     designPreset: "meetatheal",
   },
   {
     bodyKey: "riseWorkbookMarkdown",
+    label: "Rise Individual Workbook",
     filename: "meet-at-the-heal-rise-individual-workbook.pdf",
     designPreset: "meetatheal-rise",
   },
   {
     bodyKey: "landWorkbookMarkdown",
+    label: "Land Individual Workbook",
     filename: "meet-at-the-heal-land-individual-workbook.pdf",
     designPreset: "meetatheal-land",
   },
@@ -52,6 +56,17 @@ export async function POST(request: Request) {
 
   for (const document of packageDocuments) {
     const markdown = typeof body[document.bodyKey] === "string" ? body[document.bodyKey] : ""
+
+    if (!markdown.trim()) {
+      allIssues.push({
+        code: "missing-package-document",
+        detail: `${document.label}: Paste or upload the markdown for this required document.`,
+        level: "error",
+        message: `${document.label} markdown is required.`,
+      })
+      continue
+    }
+
     const kit = parseKitMarkdown(markdown, {
       branch: "meetatheal",
       designPreset: document.designPreset,

@@ -42,6 +42,17 @@ REFLECT: What do I need to own without becoming defensive?
 REFLECT: What would steady leadership look like here?
 
 <!-- PAGE: closing -->
+SECTION: Closing
+TITLE: Before I Rejoin
+Choose the steady response you want to practice and the responsibility you are ready to own.
+
+CHECK: I know what reaction showed up.
+CHECK: I know what belongs to me.
+CHECK: I know how I want to return to the conversation.
+
+TAGLINE: Private ownership. Shared repair.
+
+<!-- PAGE: back-cover -->
 TITLE: Land Reflection Complete
 SUBTITLE: Strength and repair can exist in the same conversation.
 TAGLINE: Private ownership. Shared repair.

@@ -14,7 +14,7 @@ export function selectPagesForTarget(kit: ParsedKit, target: RenderTarget): Pars
   }
 
   const pages = kit.pages.filter((page) => {
-    if (page.type === "cover" || page.type === "closing") {
+    if (page.type === "cover" || page.type === "closing" || page.type === "back-cover") {
       return true
     }
 

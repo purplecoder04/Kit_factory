@@ -45,6 +45,9 @@ async function main() {
   await runStep("Meet at the Heal package", () =>
     testMeetAtTheHealPackage(baseUrl, meetAtTheHealPackage)
   )
+  await runStep("Meet at the Heal package validation", () =>
+    testMeetAtTheHealPackageValidation(baseUrl, meetAtTheHealPackage)
+  )
 
   console.log("Kit Factory regression smoke tests passed.")
 }
@@ -579,9 +582,9 @@ async function testSplitPdfOutputs(baseUrl, markdown) {
   await assertUsLetterPdf(complete, "Complete PDF")
   await assertUsLetterPdf(guide, "Lesson guide PDF")
   await assertUsLetterPdf(workbook, "Workbook PDF")
-  assert((await pageCount(complete)) === 19, "Complete PDF should include every page in the proof kit.")
-  assert((await pageCount(guide)) === 14, "Lesson guide should include cover, guide pages, and closing page.")
-  assert((await pageCount(workbook)) === 8, "Workbook PDF should include cover, intro, workbook pages, and closing page.")
+  assert((await pageCount(complete)) === 20, "Complete PDF should include every page in the proof kit.")
+  assert((await pageCount(guide)) === 15, "Lesson guide should include cover, guide pages, closing, and back cover.")
+  assert((await pageCount(workbook)) === 9, "Workbook PDF should include cover, intro, workbook pages, closing, and back cover.")
 }
 
 async function testFillableFields(baseUrl, markdown) {
@@ -634,7 +637,7 @@ async function testBrandPackage(baseUrl, markdown) {
 
     assert(filename, `Brand package ZIP is missing ${filenameSuffix}.`)
     await assertUsLetterPdf(data, `Brand package file ${filename}`)
-    assert((await pageCount(data)) === 19, `${filename} should be a complete 19-page PDF.`)
+    assert((await pageCount(data)) === 20, `${filename} should be a complete 20-page PDF.`)
   }
 }
 
@@ -661,8 +664,27 @@ async function testMeetAtTheHealPackage(baseUrl, meetAtTheHealPackage) {
 
     assert(data, `Package ZIP is missing ${filename}.`)
     await assertUsLetterPdf(data, `Meet at the Heal package file ${filename}`)
-    assert((await pageCount(data)) === 5, `${filename} should be a 5-page sample PDF.`)
+    assert((await pageCount(data)) === 6, `${filename} should be a 6-page sample PDF.`)
   }
+}
+
+async function testMeetAtTheHealPackageValidation(baseUrl, meetAtTheHealPackage) {
+  const response = await fetchWithTimeout(new URL("/api/package/meetatheal", baseUrl), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      lessonBookMarkdown: meetAtTheHealPackage.lessonBookMarkdown,
+      couplesWorkbookMarkdown: meetAtTheHealPackage.couplesWorkbookMarkdown,
+      riseWorkbookMarkdown: "",
+      landWorkbookMarkdown: meetAtTheHealPackage.landWorkbookMarkdown,
+    }),
+  }, 120_000)
+  const payload = await response.json()
+  const issueText = JSON.stringify(payload)
+
+  assert(response.status === 400, `Missing package markdown should return 400, got ${response.status}.`)
+  assert(issueText.includes("Rise Individual Workbook markdown is required."), "Missing Rise workbook message was not returned.")
+  assert(issueText.includes("Paste or upload the markdown"), "Missing package markdown detail was not returned.")
 }
 
 function smokeSupabaseClient() {
@@ -1042,6 +1064,15 @@ CHECK: Fillable saved.
 TITLE: Export History Complete
 SUBTITLE: Links are ready when storage is ready.
 TAGLINE: Best Collective
+
+CHECK: Confirm every export link opens.
+CHECK: Save the ready package.
+
+<!-- PAGE: back-cover -->
+
+TITLE: Best Collective
+SUBTITLE: One System. Five Rooms. All For You.
+TAGLINE: Export history is ready.
 `
 }
 

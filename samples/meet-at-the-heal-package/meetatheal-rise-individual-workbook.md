@@ -42,6 +42,17 @@ REFLECT: What do I need to own without shrinking?
 REFLECT: What would help me feel emotionally safe?
 
 <!-- PAGE: closing -->
+SECTION: Closing
+TITLE: Before I Rejoin
+Choose the one thing you need to say honestly and the one thing you need to own clearly.
+
+CHECK: I know what emotion came up.
+CHECK: I know what belongs to me.
+CHECK: I know what I want to communicate with care.
+
+TAGLINE: Private clarity. Shared repair.
+
+<!-- PAGE: back-cover -->
 TITLE: Rise Reflection Complete
 SUBTITLE: You can be honest and still be loving.
 TAGLINE: Private clarity. Shared repair.

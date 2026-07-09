@@ -5405,6 +5405,121 @@ function buildCss(tokens: DesignPresetTokens) {
       .closing-panel .subtitle {
         max-width: 4.2in;
         margin: 16px auto 0;
+      }
+      .type-next-steps .closing-panel {
+        display: block;
+        min-height: 7.85in;
+        text-align: left;
+      }
+      .type-next-steps .closing-content-card {
+        border: 1px solid ${transparent(tokens.line, 0.72)};
+        border-left: 0.055in solid ${tokens.accent};
+        border-radius: 0.08in;
+        background:
+          radial-gradient(ellipse at 92% 8%, ${transparent(tokens.lilac, 0.14)}, transparent 1.14in),
+          linear-gradient(116deg, ${transparent(tokens.paperAlt, 0.18)}, transparent 54%),
+          ${transparent(tokens.paper, 0.9)};
+        box-shadow: 0 0.13in 0.34in ${transparent(tokens.ink, 0.07)};
+        margin-top: 0.36in;
+        max-width: 5.8in;
+        padding: 0.28in 0.32in;
+      }
+      .type-next-steps .closing-content-card .check-list {
+        display: grid;
+        gap: 0.1in;
+        margin-top: 0.18in;
+      }
+      .type-next-steps .closing-content-card .check-list li {
+        align-items: start;
+        background: ${transparent(tokens.paper, 0.62)};
+        border: 1px solid ${transparent(tokens.line, 0.52)};
+        border-radius: 0.05in;
+        padding: 0.09in 0.12in;
+      }
+      .type-next-steps .closing-content-card .check-list li::before {
+        background: ${tokens.accent};
+        margin-top: 0.045in;
+      }
+      .type-next-steps .bottom-note {
+        bottom: 1.08in;
+      }
+      .type-back-cover {
+        text-align: center;
+        padding: 0.72in 0.74in 0.86in;
+        background:
+          radial-gradient(circle at -4% 2%, ${transparent(tokens.plum, 0.42)} 0 0.88in, transparent 0.9in),
+          radial-gradient(circle at 96% 6%, ${transparent(tokens.plum, 0.28)} 0 0.72in, transparent 0.74in),
+          radial-gradient(circle at 14% 88%, ${transparent(tokens.lilac, 0.28)} 0 1.28in, transparent 1.3in),
+          radial-gradient(ellipse at 88% 88%, ${transparent(tokens.accent, 0.1)}, transparent 1.55in),
+          linear-gradient(126deg, transparent 0 68%, ${transparent(tokens.lilac, 0.14)} 68.5% 100%),
+          ${tokens.paper};
+      }
+      .type-back-cover .closing-panel {
+        display: grid;
+        min-height: 8.5in;
+        place-items: center;
+        position: relative;
+      }
+      .type-back-cover .image-slot {
+        display: none;
+      }
+      .type-back-cover .brand-mark {
+        color: ${tokens.ink};
+        font-size: 22px;
+        margin-bottom: 0.18in;
+      }
+      .type-back-cover h1 {
+        color: ${tokens.ink};
+        font-size: 50px;
+        letter-spacing: 0.02em;
+        line-height: 0.94;
+        text-transform: uppercase;
+      }
+      .type-back-cover .subtitle {
+        color: ${tokens.ink};
+        font-family: "Poppins", Arial, sans-serif;
+        font-size: 10px;
+        font-style: normal;
+        font-weight: 700;
+        letter-spacing: 0.34em;
+        line-height: 1.45;
+        margin: 0.18in auto 0;
+        max-width: 4.2in;
+        text-transform: uppercase;
+      }
+      .type-back-cover .cover-tagline {
+        color: ${tokens.mutedInk};
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.28em;
+        margin-top: 0.42in;
+        text-transform: uppercase;
+      }
+      .style-brand.type-back-cover .brand-laptop,
+      .style-brand.type-back-cover .brand-book,
+      .style-brand.type-back-cover .brand-plant,
+      .style-brand.type-back-cover .brand-cup {
+        display: block;
+      }
+      .style-brand.type-back-cover .brand-laptop {
+        left: 0.52in;
+        bottom: 0.76in;
+        transform: rotate(-3deg) scale(1.12);
+      }
+      .style-brand.type-back-cover .brand-book {
+        right: 0.58in;
+        bottom: 0.88in;
+        transform: rotate(5deg) scale(1.22);
+      }
+      .style-brand.type-back-cover .brand-plant {
+        right: 0.96in;
+        bottom: 1.58in;
+        transform: scale(1.04);
+      }
+      .style-brand.type-back-cover .brand-cup {
+        left: 2.04in;
+        bottom: 0.78in;
+        transform: scale(0.88);
       }`
 }
 
@@ -5435,6 +5550,10 @@ function renderPage(
 
   if (page.type === "closing") {
     return renderClosingPage(page, index, total, kit, preset, branch)
+  }
+
+  if (page.type === "back-cover") {
+    return renderBackCoverPage(page, index, total, kit, preset, branch)
   }
 
   const typeClass = page.rawType || "page"
@@ -5904,36 +6023,47 @@ function renderClosingPage(
   preset: DesignPresetTokens,
   branch: BranchInfo
 ) {
+  const title = page.title || "Next Steps"
+  const presetClasses = presetClassName(preset)
+
+  return `<section class="page ${presetClasses} type-closing type-next-steps">
+    ${renderDecor()}
+    <div class="closing-panel">
+      <div class="section-label">${escapeHtml(page.section || "Closing")}</div>
+      <h2>${escapeHtml(title)}</h2>
+      ${page.subtitle ? `<div class="subtitle">${escapeHtml(page.subtitle)}</div>` : ""}
+      <div class="closing-content-card">
+        ${renderContent(page.content)}
+        ${page.tagline ? `<div class="cover-tagline">${escapeHtml(page.tagline)}</div>` : ""}
+      </div>
+    </div>
+    ${page.bottomNote ? `<div class="bottom-note">${escapeHtml(page.bottomNote)}</div>` : ""}
+    ${footer(index, total, branch)}
+  </section>`
+}
+
+function renderBackCoverPage(
+  page: KitPage,
+  index: number,
+  total: number,
+  kit: ParsedKit,
+  preset: DesignPresetTokens,
+  branch: BranchInfo
+) {
   const title = page.title || branch.name || kit.title
   const subtitle = page.subtitle || kit.subtitle
   const tagline = page.tagline || kit.tagline
+  const headline = preset.styleFamily === "brand" ? subtitle || title : title
   const presetClasses = presetClassName(preset)
 
-  if (preset.styleFamily === "brand") {
-    const closingHeadline = subtitle || kit.subtitle || title
-
-    return `<section class="page ${presetClasses} type-closing">
+  return `<section class="page ${presetClasses} type-back-cover">
     ${renderDecor()}
     <div class="closing-panel">
       <div>
         <div class="brand-mark">${renderIcon(preset)}</div>
-        <div class="cover-brandline">${escapeHtml(title)}</div>
-        <h1>${escapeHtml(closingHeadline)}</h1>
-        ${tagline ? `<div class="cover-tagline">${escapeHtml(tagline)}</div>` : ""}
-      </div>
-    </div>
-    ${page.imageSlot ? `<div class="image-slot"></div>` : ""}
-    ${footer(index, total, branch)}
-  </section>`
-  }
-
-  return `<section class="page ${presetClasses} type-closing">
-    ${renderDecor()}
-    <div class="closing-panel">
-      <div>
-        <div class="brand-mark">${renderIcon(preset)}</div>
-        <h1>${escapeHtml(title)}</h1>
-        ${subtitle ? `<div class="subtitle">${escapeHtml(subtitle)}</div>` : ""}
+        ${preset.styleFamily === "brand" ? `<div class="cover-brandline">${escapeHtml(title)}</div>` : ""}
+        <h1>${escapeHtml(headline)}</h1>
+        ${subtitle && headline !== subtitle ? `<div class="subtitle">${escapeHtml(subtitle)}</div>` : ""}
         ${tagline ? `<div class="cover-tagline">${escapeHtml(tagline)}</div>` : ""}
       </div>
     </div>

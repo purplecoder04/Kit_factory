@@ -58,6 +58,7 @@ export const pageTypes = [
   "resource",
   "case-study",
   "closing",
+  "back-cover",
 ] as const
 
 export const fillablePageTypes = new Set<PageType>([

@@ -139,11 +139,37 @@ const packageDocuments: {
   key: PackageKey
   title: string
   bodyKey: string
+  description: string
+  filenameHint: string
 }[] = [
-  { key: "lessonBook", title: "Lesson Book", bodyKey: "lessonBookMarkdown" },
-  { key: "couplesWorkbook", title: "Couples Workbook", bodyKey: "couplesWorkbookMarkdown" },
-  { key: "riseWorkbook", title: "Rise Individual", bodyKey: "riseWorkbookMarkdown" },
-  { key: "landWorkbook", title: "Land Individual", bodyKey: "landWorkbookMarkdown" },
+  {
+    key: "lessonBook",
+    title: "Lesson Book",
+    bodyKey: "lessonBookMarkdown",
+    description: "Teaches the relationship concepts, examples, stories, and principles.",
+    filenameHint: "Use a filename with lesson or guide.",
+  },
+  {
+    key: "couplesWorkbook",
+    title: "Couples Workbook",
+    bodyKey: "couplesWorkbookMarkdown",
+    description: "Holds the shared exercises, discussions, agreements, and action plans.",
+    filenameHint: "Use a filename with couples, shared, together, or partner.",
+  },
+  {
+    key: "riseWorkbook",
+    title: "Rise Individual Workbook",
+    bodyKey: "riseWorkbookMarkdown",
+    description: "Holds her private reflection work, emotions, boundaries, and accountability.",
+    filenameHint: "Use a filename with rise, her, woman, or women.",
+  },
+  {
+    key: "landWorkbook",
+    title: "Land Individual Workbook",
+    bodyKey: "landWorkbookMarkdown",
+    description: "Holds his private reflection work, leadership, healing, and accountability.",
+    filenameHint: "Use a filename with land, his, man, or men.",
+  },
 ]
 
 export function KitFactoryDashboard() {
@@ -733,7 +759,7 @@ export function KitFactoryDashboard() {
 
     if (loadedCount === 0) {
       setStatus("Error")
-      setMessage("No Meet at the Heal package files were recognized.")
+      setMessage("No Meet at the Heal files were recognized. Name the files with lesson, couples, rise, or land.")
       return
     }
 
@@ -742,7 +768,7 @@ export function KitFactoryDashboard() {
       ...updates,
     }))
     setStatus("Draft")
-    setMessage(`${loadedCount} Meet at the Heal package file${loadedCount === 1 ? "" : "s"} loaded.`)
+    setMessage(`${loadedCount} Meet at the Heal package file${loadedCount === 1 ? "" : "s"} loaded. Each tab controls one PDF in the ZIP.`)
   }
 
   async function handleFileUpload(file: File | undefined) {
@@ -1353,6 +1379,9 @@ function MeetPackagePanel({
       <CardContent className="grid gap-3">
         <Field>
           <FieldLabel htmlFor="meet-package-upload">Upload package markdown files</FieldLabel>
+          <p className="text-muted-foreground text-sm">
+            Upload the four official markdown files at once. The app matches them by filename and exports one PDF per tab.
+          </p>
           <Input
             accept=".md,.markdown,.txt"
             disabled={isWorking}
@@ -1375,6 +1404,11 @@ function MeetPackagePanel({
           </TabsList>
           {packageDocuments.map((document) => (
             <TabsContent className="mt-3" key={document.key} value={document.key}>
+              <div className="mb-2 space-y-1">
+                <FieldTitle>{document.title}</FieldTitle>
+                <p className="text-muted-foreground text-sm">{document.description}</p>
+                <p className="text-muted-foreground text-xs">{document.filenameHint}</p>
+              </div>
               <Textarea
                 aria-label={`${document.title} markdown`}
                 className="h-[260px] resize-none font-mono text-xs leading-6"
@@ -1818,7 +1852,8 @@ function MiniPagePreview({
     page?.type !== "toc" &&
     page?.type !== "section-divider" &&
     !(page?.type === "lesson" && tokens.styleFamily === "brand") &&
-    page?.type !== "closing"
+    page?.type !== "closing" &&
+    page?.type !== "back-cover"
   const isCover = page?.type === "cover"
   const isBrandLesson = page?.type === "lesson" && tokens.styleFamily === "brand"
 
@@ -2103,10 +2138,35 @@ function MiniPageBody({
     return (
       <div className="relative z-10 p-5">
         <MiniPageHeading page={page} tokens={tokens} />
-        <div className="mt-4 rounded-lg bg-[var(--preview-plum)] p-5 text-center text-[var(--preview-paper)]">
-          <div className="mx-auto mb-4 size-3 rotate-45 bg-[var(--preview-paper)]" />
-          <MiniContent blocks={page.content} compact />
+        <div className="mt-5 rounded-lg border border-[var(--preview-line)] bg-[var(--preview-paper)]/85 p-5 shadow-sm">
+          <MiniContent blocks={page.content} />
+          {page.tagline && (
+            <div className="mt-4 text-[8px] font-bold uppercase tracking-[0.22em] text-[var(--preview-muted)]">
+              {page.tagline}
+            </div>
+          )}
         </div>
+      </div>
+    )
+  }
+
+  if (page.type === "back-cover") {
+    return (
+      <div className="relative z-10 flex h-[calc(100%-72px)] flex-col items-center justify-center px-8 text-center">
+        <div className="font-heading text-[22px] font-semibold tracking-[0.08em]" style={{ color: tokens.ink }}>
+          {tokens.icon === "bc" ? "B C" : tokens.shortName}
+        </div>
+        <div className="mt-4 text-[8px] font-extrabold uppercase tracking-[0.34em] text-[var(--preview-background)]">
+          {page.title || "Best Collective"}
+        </div>
+        <div className="mt-7 max-w-[300px] font-heading text-[38px] font-semibold uppercase leading-[0.92]" style={{ color: tokens.ink }}>
+          {page.subtitle || kit?.subtitle || page.title}
+        </div>
+        {page.tagline && (
+          <div className="mt-7 max-w-[250px] text-[8px] font-bold uppercase tracking-[0.26em] text-[var(--preview-muted)]">
+            {page.tagline}
+          </div>
+        )}
       </div>
     )
   }
@@ -3893,9 +3953,19 @@ CHECK: Add the second outcome.
 CHECK: Add the third outcome.
 
 <!-- PAGE: closing -->
+SECTION: Closing
+TITLE: Your Next Step
+Add a short next-step paragraph here.
+
+CHECK: Add the first next step.
+CHECK: Add the second next step.
+
+TAGLINE: Add your final reminder here.
+
+<!-- PAGE: back-cover -->
 TITLE: You did the work
 SUBTITLE: Add a closing note here.
-TAGLINE: Add your final reminder here.
+TAGLINE: Add your final brand promise here.
 `
 }
 
@@ -4070,6 +4140,17 @@ IMAGE_SLOT: cover-lifestyle
 ${innerPage}
 
 <!-- PAGE: closing -->
+
+SECTION: Closing
+TITLE: Your Next Step
+Come back to the lesson, name one honest action, and decide how you will protect the progress you made.
+
+CHECK: Choose one action before closing this workbook.
+CHECK: Return to this work before the next conversation.
+
+TAGLINE: We choose us, every day.
+
+<!-- PAGE: back-cover -->
 
 TITLE: Meet at the Heal
 SUBTITLE: Two Worlds. One Choice. A Stronger We.

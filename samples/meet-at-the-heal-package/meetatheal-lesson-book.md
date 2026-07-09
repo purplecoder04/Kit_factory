@@ -49,6 +49,17 @@ STORY: A couple kept arguing about small tasks, but the deeper issue was feeling
 TAKEAWAY: The surface topic is not always the real relationship issue.
 
 <!-- PAGE: closing -->
+SECTION: Closing
+TITLE: What To Do Next
+Each person should complete the individual reflection that belongs to them before the couple starts the shared workbook.
+
+CHECK: Read the lesson before workbook practice.
+CHECK: Complete private reflection before shared repair.
+CHECK: Come back together with one honest observation.
+
+TAGLINE: Learn. Reflect. Apply together.
+
+<!-- PAGE: back-cover -->
 TITLE: Lesson Complete
 SUBTITLE: Now each person does their own reflection before coming back together.
 TAGLINE: Learn. Reflect. Apply together.

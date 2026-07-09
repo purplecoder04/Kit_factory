@@ -45,6 +45,17 @@ ACTION: What will we do after the pause to return with care?
 QUESTION: When will we check in again?
 
 <!-- PAGE: closing -->
+SECTION: Closing
+TITLE: Our Next Practice
+Choose one shared repair practice and decide how you will come back to it this week.
+
+CHECK: We named one shared pattern.
+CHECK: We chose one repair practice.
+CHECK: We know when we will check in again.
+
+TAGLINE: Two people. One healthier pattern.
+
+<!-- PAGE: back-cover -->
 TITLE: Couples Practice Complete
 SUBTITLE: The goal is not perfection. The goal is repair that becomes safer over time.
 TAGLINE: Two people. One healthier pattern.
