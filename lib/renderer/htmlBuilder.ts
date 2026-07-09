@@ -5869,6 +5869,8 @@ function buildBrandTemplateCss(tokens: DesignPresetTokens) {
     caseStudy: buildBrandTemplatePageDataUri(15, "blank"),
     checklist: buildBrandTemplatePageDataUri(10, "blank"),
     closing: buildBrandTemplatePageDataUri(14, "blank"),
+    howToUse: buildBrandTemplatePageDataUri(6, "blank"),
+    importantToKnow: buildBrandTemplatePageDataUri(7, "blank"),
     lesson: buildBrandTemplatePageDataUri(6, "blank"),
     lessonContinue: buildBrandTemplatePageDataUri(7, "blank"),
     notes: buildBrandTemplatePageDataUri(12, "blank"),
@@ -5886,6 +5888,8 @@ function buildBrandTemplateCss(tokens: DesignPresetTokens) {
       .style-brand.type-toc,
       .style-brand.type-quote,
       .style-brand.type-section-divider,
+      .style-brand.type-how-to-use,
+      .style-brand.type-important-to-know,
       .style-brand.type-lesson,
       .style-brand.type-lesson-continue,
       .style-brand.type-workbook,
@@ -5908,6 +5912,8 @@ function buildBrandTemplateCss(tokens: DesignPresetTokens) {
       .style-brand.type-toc { background-image: url("${template.toc}"); }
       .style-brand.type-quote { background-image: url("${template.quote}"); }
       .style-brand.type-section-divider { background-image: url("${template.sectionDivider}"); }
+      .style-brand.type-how-to-use { background-image: url("${template.howToUse}"); }
+      .style-brand.type-important-to-know { background-image: url("${template.importantToKnow}"); }
       .style-brand.type-lesson { background-image: url("${template.lesson}"); }
       .style-brand.type-lesson-continue { background-image: url("${template.lessonContinue}"); }
       .style-brand.type-workbook { background-image: url("${template.workbook}"); }
@@ -5951,6 +5957,8 @@ function buildBrandTemplateCss(tokens: DesignPresetTokens) {
       .style-brand.type-toc .toc-frame,
       .style-brand.type-quote .quote-page .quote-box,
       .style-brand.type-section-divider .section-divider-box,
+      .style-brand.type-how-to-use .content,
+      .style-brand.type-important-to-know .content,
       .style-brand.type-closing .closing-content-card {
         background: ${transparent(tokens.paper, 0.98)};
         border-radius: 0.08in;
@@ -5990,6 +5998,8 @@ function buildBrandTemplateCss(tokens: DesignPresetTokens) {
       }
       .style-brand.type-lesson .lesson-main,
       .style-brand.type-lesson .lesson-takeaway-box,
+      .style-brand.type-how-to-use .content,
+      .style-brand.type-important-to-know .content,
       .style-brand.type-workbook .prompt-card,
       .style-brand.type-checklist .prompt-stack,
       .style-brand.type-tracker .tracker-table,

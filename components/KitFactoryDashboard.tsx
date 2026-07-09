@@ -1845,6 +1845,8 @@ function getPreviewBrandTemplateArtPath(pageType: KitPage["type"] | null | undef
     "toc": "03",
     "quote": "04",
     "section-divider": "05",
+    "how-to-use": "06",
+    "important-to-know": "07",
     "lesson": "06",
     "lesson-continue": "07",
     "reflection": "07",
@@ -1854,8 +1856,6 @@ function getPreviewBrandTemplateArtPath(pageType: KitPage["type"] | null | undef
     "tracker": "11",
     "notes": "12",
     "action-plan": "13",
-    "resource": "14",
-    "closing": "14",
     "case-study": "15",
     "back-cover": "16",
   }
@@ -1887,6 +1887,7 @@ function MiniPagePreview({
     page?.type !== "toc" &&
     page?.type !== "section-divider" &&
     !(page?.type === "lesson" && tokens.styleFamily === "brand") &&
+    !(tokens.slug === "brand" && (page?.type === "how-to-use" || page?.type === "important-to-know" || page?.type === "resource")) &&
     page?.type !== "closing" &&
     page?.type !== "back-cover"
   const isCover = page?.type === "cover"
@@ -1975,6 +1976,15 @@ function MiniPageBody({
 
   if (page.type === "quote" && tokens.styleFamily === "brand") {
     return <MiniBrandQuotePreview page={page} tokens={tokens} />
+  }
+
+  if (
+    tokens.slug === "brand" &&
+    (page.type === "how-to-use" ||
+      page.type === "important-to-know" ||
+      page.type === "resource")
+  ) {
+    return <MiniBrandSupportPagePreview page={page} tokens={tokens} />
   }
 
   if ((page.type as string) === "cover") {
@@ -2167,6 +2177,10 @@ function MiniPageBody({
         )}
       </div>
     )
+  }
+
+  if (page.type === "closing" && tokens.slug === "brand") {
+    return <MiniBrandSupportPagePreview page={page} tokens={tokens} variant="closing" />
   }
 
   if (page.type === "closing") {
@@ -2813,6 +2827,154 @@ function MiniBrandQuotePreview({
       </div>
     </div>
   )
+}
+
+function MiniBrandSupportPagePreview({
+  page,
+  tokens,
+  variant = "support",
+}: {
+  page: KitPage
+  tokens: DesignPresetTokens
+  variant?: "support" | "closing"
+}) {
+  const checks = page.checks.length > 0 ? page.checks.slice(0, 4) : []
+  const isClosing = variant === "closing"
+  const isTight = isClosing || page.type === "important-to-know"
+
+  return (
+    <div className="relative z-10 flex h-[calc(100%-42px)] items-start justify-center px-8 pt-[70px]">
+      <div
+        className="max-h-[470px] w-full max-w-[315px] overflow-hidden rounded-md border-l-4 p-6 shadow-lg"
+        style={{
+          background: "rgba(250,246,240,0.94)",
+          borderLeftColor: tokens.accent,
+          boxShadow: `0 12px 28px ${tokens.ink}17`,
+        }}
+      >
+        <div
+          className="text-[8px] font-extrabold uppercase leading-none tracking-[0.34em]"
+          style={{ color: tokens.accent }}
+        >
+          {page.section || page.rawType}
+        </div>
+        <div
+          className="mt-3 font-heading text-[25px] font-semibold leading-[1.02]"
+          style={{ color: tokens.ink }}
+        >
+          {page.title || titleCasePreview(page.rawType)}
+        </div>
+        {page.subtitle && (
+          <div className="mt-3 font-heading text-[15px] italic leading-5" style={{ color: tokens.plum }}>
+            {page.subtitle}
+          </div>
+        )}
+        <MiniBrandSupportContent blocks={page.content} compact={isTight} tokens={tokens} />
+        {checks.length > 0 && (
+          <ul className="mt-4 grid gap-2.5 text-[10px] font-semibold leading-4" style={{ color: tokens.background }}>
+            {checks.map((check) => (
+              <li className="grid grid-cols-[14px_1fr] gap-2" key={check}>
+                <span className="mt-1 size-2.5 rounded-full" style={{ background: tokens.gold }} />
+                <span>{check}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        {!isTight && (page.tagline || page.bottomNote) && (
+          <div
+            className="mt-5 border-t pt-3 text-[8px] font-bold uppercase leading-4 tracking-[0.24em]"
+            style={{ borderColor: tokens.line, color: tokens.lilac }}
+          >
+            {page.tagline || page.bottomNote}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function MiniBrandSupportContent({
+  blocks,
+  compact,
+  tokens,
+}: {
+  blocks: ContentBlock[]
+  compact: boolean
+  tokens: DesignPresetTokens
+}) {
+  return (
+    <div className="mt-4 grid gap-3">
+      {blocks.slice(0, compact ? 2 : 3).map((block, index) => {
+        if (block.type === "paragraph") {
+          return (
+            <p
+              className={cn("text-[10px] leading-5", compact && "line-clamp-6")}
+              key={`${block.type}-${index}`}
+              style={{ color: tokens.background }}
+            >
+              {block.text}
+            </p>
+          )
+        }
+
+        if (block.type === "alert") {
+          return (
+            <div
+              className="max-h-[245px] overflow-hidden rounded-md border-l-4 bg-white/55 p-4 text-[9px] leading-5"
+              key={`${block.type}-${index}`}
+              style={{ borderLeftColor: tokens.accent, color: tokens.background }}
+            >
+              {block.text}
+            </div>
+          )
+        }
+
+        if (block.type === "list" || block.type === "check-list") {
+          return (
+            <ul className="grid gap-2 text-[10px] leading-4" key={`${block.type}-${index}`} style={{ color: tokens.background }}>
+              {block.items.slice(0, 4).map((item) => (
+                <li className="grid grid-cols-[14px_1fr] gap-2" key={item}>
+                  <span className="mt-1 size-2.5 rounded-full" style={{ background: tokens.gold }} />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          )
+        }
+
+        if (block.type === "key-term") {
+          return (
+            <div
+              className="rounded-md border-l-4 p-4"
+              key={`${block.type}-${index}`}
+              style={{ background: tokens.accentSoft, borderLeftColor: tokens.plum }}
+            >
+              <div className="text-[7px] font-bold uppercase tracking-[0.24em]" style={{ color: tokens.ink }}>Key Term</div>
+              <div className="mt-2 font-heading text-[20px] font-semibold" style={{ color: tokens.ink }}>{block.term}</div>
+              <p className="mt-2 line-clamp-3 text-[9px] leading-5" style={{ color: tokens.background }}>{block.text}</p>
+            </div>
+          )
+        }
+
+        return (
+          <div
+            className="rounded-md border-l-4 bg-white/50 p-3 font-heading text-[13px] italic leading-5"
+            key={`${block.type}-${index}`}
+            style={{ borderLeftColor: tokens.accent, color: tokens.ink }}
+          >
+            {block.text}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function titleCasePreview(value: string) {
+  return value
+    .split("-")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ")
 }
 
 function previewQuoteBlock(page: KitPage) {
