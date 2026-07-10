@@ -5922,6 +5922,31 @@ function buildBrandTemplateCss(tokens: DesignPresetTokens) {
       .style-brand.type-case-study { background: url("${template.caseStudy}") center / cover no-repeat !important; }
       .style-brand.type-closing { background: url("${template.closing}") center / cover no-repeat !important; }
       .style-brand.type-back-cover { background: url("${template.backCover}") center / cover no-repeat !important; }
+      .style-brand.type-how-to-use,
+      .style-brand.type-important-to-know,
+      .style-brand.type-lesson,
+      .style-brand.type-lesson-continue,
+      .style-brand.type-workbook,
+      .style-brand.type-checklist,
+      .style-brand.type-tracker,
+      .style-brand.type-action-plan,
+      .style-brand.type-notes,
+      .style-brand.type-reflection,
+      .style-brand.type-progress-check,
+      .style-brand.type-resource,
+      .style-brand.type-case-study,
+      .style-brand.type-closing,
+      .style-brand.type-back-cover {
+        background:
+          radial-gradient(circle at -0.34in -0.2in, ${transparent(tokens.plum, 0.88)} 0 1.18in, transparent 1.2in),
+          radial-gradient(circle at 0.98in 0.1in, ${transparent(tokens.lilac, 0.5)} 0 0.9in, transparent 0.92in),
+          radial-gradient(circle at 8.62in 10.62in, ${transparent(tokens.plum, 0.82)} 0 1.18in, transparent 1.2in),
+          radial-gradient(circle at 7.32in 10.24in, ${transparent(tokens.lilac, 0.46)} 0 0.92in, transparent 0.94in),
+          radial-gradient(ellipse at 14% 84%, ${transparent(tokens.accent, 0.1)}, transparent 1.56in),
+          repeating-radial-gradient(circle at 0.58in 8.92in, transparent 0 0.52in, ${transparent(tokens.gold, 0.42)} 0.525in 0.53in, transparent 0.535in 0.74in),
+          linear-gradient(126deg, transparent 0 72%, ${transparent(tokens.lilac, 0.1)} 72.3% 100%),
+          ${tokens.paper} !important;
+      }
       .style-brand.type-resource,
       .style-brand.type-closing {
         background:
@@ -5930,7 +5955,7 @@ function buildBrandTemplateCss(tokens: DesignPresetTokens) {
           radial-gradient(circle at 8.62in 10.62in, ${transparent(tokens.plum, 0.82)} 0 1.18in, transparent 1.2in),
           radial-gradient(circle at 7.32in 10.24in, ${transparent(tokens.lilac, 0.46)} 0 0.92in, transparent 0.94in),
           linear-gradient(126deg, transparent 0 72%, ${transparent(tokens.lilac, 0.1)} 72.3% 100%),
-          ${tokens.paper};
+          ${tokens.paper} !important;
       }
       .style-brand:not(.cover) .decor,
       .style-brand:not(.cover) .dots,
@@ -5982,6 +6007,14 @@ function buildBrandTemplateCss(tokens: DesignPresetTokens) {
         background: transparent !important;
         border: 0 !important;
         box-shadow: none !important;
+      }
+      .style-brand.type-how-to-use .content,
+      .style-brand.type-important-to-know .content {
+        margin-left: 1.18in;
+        max-width: 5.68in;
+        min-height: 3.08in;
+        padding: 0.32in 0.36in;
+        border-left: 0.06in solid ${tokens.accent};
       }
       .style-brand.type-welcome .welcome-frame,
       .style-brand.type-toc .toc-frame,
@@ -6043,12 +6076,26 @@ function buildBrandTemplateCss(tokens: DesignPresetTokens) {
       }
       .style-brand.type-closing .closing-panel,
       .style-brand.type-back-cover .closing-panel {
-        background: ${transparent(tokens.paper, 0.76)};
+        background: ${transparent(tokens.paper, 0.88)};
         border-radius: 0.08in;
-        margin: 1.24in auto 0;
+        margin: 1.28in auto 0;
         max-width: 5.3in;
-        min-height: 5.6in;
+        min-height: auto;
         padding: 0.44in;
+      }
+      .style-brand.type-closing .closing-content-card {
+        margin: 0.34in auto 0;
+        max-width: 4.3in;
+        padding: 0.34in 0.36in;
+      }
+      .style-brand.type-closing .cover-tagline {
+        margin-top: 0.2in;
+      }
+      .style-brand.type-back-cover .closing-panel {
+        min-height: 5.04in;
+        display: grid;
+        place-items: center;
+        text-align: center;
       }
       .style-brand.type-back-cover h1 {
         font-size: 38px;
