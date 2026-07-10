@@ -525,12 +525,7 @@ export function KitFactoryDashboard() {
 
       const blob = await response.blob()
       const filename = filenameFromResponse(response, fallbackFilename(kind, target))
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = filename
-      link.click()
-      URL.revokeObjectURL(url)
+      triggerBrowserDownload(blob, filename)
       if (kitId) {
         void loadExportFiles(kitId)
       }
@@ -569,12 +564,7 @@ export function KitFactoryDashboard() {
 
       const blob = await response.blob()
       const filename = filenameFromResponse(response, "kit-website-mockup.png")
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = filename
-      link.click()
-      URL.revokeObjectURL(url)
+      triggerBrowserDownload(blob, filename)
       if (kitId) {
         void loadExportFiles(kitId)
       }
@@ -619,12 +609,7 @@ export function KitFactoryDashboard() {
 
       const blob = await response.blob()
       const filename = filenameFromResponse(response, "meet-at-the-heal-kit-package.zip")
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = filename
-      link.click()
-      URL.revokeObjectURL(url)
+      triggerBrowserDownload(blob, filename)
       if (kitId) {
         void loadExportFiles(kitId)
       }
@@ -663,12 +648,7 @@ export function KitFactoryDashboard() {
 
       const blob = await response.blob()
       const filename = filenameFromResponse(response, "brand-style-package.zip")
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement("a")
-      link.href = url
-      link.download = filename
-      link.click()
-      URL.revokeObjectURL(url)
+      triggerBrowserDownload(blob, filename)
       if (kitId) {
         void loadExportFiles(kitId)
       }
@@ -4112,6 +4092,23 @@ function filenameFromResponse(response: Response, fallback: string) {
   const match = disposition?.match(/filename="([^"]+)"/)
 
   return match?.[1] ?? fallback
+}
+
+function triggerBrowserDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement("a")
+
+  link.href = url
+  link.download = filename
+  link.rel = "noopener"
+  link.style.display = "none"
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+
+  window.setTimeout(() => {
+    URL.revokeObjectURL(url)
+  }, 30_000)
 }
 
 function createNewKitMarkdown({
