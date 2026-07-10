@@ -38,7 +38,7 @@ export function selectPagesForTarget(kit: ParsedKit, target: RenderTarget): Pars
 
   return {
     ...kit,
-    pages,
+    pages: expandBrandWorkbookPages(pages, kit),
   }
 }
 
@@ -228,4 +228,80 @@ function createWorkbookIntroPage(kit: ParsedKit): KitPage {
     parserErrors: [],
     parserWarnings: [],
   }
+}
+
+function expandBrandWorkbookPages(pages: KitPage[], kit: ParsedKit) {
+  if (kit.designPreset !== "brand" && kit.designPreset !== "brand-land") {
+    return pages
+  }
+
+  return pages.flatMap((page) => {
+    if (page.type === "tracker") {
+      return expandTrackerPage(page)
+    }
+
+    if (page.type === "action-plan") {
+      return expandActionPlanPage(page)
+    }
+
+    return [page]
+  })
+}
+
+function expandTrackerPage(page: KitPage) {
+    const rows = page.tableRows.length > 0 ? page.tableRows : ["Revenue", "Expenses", "Profit", "Notes"]
+
+    if (rows.length <= 6) {
+      return [page]
+    }
+
+    const chunks = chunkRows(rows, 6)
+
+    return chunks.map((chunk, index) => ({
+      ...page,
+      id: `${page.id}-part-${index + 1}`,
+      title: chunks.length > 1 ? `${page.title || "Tracker"} ${index + 1}` : page.title,
+      subtitle:
+        index === 0
+          ? page.subtitle
+          : page.subtitle
+            ? `${page.subtitle} Continued.`
+            : "Continued.",
+      tableRows: chunk,
+      noteLabel: index === chunks.length - 1 ? page.noteLabel : "",
+    }))
+}
+
+function expandActionPlanPage(page: KitPage) {
+  const items = [...(page.actions.length > 0 ? page.actions : ["What is the next action?"]), ...page.questions]
+
+  if (items.length <= 4) {
+    return [page]
+  }
+
+  const chunks = chunkRows(items, 3)
+
+  return chunks.map((chunk, index) => ({
+    ...page,
+    id: `${page.id}-part-${index + 1}`,
+    title: chunks.length > 1 ? `${page.title || "Action Plan"} ${index + 1}` : page.title,
+    subtitle:
+      index === 0
+        ? page.subtitle
+        : page.subtitle
+          ? `${page.subtitle} Continued.`
+          : "Continued.",
+    actions: chunk,
+    questions: [],
+  }))
+}
+
+function chunkRows(rows: string[], size: number) {
+  const chunks: string[][] = []
+
+  for (let index = 0; index < rows.length; index += size) {
+    chunks.push(rows.slice(index, index + size))
+  }
+
+  return chunks
 }

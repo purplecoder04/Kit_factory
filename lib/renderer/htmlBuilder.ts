@@ -1619,7 +1619,7 @@ function buildCss(tokens: DesignPresetTokens) {
         justify-content: space-between;
         color: ${tokens.mutedInk};
         font-size: 8.6px;
-        z-index: 4;
+        z-index: 30;
       }
       .cover {
         display: block;
@@ -5823,12 +5823,50 @@ function buildCss(tokens: DesignPresetTokens) {
       .style-brand.type-tracker .tracker-table {
         background: ${transparent(tokens.paper, 0.9)};
       }
+      .style-brand.type-tracker .tracker-table td {
+        height: 0.58in;
+      }
+      .style-brand.type-tracker .tracker-table th:first-child,
+      .style-brand.type-tracker .tracker-table td:first-child {
+        width: 39%;
+      }
+      .style-brand.type-tracker .tracker-table th:last-child,
+      .style-brand.type-tracker .tracker-table td:last-child {
+        width: 25%;
+      }
       .style-brand.type-tracker .tracker-table th {
         background: ${tokens.plum};
+      }
+      .style-brand.type-tracker .prompt-card {
+        margin-top: 0.18in;
+      }
+      .style-brand.type-action-plan .action-grid {
+        gap: 0.1in;
+      }
+      .style-brand.type-action-plan .prompt-card {
+        min-height: 1.02in;
+        padding: 0.13in 0.16in 0.1in;
+      }
+      .style-brand.type-action-plan .writing-lines {
+        gap: 0.11in;
+        margin-top: 0.1in;
       }
       .style-brand.type-notes .notes-field {
         min-height: 6.9in;
         background-color: ${transparent(tokens.paper, 0.58)};
+      }
+      .style-brand.type-closing .brand-laptop,
+      .style-brand.type-closing .brand-card,
+      .style-brand.type-closing .brand-book,
+      .style-brand.type-closing .brand-plant,
+      .style-brand.type-closing .brand-cup {
+        display: none !important;
+      }
+      .style-brand .footer span:last-child {
+        color: ${tokens.ink};
+        background: ${transparent(tokens.paper, 0.82)};
+        border-radius: 999px;
+        padding: 0.02in 0.06in;
       }
       .style-brand.type-action-plan .brand-laptop,
       .style-brand.type-action-plan .brand-card,
@@ -6765,27 +6803,20 @@ function renderFillableArea(page: KitPage, kit: ParsedKit) {
 
   if (page.type === "action-plan") {
     const actions = page.actions.length > 0 ? page.actions : ["What is the next action?"]
+    const actionItems = [...actions, ...page.questions]
 
-    return `<div class="action-grid">${actions
+    return `<div class="action-grid">${actionItems
       .map(
         (action, index) => `<div class="action-card"><span class="action-num">${index + 1}</span><div>${renderPromptCard(
           action,
-          2,
+          3,
           {
             suffix: `action_${String(index + 1).padStart(2, "0")}`,
             multiline: true,
           }
         )}</div></div>`
       )
-      .join("")}</div>${page.questions
-      .map((question, index) =>
-        renderPromptCard(question, 1, {
-          suffix: `question_${String(index + 1).padStart(2, "0")}`,
-          multiline: true,
-          fontSize: 9.5,
-        })
-      )
-      .join("")}`
+      .join("")}</div>`
   }
 
   if (page.type === "notes") {
