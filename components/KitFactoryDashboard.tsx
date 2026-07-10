@@ -21,7 +21,7 @@ import {
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Card,
   CardAction,
@@ -121,6 +121,11 @@ type ExportFileSummary = {
   createdAt: string
 }
 
+type LocalDownload = {
+  filename: string
+  url: string
+}
+
 type StorageHealthSummary = {
   bucket: string
   cleanupIssue?: string | null
@@ -187,6 +192,7 @@ export function KitFactoryDashboard() {
   const [savedKitSearch, setSavedKitSearch] = useState("")
   const [exportFiles, setExportFiles] = useState<ExportFileSummary[]>([])
   const [copyFallbackText, setCopyFallbackText] = useState("")
+  const [lastDownload, setLastDownload] = useState<LocalDownload | null>(null)
   const [isLoadingExports, setIsLoadingExports] = useState(false)
   const [isCheckingStorage, setIsCheckingStorage] = useState(false)
   const [readyProduct, setReadyProduct] = useState<ReadyProductSummary | null>(null)
@@ -256,6 +262,15 @@ export function KitFactoryDashboard() {
     void loadSavedKits()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(
+    () => () => {
+      if (lastDownload?.url) {
+        URL.revokeObjectURL(lastDownload.url)
+      }
+    },
+    [lastDownload]
+  )
 
   async function loadSavedKits() {
     try {
@@ -525,12 +540,12 @@ export function KitFactoryDashboard() {
 
       const blob = await response.blob()
       const filename = filenameFromResponse(response, fallbackFilename(kind, target))
-      triggerBrowserDownload(blob, filename)
+      setLastDownload(triggerBrowserDownload(blob, filename))
       if (kitId) {
         void loadExportFiles(kitId)
       }
       setStatus(kind === "render" ? "PDF Generated" : "Fillable Generated")
-      setMessage(`${filename} downloaded.`)
+      setMessage(`${filename} is ready. If it did not open, use Download Last File.`)
     } catch {
       setStatus("Error")
       setMessage("The file could not be generated.")
@@ -564,12 +579,12 @@ export function KitFactoryDashboard() {
 
       const blob = await response.blob()
       const filename = filenameFromResponse(response, "kit-website-mockup.png")
-      triggerBrowserDownload(blob, filename)
+      setLastDownload(triggerBrowserDownload(blob, filename))
       if (kitId) {
         void loadExportFiles(kitId)
       }
       setStatus("Mockup Generated")
-      setMessage(`${filename} downloaded.`)
+      setMessage(`${filename} is ready. If it did not open, use Download Last File.`)
     } catch {
       setStatus("Error")
       setMessage("The mockup image could not be generated.")
@@ -609,12 +624,12 @@ export function KitFactoryDashboard() {
 
       const blob = await response.blob()
       const filename = filenameFromResponse(response, "meet-at-the-heal-kit-package.zip")
-      triggerBrowserDownload(blob, filename)
+      setLastDownload(triggerBrowserDownload(blob, filename))
       if (kitId) {
         void loadExportFiles(kitId)
       }
       setStatus("Package Generated")
-      setMessage(`${filename} downloaded.`)
+      setMessage(`${filename} is ready. If it did not open, use Download Last File.`)
     } catch {
       setStatus("Error")
       setMessage("The Meet at the Heal package could not be generated.")
@@ -648,12 +663,12 @@ export function KitFactoryDashboard() {
 
       const blob = await response.blob()
       const filename = filenameFromResponse(response, "brand-style-package.zip")
-      triggerBrowserDownload(blob, filename)
+      setLastDownload(triggerBrowserDownload(blob, filename))
       if (kitId) {
         void loadExportFiles(kitId)
       }
       setStatus("Package Generated")
-      setMessage(`${filename} downloaded.`)
+      setMessage(`${filename} is ready. If it did not open, use Download Last File.`)
     } catch {
       setStatus("Error")
       setMessage("The Brand package could not be generated.")
@@ -1083,6 +1098,7 @@ export function KitFactoryDashboard() {
                 isCheckingStorage={isCheckingStorage}
                 isLoadingExports={isLoadingExports}
                 isWorking={isWorking}
+                lastDownload={lastDownload}
                 onCheckStorage={checkStorageReadiness}
                 onCopyAllExports={copyAllExportLinks}
                 onCopyExport={copySingleExportLink}
@@ -3518,6 +3534,7 @@ function OutputPanel({
   isCheckingStorage,
   isLoadingExports,
   isWorking,
+  lastDownload,
   onCheckStorage,
   onCopyAllExports,
   onCopyExport,
@@ -3542,6 +3559,7 @@ function OutputPanel({
   isCheckingStorage: boolean
   isLoadingExports: boolean
   isWorking: boolean
+  lastDownload: LocalDownload | null
   onCheckStorage: () => void
   onCopyAllExports: () => void
   onCopyExport: (file: ExportFileSummary) => void
@@ -3595,6 +3613,23 @@ function OutputPanel({
               saved exports also store public links in Export History.
             </AlertDescription>
           </Alert>
+
+          {lastDownload && (
+            <div className="flex flex-col gap-3 rounded-lg border border-primary/40 bg-primary/10 p-3 md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
+                <div className="font-medium">Last file is ready</div>
+                <div className="truncate text-xs text-muted-foreground">{lastDownload.filename}</div>
+              </div>
+              <a
+                className={buttonVariants()}
+                download={lastDownload.filename}
+                href={lastDownload.url}
+              >
+                <DownloadIcon data-icon="inline-start" />
+                Download Last File
+              </a>
+            </div>
+          )}
 
           <div className="flex flex-col gap-3 rounded-lg border p-3 md:flex-row md:items-center md:justify-between">
             <div className="min-w-0">
@@ -4094,7 +4129,7 @@ function filenameFromResponse(response: Response, fallback: string) {
   return match?.[1] ?? fallback
 }
 
-function triggerBrowserDownload(blob: Blob, filename: string) {
+function triggerBrowserDownload(blob: Blob, filename: string): LocalDownload {
   const url = URL.createObjectURL(blob)
   const link = document.createElement("a")
 
@@ -4106,9 +4141,7 @@ function triggerBrowserDownload(blob: Blob, filename: string) {
   link.click()
   link.remove()
 
-  window.setTimeout(() => {
-    URL.revokeObjectURL(url)
-  }, 30_000)
+  return { filename, url }
 }
 
 function createNewKitMarkdown({
